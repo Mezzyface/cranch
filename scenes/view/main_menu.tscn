@@ -1,0 +1,64 @@
+[gd_scene load_steps=6 format=3 uid="uid://bcq7udcnalxps"]
+
+[ext_resource type="Theme" uid="uid://de72pewi7lkny" path="res://assets/main.tres" id="1_6eu56"]
+[ext_resource type="Script" uid="uid://dgk7fpnvm56tw" path="res://scenes/view/main_menu.gd" id="1_lru07"]
+[ext_resource type="Texture2D" uid="uid://chxfeo782kaj7" path="res://assets/backgrounds/origbig.png" id="2_hdhft"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="3_hdhft"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_lru07"]
+font = ExtResource("3_hdhft")
+font_size = 128
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 16
+outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
+shadow_size = 0
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lru07")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_6eu56")
+texture = ExtResource("2_hdhft")
+expand_mode = 1
+stretch_mode = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Cranch"
+label_settings = SubResource("LabelSettings_lru07")
+
+[node name="NewGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Start Game"
+
+[node name="ContinueButton" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Continue"
+
+[connection signal="pressed" from="CenterContainer/VBoxContainer/NewGameButton" to="." method="_on_new_game_button_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/ContinueButton" to="." method="_on_continue_button_pressed"]

@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://1qerfg100c2f"]
+
+[ext_resource type="Script" uid="uid://csdytwdnpbd47" path="res://scenes/entities/creature_display.gd" id="1_40tls"]
+[ext_resource type="SpriteFrames" uid="uid://sho2e26e2vhk" path="res://assets/sprites/creatures/scuttleguard/scutleguard.tres" id="2_ndmns"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wuxy4"]
+
+[node name="CreatureDisplay" type="CharacterBody2D"]
+script = ExtResource("1_40tls")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_ndmns")
+animation = &"attack"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_wuxy4")

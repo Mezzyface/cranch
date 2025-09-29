@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4wdm6dnj27ru"]
+
+[ext_resource type="Script" uid="uid://b71n5262tckmo" path="res://scenes/windows/emote_bubble.gd" id="1_t5c3x"]
+
+[node name="EmoteBubble" type="Node2D"]
+script = ExtResource("1_t5c3x")
+
+[node name="Emote" type="Sprite2D" parent="."]

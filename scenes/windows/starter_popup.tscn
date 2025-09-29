@@ -1,0 +1,507 @@
+[gd_scene load_steps=45 format=3 uid="uid://bd8g4m7l2nwix"]
+
+[ext_resource type="Theme" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/starter_popup_controller.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://d3pf3ry0h8bul" path="res://ui/dialog_box.custom/dialog_box_0.png" id="3_3kt64"]
+[ext_resource type="Texture2D" uid="uid://6q1pe22wd6" path="res://ui/button_square.custom/button_square_0.png" id="4_yin25"]
+[ext_resource type="Texture2D" uid="uid://caftp2pme18nj" path="res://ui/selection_frame_square.custom/selection_frame_square_0.png" id="5_aax5s"]
+[ext_resource type="Texture2D" uid="uid://wvej3413m4yx" path="res://ui/button_square_pressed.custom/button_square_pressed_0.png" id="6_ajmko"]
+[ext_resource type="Texture2D" uid="uid://cn436a8lc7u7p" path="res://ui/checkbox.custom/checkbox_1.png" id="7_yrlcr"]
+[ext_resource type="Texture2D" uid="uid://b4ivaa8qmp0hr" path="res://ui/checkbox.custom/checkbox_0.png" id="8_rqh4b"]
+[ext_resource type="Texture2D" uid="uid://dl14g7hdnwqnp" path="res://ui/radio_button.custom/radio_button_1.png" id="9_5tiu4"]
+[ext_resource type="Texture2D" uid="uid://b8wa852pe1hg3" path="res://ui/radio_button.custom/radio_button_0.png" id="10_ahu7q"]
+[ext_resource type="Texture2D" uid="uid://bu4jdpa4vep84" path="res://ui/scrollbar_horizontal_button.custom/scrollbar_horizontal_button_0.png" id="11_p4pgb"]
+[ext_resource type="Texture2D" uid="uid://dph51yqkbaa5g" path="res://ui/scrollbar_horizontal_button_pressed.custom/scrollbar_horizontal_button_pressed_0.png" id="12_q6mg4"]
+[ext_resource type="Texture2D" uid="uid://bfd66iydjnolg" path="res://ui/scrollbar_horizontal_bar.custom/scrollbar_horizontal_bar_0.png" id="13_x6hmf"]
+[ext_resource type="Texture2D" uid="uid://3ghf4yqdyklj" path="res://ui/panel.custom/panel_0.png" id="14_u6cv4"]
+[ext_resource type="Texture2D" uid="uid://vfrvnjff0qn3" path="res://ui/text_input.custom/text_input_0.png" id="15_vgrmg"]
+[ext_resource type="Texture2D" uid="uid://de1pu8t5y02jh" path="res://ui/progress_bar.custom/progress_bar_0.png" id="16_lxg8b"]
+[ext_resource type="Texture2D" uid="uid://esq23msro5bi" path="res://ui/progress_bar.custom/progress_bar_1.png" id="17_8afnc"]
+[ext_resource type="Texture2D" uid="uid://dp8em2m3lxf47" path="res://ui/tooltip.custom/tooltip_0.png" id="18_t22pn"]
+[ext_resource type="Texture2D" uid="uid://b0ft582hs7bt5" path="res://ui/scrollbar_vertical_button.custom/scrollbar_vertical_button_0.png" id="19_dxvrg"]
+[ext_resource type="Texture2D" uid="uid://bu8calineqpi1" path="res://ui/scrollbar_vertical_button_pressed.custom/scrollbar_vertical_button_pressed_0.png" id="20_vgsyx"]
+[ext_resource type="Texture2D" uid="uid://cerrcsotdadym" path="res://ui/scrollbar_vertical_bar.custom/scrollbar_vertical_bar_0.png" id="21_fnykx"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="22_yin25"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/food/rpg_item_icon_wheat_51.png" id="22_yrlcr"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/creatures/scuttleguard/scutleguard.tres" id="24_ajmko"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/food/rpg_item_icon_coin_102.png" id="25_rqh4b"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_8"]
+texture = ExtResource("3_3kt64")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1"]
+texture = ExtResource("4_yin25")
+texture_margin_left = 14.017399
+texture_margin_top = 14.01503
+texture_margin_right = 14.189323
+texture_margin_bottom = 22.0
+region_rect = Rect2(0, 0, 54, 54)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_19"]
+texture = ExtResource("5_aax5s")
+texture_margin_left = 12.251862
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+region_rect = Rect2(0, 0, 38, 38)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_2"]
+texture = ExtResource("6_ajmko")
+texture_margin_left = 15.142367
+texture_margin_top = 14.864994
+texture_margin_right = 15.0
+texture_margin_bottom = 15.063972
+region_rect = Rect2(0, 0, 54, 48)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_16"]
+texture = ExtResource("11_p4pgb")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_17"]
+texture = ExtResource("12_q6mg4")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_15"]
+texture = ExtResource("13_x6hmf")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_7"]
+texture = ExtResource("14_u6cv4")
+texture_margin_left = 16.011599
+texture_margin_top = 15.0373535
+texture_margin_right = 16.011599
+texture_margin_bottom = 14.922736
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_11"]
+texture = ExtResource("15_vgrmg")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_9"]
+texture = ExtResource("16_lxg8b")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_10"]
+texture = ExtResource("17_8afnc")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_18"]
+texture = ExtResource("18_t22pn")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_13"]
+texture = ExtResource("19_dxvrg")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_14"]
+texture = ExtResource("20_vgsyx")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_12"]
+texture = ExtResource("21_fnykx")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="Theme" id="Theme_2a8lp"]
+default_font_size = 16
+AcceptDialog/styles/panel = SubResource("StyleBoxTexture_8")
+Button/colors/font_color = Color(0.988, 0.926, 0.851, 1)
+Button/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+Button/colors/font_focus_color = Color(0.988, 0.926, 0.851, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(0.988, 0.926, 0.851, 1)
+Button/styles/disabled = SubResource("StyleBoxTexture_1")
+Button/styles/focus = SubResource("StyleBoxTexture_19")
+Button/styles/hover = SubResource("StyleBoxTexture_1")
+Button/styles/normal = SubResource("StyleBoxTexture_1")
+Button/styles/pressed = SubResource("StyleBoxTexture_2")
+CheckBox/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+CheckBox/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+CheckBox/colors/font_hover_color = Color(0.051, 0.169, 0.271, 1)
+CheckBox/colors/font_pressed_color = Color(0.051, 0.169, 0.271, 1)
+CheckBox/icons/checked = ExtResource("7_yrlcr")
+CheckBox/icons/unchecked = ExtResource("8_rqh4b")
+CheckButton/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+CheckButton/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+CheckButton/colors/font_hover_color = Color(0.051, 0.169, 0.271, 1)
+CheckButton/colors/font_pressed_color = Color(0.051, 0.169, 0.271, 1)
+CheckButton/icons/checked = ExtResource("9_5tiu4")
+CheckButton/icons/unchecked = ExtResource("10_ahu7q")
+ConfirmationDialog/styles/panel = SubResource("StyleBoxTexture_8")
+FileDialog/styles/panel = SubResource("StyleBoxTexture_8")
+HScrollBar/styles/grabber = SubResource("StyleBoxTexture_16")
+HScrollBar/styles/grabber_highlight = SubResource("StyleBoxTexture_17")
+HScrollBar/styles/grabber_pressed = SubResource("StyleBoxTexture_17")
+HScrollBar/styles/scroll = SubResource("StyleBoxTexture_15")
+HScrollBar/styles/scroll_focus = SubResource("StyleBoxTexture_15")
+HSeparator/styles/separator = SubResource("StyleBoxTexture_19")
+ItemList/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+ItemList/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+ItemList/colors/guide_color = Color(0.553, 0.306, 0.478, 0.3)
+ItemList/styles/panel = SubResource("StyleBoxTexture_7")
+ItemList/styles/selected = SubResource("StyleBoxTexture_19")
+ItemList/styles/selected_focus = SubResource("StyleBoxTexture_19")
+Label/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+Label/colors/font_shadow_color = Color(0.988, 0.926, 0.851, 0.3)
+LineEdit/colors/caret_color = Color(0.051, 0.169, 0.271, 1)
+LineEdit/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+LineEdit/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+LineEdit/colors/font_uneditable_color = Color(0.553, 0.306, 0.478, 0.6)
+LineEdit/colors/selection_color = Color(0.819, 0.533, 0.349, 0.4)
+LineEdit/styles/focus = SubResource("StyleBoxTexture_11")
+LineEdit/styles/normal = SubResource("StyleBoxTexture_11")
+LineEdit/styles/read_only = SubResource("StyleBoxTexture_11")
+MenuButton/colors/font_color = Color(0.988, 0.926, 0.851, 1)
+MenuButton/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+MenuButton/colors/font_hover_color = Color(1, 1, 1, 1)
+MenuButton/colors/font_pressed_color = Color(0.988, 0.926, 0.851, 1)
+MenuButton/styles/disabled = SubResource("StyleBoxTexture_1")
+MenuButton/styles/focus = SubResource("StyleBoxTexture_19")
+MenuButton/styles/hover = SubResource("StyleBoxTexture_1")
+MenuButton/styles/normal = SubResource("StyleBoxTexture_1")
+MenuButton/styles/pressed = SubResource("StyleBoxTexture_2")
+OptionButton/colors/font_color = Color(0.988, 0.926, 0.851, 1)
+OptionButton/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+OptionButton/colors/font_hover_color = Color(1, 1, 1, 1)
+OptionButton/colors/font_pressed_color = Color(0.988, 0.926, 0.851, 1)
+OptionButton/styles/disabled = SubResource("StyleBoxTexture_1")
+OptionButton/styles/focus = SubResource("StyleBoxTexture_19")
+OptionButton/styles/hover = SubResource("StyleBoxTexture_1")
+OptionButton/styles/normal = SubResource("StyleBoxTexture_1")
+OptionButton/styles/pressed = SubResource("StyleBoxTexture_2")
+Panel/styles/panel = SubResource("StyleBoxTexture_7")
+PopupMenu/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+PopupMenu/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+PopupMenu/colors/font_hover_color = Color(0.988, 0.926, 0.851, 1)
+PopupMenu/colors/font_pressed_color = Color(0.988, 0.926, 0.851, 1)
+PopupMenu/styles/hover = SubResource("StyleBoxTexture_19")
+PopupMenu/styles/panel = SubResource("StyleBoxTexture_8")
+ProgressBar/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+ProgressBar/styles/background = SubResource("StyleBoxTexture_9")
+ProgressBar/styles/fill = SubResource("StyleBoxTexture_10")
+RichTextLabel/colors/default_color = Color(0.051, 0.169, 0.271, 1)
+RichTextLabel/colors/selection_color = Color(0.819, 0.533, 0.349, 0.4)
+RichTextLabel/styles/focus = SubResource("StyleBoxTexture_11")
+RichTextLabel/styles/normal = SubResource("StyleBoxTexture_11")
+SpinBox/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+SpinBox/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.6)
+SpinBox/colors/font_hover_color = Color(0.051, 0.169, 0.271, 1)
+SpinBox/colors/font_pressed_color = Color(0.988, 0.926, 0.851, 1)
+TabBar/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.4)
+TabBar/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+TabBar/colors/font_unselected_color = Color(0.553, 0.306, 0.478, 0.8)
+TabBar/styles/tab_disabled = SubResource("StyleBoxTexture_7")
+TabBar/styles/tab_selected = SubResource("StyleBoxTexture_1")
+TabBar/styles/tab_unselected = SubResource("StyleBoxTexture_7")
+TabContainer/colors/font_disabled_color = Color(0.553, 0.306, 0.478, 0.4)
+TabContainer/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+TabContainer/colors/font_unselected_color = Color(0.553, 0.306, 0.478, 0.8)
+TabContainer/styles/panel = SubResource("StyleBoxTexture_7")
+TabContainer/styles/tab_disabled = SubResource("StyleBoxTexture_7")
+TabContainer/styles/tab_selected = SubResource("StyleBoxTexture_1")
+TabContainer/styles/tab_unselected = SubResource("StyleBoxTexture_7")
+TextEdit/colors/caret_color = Color(0.051, 0.169, 0.271, 1)
+TextEdit/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+TextEdit/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+TextEdit/colors/selection_color = Color(0.819, 0.533, 0.349, 0.4)
+TextEdit/styles/focus = SubResource("StyleBoxTexture_11")
+TextEdit/styles/normal = SubResource("StyleBoxTexture_11")
+TextEdit/styles/read_only = SubResource("StyleBoxTexture_11")
+TooltipLabel/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+TooltipPanel/styles/panel = SubResource("StyleBoxTexture_18")
+Tree/colors/font_color = Color(0.051, 0.169, 0.271, 1)
+Tree/colors/font_selected_color = Color(0.988, 0.926, 0.851, 1)
+Tree/colors/guide_color = Color(0.553, 0.306, 0.478, 0.3)
+Tree/styles/panel = SubResource("StyleBoxTexture_7")
+Tree/styles/selected = SubResource("StyleBoxTexture_19")
+Tree/styles/selected_focus = SubResource("StyleBoxTexture_19")
+VScrollBar/styles/grabber = SubResource("StyleBoxTexture_13")
+VScrollBar/styles/grabber_highlight = SubResource("StyleBoxTexture_14")
+VScrollBar/styles/grabber_pressed = SubResource("StyleBoxTexture_14")
+VScrollBar/styles/scroll = SubResource("StyleBoxTexture_12")
+VScrollBar/styles/scroll_focus = SubResource("StyleBoxTexture_12")
+VSeparator/styles/separator = SubResource("StyleBoxTexture_19")
+Window/colors/title_color = Color(0.988, 0.926, 0.851, 1)
+Window/styles/embedded_border = SubResource("StyleBoxTexture_8")
+
+[sub_resource type="LabelSettings" id="LabelSettings_ajmko"]
+font = ExtResource("22_yin25")
+outline_size = 6
+outline_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+
+[sub_resource type="Theme" id="Theme_3kt64"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_aax5s"]
+font = ExtResource("22_yin25")
+font_size = 24
+font_color = Color(1, 0.9254902, 0.8392157, 1)
+shadow_size = 0
+
+[node name="StarterPopup" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Control" type="Control" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_2a8lp")
+
+[node name="CreatureContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="CreatureSprite" type="AnimatedSprite2D" parent="Panel/MarginContainer/VBoxContainer/CreatureContainer"]
+scale = Vector2(2, 2)
+
+[node name="ItemsContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Panel" type="Panel" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer"]
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+theme_type_variation = &"InventorySlot"
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FoodIcon" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel/MarginContainer"]
+layout_mode = 2
+texture = ExtResource("22_yrlcr")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="FoodLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "x5 Grain"
+label_settings = SubResource("LabelSettings_ajmko")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="VSeparator" type="VSeparator" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer"]
+layout_mode = 2
+
+[node name="Panel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer"]
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+theme_type_variation = &"InventorySlot"
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel2"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="Control" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel2/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel2/MarginContainer/Control"]
+scale = Vector2(1.2, 1.2)
+sprite_frames = ExtResource("24_ajmko")
+animation = &"idle"
+autoplay = "idle"
+offset = Vector2(0, -10)
+
+[node name="CreatureName" type="Label" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Kevin"
+label_settings = SubResource("LabelSettings_ajmko")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="VSeparator2" type="VSeparator" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer"]
+layout_mode = 2
+
+[node name="Panel3" type="Panel" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer"]
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+theme_type_variation = &"InventorySlot"
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel3"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GoldIcon" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel3/MarginContainer"]
+layout_mode = 2
+texture = ExtResource("25_rqh4b")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="GoldLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ItemsContainer/Panel3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "x500 Gold"
+label_settings = SubResource("LabelSettings_ajmko")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="StartButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("22_yin25")
+theme_override_font_sizes/font_size = 24
+text = "Start Adventure"
+
+[node name="SkipTutorialButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("22_yin25")
+theme_override_font_sizes/font_size = 16
+text = "Skip Tutorial"
+
+[node name="Title" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -228.0
+offset_top = -168.0
+offset_right = 231.0
+offset_bottom = -68.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_3kt64")
+theme_type_variation = &"Banner"
+
+[node name="Label" type="Label" parent="Title"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.5
+offset_top = -21.0
+offset_right = 141.5
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("22_yin25")
+text = "Ranching Starter Package!"
+label_settings = SubResource("LabelSettings_aax5s")
+horizontal_alignment = 1

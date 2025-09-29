@@ -1,0 +1,117 @@
+[gd_scene load_steps=4 format=3 uid="uid://bkvhsmihqan3x"]
+
+[ext_resource type="Script" uid="uid://beseeliqq63gk" path="res://scenes/windows/debug_popup.gd" id="1_7htyw"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_lgrwq"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ffik7"]
+font = ExtResource("1_lgrwq")
+font_size = 24
+
+[node name="DebugPopup" type="AcceptDialog"]
+oversampling_override = 1.0
+size = Vector2i(231, 266)
+visible = true
+script = ExtResource("1_7htyw")
+
+[node name="Background" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -78.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.5)
+
+[node name="PopupPanel" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -99.5
+offset_top = -117.0
+offset_right = 99.5
+offset_bottom = 55.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"DefaultPanelContainer"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PopupPanel"]
+visible = false
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="PopupPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="PopupPanel/VBoxContainer/HeaderContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("1_lgrwq")
+theme_override_font_sizes/font_size = 36
+text = "Debug"
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="PopupPanel/VBoxContainer/HeaderContainer"]
+visible = false
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+theme_type_variation = &"XButton"
+
+[node name="Label" type="Label" parent="PopupPanel/VBoxContainer/HeaderContainer/CloseButton"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -7.5
+offset_right = 20.0
+offset_bottom = 7.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "X"
+label_settings = SubResource("LabelSettings_ffik7")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="PopupPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ScrollContainer" type="MarginContainer" parent="PopupPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="PopupPanel/VBoxContainer/ScrollContainer"]
+visible = false
+layout_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="PopupPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="PopupPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+alignment = 2
+
+[node name="CancelButton" type="Button" parent="PopupPanel/VBoxContainer/ButtonContainer"]
+visible = false
+layout_mode = 2
+text = "Cancel"
+
+[node name="ConfirmButton" type="Button" parent="PopupPanel/VBoxContainer/ButtonContainer"]
+visible = false
+layout_mode = 2
+text = "Confirm"
