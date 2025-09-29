@@ -21,7 +21,8 @@ signal show_debug_popup_requested()
 signal show_creature_details_requested(creature: CreatureData)
 signal popup_closed(popup_name: String)
 
-# Activity & Training Signals
-signal training_started(creature: CreatureData, facility: Resource)
-signal training_completed(creature: CreatureData)
-signal activity_completed(creature: CreatureData, activity: Resource)
+# Activity & Facility signals
+signal activity_started(creature: CreatureData, activity: ActivityResource)
+signal activity_completed(creature: CreatureData, activity: ActivityResource)
+signal creature_species_changed(creature: CreatureData)
+signal facility_assigned(creature: CreatureData, facility: FacilityResource)

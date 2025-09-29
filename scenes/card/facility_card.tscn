@@ -1,0 +1,93 @@
+[gd_scene load_steps=5 format=3 uid="uid://cr73exyfersa4"]
+
+[ext_resource type="Script" uid="uid://du4m82ouowcxb" path="res://facility_card.gd" id="1_fn147"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="2_3h7io"]
+[ext_resource type="Texture2D" uid="uid://kqbjbu7gse11" path="res://assets/House.png" id="3_ycwrp"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ycwrp"]
+font = ExtResource("2_3h7io")
+font_size = 23
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 4
+outline_color = Color(1, 0.9254902, 0.8392157, 1)
+shadow_size = 0
+shadow_color = Color(0.1254902, 0.23529412, 0.3372549, 1)
+
+[node name="FacilityCard" type="Panel"]
+custom_minimum_size = Vector2(300, 400)
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_fn147")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(300, 75)
+layout_mode = 2
+theme_type_variation = &"Banner"
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -82.5
+offset_top = -14.5
+offset_right = 82.5
+offset_bottom = 4.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Training Grounds"
+label_settings = SubResource("LabelSettings_ycwrp")
+horizontal_alignment = 1
+
+[node name="TrainingImage" type="TextureRect" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("3_ycwrp")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="ActivitiesLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Activities"
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ActivitiesList" type="RichTextLabel" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "[tag]content[/tag]
+[tag=value]content[/tag]
+[tag option1=value1 option2=value2]content[/tag]
+[tag][/tag]
+[tag]"
+
+[node name="CreatureSlots" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="DropArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1

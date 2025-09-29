@@ -41,19 +41,36 @@ func initialize_new_game():
 	SignalBus.player_data_initialized.emit()
 	SignalBus.creature_added.emit(starter_creature)
 	SignalBus.gold_changed.emit(player_data.gold)
+	
+	create_test_facility()
 
 func advance_week():
 	current_week += 1
 	SignalBus.week_advanced.emit(current_week)
 #
-#func process_training():
-	## Updated to work with creatures array
-	#for creature in player_data.creatures:
-		#if creature.get("assigned_facility"):
-			#creature.strength += 5
-			#creature.agility += 3
-			#stats_changed.emit()
+func create_test_facility() -> void:
+	# Create a training facility with multiple activities
+	var training_facility = FacilityResource.new()
+	training_facility.facility_name = "Training Grounds"
+	training_facility.description = "A place to train creatures"
+	training_facility.max_creatures = 3
 
+	# Add strength training activity
+	var strength_activity = preload("res://resources/activities/strength_training.gd").new()
+	strength_activity.strength_gain = 10
+
+	# Add species change activity
+	var transform_activity = preload("res://resources/activities/species_change.gd").new()
+	transform_activity.target_species = GlobalEnums.Species.WIND_DANCER
+
+	training_facility.activities.append(strength_activity)
+	training_facility.activities.append(transform_activity)
+
+	# Test on first creature
+	if player_data and player_data.creatures.size() > 0:
+		print("Testing facility on ", player_data.creatures[0].creature_name)
+		training_facility.run_all_activities(player_data.creatures[0])
+		
 func get_active_creature() -> CreatureData:
 	if player_data and player_data.creatures.size() > 0:
 		return player_data.creatures[0]

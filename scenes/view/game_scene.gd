@@ -14,6 +14,8 @@ func _ready():
 	# Initialize the game when scene loads
 	SignalBus.game_started.emit()
 
+	_spawn_test_facilities()
+
 func _input(event):
 	# Quick save with F5
 	if event.is_action_pressed("ui_page_down"):  # F5 key
@@ -105,3 +107,30 @@ func _refresh_display():
 	# Respawn creatures from loaded data
 	for creature in GameManager.player_data.creatures:
 		_spawn_creature(creature)
+
+func _spawn_test_facilities():
+	# Create a container for facility cards if it doesn't exist
+	var facilities_container = Control.new()
+	facilities_container.name = "FacilitiesContainer"
+	facilities_container.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	facilities_container.position = Vector2(50, 50)
+	add_child(facilities_container)
+
+	# Create test facilities
+	var training_facility = FacilityResource.new()
+	training_facility.facility_name = "Training Grounds"
+	training_facility.description = "Train your creatures"
+	training_facility.max_creatures = 2
+
+	# Add a strength training activity
+	var strength_activity = ActivityResource.new()
+	strength_activity.activity_name = "Strength Training"
+	strength_activity.description = "Gain +5 Strength"
+	training_facility.activities.append(strength_activity)
+
+	# Spawn facility card
+	var card_scene = preload("res://scenes/card/facility_card.tscn")
+	var card = card_scene.instantiate()
+	card.facility_resource = training_facility
+	card.add_to_group("facility_cards")
+	facilities_container.add_child(card)

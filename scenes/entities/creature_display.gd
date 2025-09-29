@@ -11,6 +11,7 @@ class_name CreatureDisplay
 @export var emote_duration: float = 2.5
 
 var creature_data: CreatureData
+var drag_area: Control
 var wander_target: Vector2
 var container_bounds: Rect2
 var state_timer: float = 0.0
@@ -30,7 +31,24 @@ func _ready():
 func set_creature_data(data: CreatureData):
 	creature_data = data
 	_update_sprite()
+	_setup_drag_detection()
+	
+func _setup_drag_detection():
+	# Create a Control node for drag detection
+	# Add drag control
+	var drag_script = preload("res://scripts/creature_drag_control.gd")
+	drag_area = Control.new()
+	drag_area.name = "DragArea"
+	drag_area.set_script(drag_script)
+	drag_area.custom_minimum_size = Vector2(64, 64)
+	drag_area.position = Vector2(-32, -32)
+	add_child(drag_area)
 
+	# Pass references
+	drag_area.creature_parent = self
+	drag_area.creature_data = creature_data
+
+			
 func _update_sprite():
 	if not creature_data:
 		return
