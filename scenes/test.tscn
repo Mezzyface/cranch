@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://dsbst1y8nsp0s"]
+
+[ext_resource type="Shader" uid="uid://bo23wumpnbhba" path="res://shaders/test.gdshader" id="1_bl13t"]
+[ext_resource type="SpriteFrames" uid="uid://sho2e26e2vhk" path="res://assets/sprites/creatures/scuttleguard/scutleguard.tres" id="1_errlg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_iyx0m"]
+shader = ExtResource("1_bl13t")
+
+[node name="Node2D" type="Node2D"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+material = SubResource("ShaderMaterial_iyx0m")
+sprite_frames = ExtResource("1_errlg")
+animation = &"idle"
+autoplay = "idle"
+frame_progress = 0.14965747
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)

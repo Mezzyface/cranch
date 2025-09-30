@@ -2,12 +2,19 @@
 extends Node
 
 var current_week: int = 1
-var player_data: PlayerData  # Changed from separate gold/creature vars
+var player_data: PlayerData
+var facility_manager: FacilityManager
 
 const SAVE_PATH = "user://savegame.tres"
 
 func _ready():
 	_connect_signals()
+	_create_managers()
+	
+func _create_managers():
+	facility_manager = FacilityManager.new()
+	facility_manager.name = "FacilityManager"
+	add_child(facility_manager)
 
 func _connect_signals():
 	SignalBus.game_started.connect(initialize_new_game)
@@ -46,7 +53,17 @@ func initialize_new_game():
 
 func advance_week():
 	current_week += 1
+	print("Advancing to week ", current_week)
+
+	# Process all facility activities through facility manager
+	if facility_manager:
+		facility_manager.process_all_activities(current_week)
+
 	SignalBus.week_advanced.emit(current_week)
+
+	# Save after week advancement
+	if has_node("/root/SaveManager"):
+		SaveManager.save_game()
 #
 func create_test_facility() -> void:
 	# Create a training facility with multiple activities

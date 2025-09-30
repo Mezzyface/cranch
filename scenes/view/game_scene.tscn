@@ -1,17 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://bw2rpq8e545hs"]
+[gd_scene load_steps=3 format=3 uid="uid://bw2rpq8e545hs"]
 
 [ext_resource type="Script" uid="uid://d0lp8rta5wmar" path="res://scenes/view/game_scene.gd" id="1_dlcv3"]
-[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="2_80tgo"]
 [ext_resource type="Texture2D" uid="uid://chxfeo782kaj7" path="res://assets/backgrounds/origbig.png" id="3_x3lul"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_x3lul"]
-font = ExtResource("2_80tgo")
-font_size = 48
-font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
-outline_size = 8
-outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
-shadow_size = 0
-shadow_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
 
 [node name="GameScene" type="Control"]
 layout_mode = 3
@@ -21,67 +11,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dlcv3")
-
-[node name="HSplitContainer" type="HSplitContainer" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Panel" type="Panel" parent="HSplitContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Panel2" type="Panel" parent="HSplitContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Control" type="Control" parent="."]
-anchors_preset = 0
-offset_left = 200.0
-offset_top = 108.0
-offset_right = 200.0
-offset_bottom = 108.0
-size_flags_horizontal = 2
-size_flags_vertical = 4
-
-[node name="Panel" type="Panel" parent="Control"]
-custom_minimum_size = Vector2(300, 80)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -40.0
-offset_right = 150.0
-offset_bottom = 40.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Label" type="Label" parent="Control"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -78.5
-offset_top = -24.0
-offset_right = 78.5
-offset_bottom = 24.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Week 1"
-label_settings = SubResource("LabelSettings_x3lul")
 
 [node name="CreatureContainer" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(500, 500)

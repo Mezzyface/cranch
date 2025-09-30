@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3 uid="uid://c3n3c8mewmiee"]
+
+[ext_resource type="Script" uid="uid://ch0dij10kqmpw" path="res://scenes/card/week_display.gd" id="1_csfop"]
+[ext_resource type="FontFile" uid="uid://dxje8yk0kfnd8" path="res://assets/fonts/HoneyPigeon.ttf" id="1_pjob5"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_csfop"]
+font = ExtResource("1_pjob5")
+font_size = 36
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 4
+outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
+shadow_size = 0
+
+[node name="WeekDisplay" type="PanelContainer"]
+offset_right = 219.0
+offset_bottom = 92.0
+theme_type_variation = &"DefaultPanelContainer"
+script = ExtResource("1_csfop")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "Week 1"
+label_settings = SubResource("LabelSettings_csfop")
+
+[node name="Button" type="Button" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "Next Week"

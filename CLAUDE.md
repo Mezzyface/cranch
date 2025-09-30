@@ -103,6 +103,7 @@ This project uses a **guided development approach** with a living documentation 
    - Updates as the project grows
 
 2. **When the user requests a feature:**
+   - **ONLY UPDATE DEVELOPMENT_GUIDE.md** - Never modify code files directly
    - Clear previous task steps when starting new feature
    - Add implementation steps to DEVELOPMENT_GUIDE.md using this format:
      - File name at the top
@@ -111,6 +112,7 @@ This project uses a **guided development approach** with a living documentation 
    - Don't paste entire code files
    - Update architecture documentation after completion
    - Move completed work to the history section
+   - **The user will implement the code changes based on the guide**
 
 3. **Signal-Driven Architecture:**
    - All inter-system communication goes through SignalBus
@@ -214,3 +216,4 @@ This project uses a **guided development approach** with a living documentation 
 2. Emit from source system
 3. Connect in receiving systems
 4. Document in DEVELOPMENT_GUIDE
+

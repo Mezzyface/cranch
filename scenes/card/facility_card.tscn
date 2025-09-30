@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://cr73exyfersa4"]
 
-[ext_resource type="Script" uid="uid://du4m82ouowcxb" path="res://facility_card.gd" id="1_fn147"]
+[ext_resource type="Script" uid="uid://du4m82ouowcxb" path="res://scenes/card/facility_card.gd" id="1_fn147"]
 [ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="2_3h7io"]
 [ext_resource type="Texture2D" uid="uid://kqbjbu7gse11" path="res://assets/House.png" id="3_ycwrp"]
 
