@@ -36,11 +36,11 @@ texture = ExtResource("3_x3lul")
 expand_mode = 3
 stretch_mode = 5
 
-[node name="FacilitySlot" parent="." instance=ExtResource("3_hega7")]
+[node name="FacilitySlot1" parent="." instance=ExtResource("3_hega7")]
 layout_mode = 0
-offset_left = 202.0
+offset_left = 201.0
 offset_top = 540.0
-offset_right = 522.0
+offset_right = 521.0
 offset_bottom = 960.0
 
 [node name="FacilitySlot2" parent="." instance=ExtResource("3_hega7")]
@@ -49,3 +49,22 @@ offset_left = 201.0
 offset_top = 120.0
 offset_right = 521.0
 offset_bottom = 540.0
+slot_index = 1
+
+[node name="FacilitySlot3" parent="." instance=ExtResource("3_hega7")]
+layout_mode = 0
+offset_left = 1401.0
+offset_top = 540.0
+offset_right = 1721.0
+offset_bottom = 960.0
+slot_index = 2
+is_locked = true
+
+[node name="FacilitySlot4" parent="." instance=ExtResource("3_hega7")]
+layout_mode = 0
+offset_left = 1401.0
+offset_top = 120.0
+offset_right = 1721.0
+offset_bottom = 540.0
+slot_index = 3
+is_locked = true

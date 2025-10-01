@@ -287,7 +287,7 @@ func _create_facility_slots():
 
 func _place_test_facility_in_slot():
 	# Get first slot from scene tree
-	var first_slot = $FacilitySlot
+	var first_slot = $FacilitySlot1
 	if first_slot:
 
 		# Create test facility card

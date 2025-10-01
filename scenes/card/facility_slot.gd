@@ -4,6 +4,8 @@ class_name FacilitySlot
 
 @export var slot_index: int = 0
 @export var slot_name: String = "Facility Slot"
+@export var is_locked: bool = false
+@export var unlock_cost: int = 100
 
 var current_facility_card: FacilityCard = null
 var is_hover: bool = false
@@ -19,8 +21,12 @@ func _ready():
 	# Visual setup for empty slot
 	_setup_empty_visual()
 
+	if is_locked:
+		_create_locked_overlay()
+		
 	# Setup drop handling with DragDropComponent
-	_setup_drop_zone()
+	if not is_locked:
+		_setup_drop_zone()
 
 func _setup_empty_visual():
 	# Add a dashed border or background to show it's an empty slot
@@ -49,6 +55,11 @@ func can_accept_facility(facility_card: FacilityCard) -> bool:
 	return current_facility_card == null
 
 func place_facility(facility_card: FacilityCard):
+	# Check if slot is locked
+	if is_locked:
+		print("Cannot place facility - slot is locked")
+		return false
+		
 	# Remove from previous slot if it has one
 	if facility_card.current_slot and facility_card.current_slot != self:
 		facility_card.current_slot.remove_facility()
@@ -113,3 +124,68 @@ func _setup_drop_zone():
 func _on_facility_dropped(data: Dictionary):
 	if data.has("facility_card"):
 		place_facility(data.facility_card)
+
+func _create_locked_overlay():
+	# Create semi-transparent overlay
+	var overlay = ColorRect.new()
+	overlay.name = "LockedOverlay"
+	overlay.color = Color(0, 0, 0, 0.7)  # Dark overlay
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP  # Block interactions
+	add_child(overlay)
+
+	# Fill the entire slot
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.set_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Create lock icon (using a Label for now - can be replaced with texture later)
+	var lock_icon = Label.new()
+	lock_icon.text = "🔒"
+	lock_icon.add_theme_font_size_override("font_size", 64)
+	lock_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lock_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	overlay.add_child(lock_icon)
+	lock_icon.set_anchors_preset(Control.PRESET_CENTER)
+
+	# Create cost label
+	var cost_label = Label.new()
+	cost_label.text = "Unlock: %d gold" % unlock_cost
+	cost_label.add_theme_font_size_override("font_size", 20)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overlay.add_child(cost_label)
+	cost_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	cost_label.position.y = -40  # Offset from bottom
+
+	# Make overlay clickable
+	overlay.gui_input.connect(_on_locked_overlay_clicked)
+
+func _on_locked_overlay_clicked(event: InputEvent):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		attempt_unlock()
+
+func attempt_unlock():
+	if not is_locked:
+		return
+
+	# Check if player has enough gold
+	if not GameManager.player_data or GameManager.player_data.gold < unlock_cost:
+		print("Not enough gold to unlock slot %d (need %d)" % [slot_index, unlock_cost])
+		# TODO: Show feedback to player (shake effect, red flash, etc)
+		return
+
+	# Deduct gold
+	GameManager.player_data.gold -= unlock_cost
+	SignalBus.gold_changed.emit(GameManager.player_data.gold)
+
+	# Unlock the slot
+	is_locked = false
+
+	# Remove locked overlay
+	var overlay = get_node_or_null("LockedOverlay")
+	if overlay:
+		overlay.queue_free()
+	
+	_setup_drop_zone()
+	# Emit signal
+	SignalBus.facility_slot_unlocked.emit(slot_index, unlock_cost)
+
+	print("Unlocked facility slot %d for %d gold" % [slot_index, unlock_cost])
