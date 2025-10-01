@@ -73,6 +73,7 @@ facility_unassigned(creature, facility) → FacilityManager.unregister_assignmen
 # UI Events
 show_debug_popup_requested → [Not connected yet]
 show_creature_details_requested(creature) → [Not connected yet]
+creature_clicked(creature_data) → game_scene._on_creature_clicked()
 popup_closed(popup_name) → [Not connected yet]
 ```
 
@@ -131,114 +132,44 @@ popup_closed(popup_name) → [Not connected yet]
 
 ## Implementation Steps Section
 
-### 🎯 Current Task: Bug Fixes - Activity Execution & Creature Duplication
+### No active tasks
 
-**Bug 1: Facility activities don't modify stats**
-- Activities show "Running activity" but don't execute
-- Root cause: Using base `ActivityResource` class instead of specific activity subclasses
-
-**Bug 2: Dragging creature between facility slots duplicates it**
-- Same creature appears in multiple slots
-- Root cause: Same-facility moves don't remove creature from original slot before adding to new slot
-
----
-
-#### Fix 1: Use Proper Activity Classes in Facility Setup
-
-**File:** `scenes/view/game_scene.gd`
-
-**Problem:** Line 307 creates a base `ActivityResource` which has no implementation. The `run_activity()` method just shows a warning and does nothing.
-
-**Solution:** Use the actual `StrengthTrainingActivity` class with preload.
-
-Find `_place_test_facility_in_slot()` function (around line 294-318) and replace:
-
-**OLD CODE (lines 307-310):**
-```gdscript
-# Add a strength training activity
-var strength_activity = ActivityResource.new()
-strength_activity.activity_name = "Strength Training"
-strength_activity.description = "Gain +5 Strength"
-```
-
-**NEW CODE:**
-```gdscript
-# Add a strength training activity (use actual class, not base)
-var strength_activity = preload("res://resources/activities/strength_training.gd").new()
-strength_activity.strength_gain = 5  # Configure the stat gain
-```
-
-**Why:** Preloading the specific activity class ensures `run_activity()` has the actual implementation that modifies stats. The base class only shows warnings.
-
----
-
-#### Fix 2: Handle Same-Facility Creature Moves (UPDATED)
-
-**File:** `scenes/card/facility_card.gd`
-
-**Problem:** The `elif source_node is AnimatedSprite2D:` is at the wrong indentation level. It should be inside the `if source_node:` block, not as an alternative to it. This means sprite removal never executes.
-
-**Solution:** Change `elif` to `if` so both checks happen inside the source_node block.
-
-Find `assign_creature_from_drag()` function (around line 136-147) and fix the indentation:
-
-**CURRENT BROKEN CODE:**
-```gdscript
-# Handle removing from source
-var source_node = drag_data.get("source_node")
-if source_node:
-	if source_node is CreatureDisplay:
-		# From world - free the creature display
-		source_node.queue_free()
-elif source_node is AnimatedSprite2D:  # BUG: This is outside the if source_node block!
-	# From facility (same or different) - use the facility_card reference in drag data
-	var old_facility = drag_data.get("facility_card")
-	if old_facility and old_facility is FacilityCard:
-		# Remove from source facility (works for same facility too)
-		old_facility.remove_creature_by_sprite(source_node)
-```
-
-**FIXED CODE:**
-```gdscript
-# Handle removing from source
-var source_node = drag_data.get("source_node")
-if source_node:
-	if source_node is CreatureDisplay:
-		# From world - free the creature display
-		source_node.queue_free()
-	elif source_node is AnimatedSprite2D:  # Now properly nested
-		# From facility (same or different) - use the facility_card reference in drag data
-		var old_facility = drag_data.get("facility_card")
-		if old_facility and old_facility is FacilityCard:
-			# Remove from source facility (works for same facility too)
-			old_facility.remove_creature_by_sprite(source_node)
-```
-
-**Why:** The `elif` needs to be inside the `if source_node:` block so it can check if the source is an AnimatedSprite2D (from facility) vs CreatureDisplay (from world). Currently the sprite removal code never runs because it's unreachable.
-
----
-
-### Testing Both Fixes
-
-After implementing:
-- [ ] Assign creature to facility slot
-- [ ] Advance week using "Next Week" button
-- [ ] Check console - should see "Squish gained 5 strength! (X -> Y)"
-- [ ] Drag creature back to world and click to view stats
-- [ ] Stats should show increased strength
-- [ ] Drag creature from one facility slot to another slot in same facility
-- [ ] Creature should move (not duplicate)
-- [ ] Only one creature sprite should be visible
-
-
----
-
-**Previous task completed:** Unified Drag and Drop System
-- See `DRAG_DROP_CHANGES.md` for complete change log and documentation
+**Previous task completed:** Creature Stats Popup & Bug Fixes
+- Added creature stats popup with click detection
+- Fixed facility activity execution
+- Fixed creature duplication bug
 
 ---
 
 ## Completed Implementations
+
+### ✅ Creature Stats Popup & Click Detection
+**Created popup system to view creature stats with click detection:**
+
+**Features**:
+- Click on creatures in world to view stats popup
+- Shows: name, species, strength, agility, intelligence
+- Click detection integrated into DragDropComponent
+- Distinguishes clicks from drags (10px threshold)
+- `clicked()` signal emitted for non-drag clicks
+- Works alongside existing drag/drop functionality
+
+**Files Created**:
+- `scenes/windows/creature_stats_popup.tscn` - Popup UI scene
+- `scenes/windows/creature_stats_popup.gd` - Popup logic and data display
+
+**Bug Fixes**:
+1. **Fixed facility activity execution** - Activities now properly modify stats
+   - Changed from base `ActivityResource.new()` to actual `StrengthTrainingActivity` class
+   - Activities execute their `run_activity()` implementation correctly
+
+2. **Fixed creature duplication** - Creatures no longer duplicate when moved between slots
+   - Fixed indentation bug in `facility_card.gd` line 142
+   - Same-facility moves now properly remove creature from source slot
+
+**Signals Updated**:
+- Added `creature_clicked(creature_data)` to SignalBus
+- Connected in game_scene to instantiate popup
 
 ### ✅ Unified Drag & Drop Component System
 **Architecture**: Layered Control nodes with z-indexing for proper input priority
