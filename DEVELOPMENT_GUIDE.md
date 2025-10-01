@@ -132,7 +132,272 @@ popup_closed(popup_name) → [Not connected yet]
 
 ## Implementation Steps Section
 
-*All current tasks completed. This section will be populated with new implementation steps when the next feature is requested.*
+### 🎯 Current Task: Facility Slot Locking System
+
+**Goal:** Add locked/unlocked state to facility slots so players must pay gold to unlock additional slots.
+
+**Design:**
+- Slots 1-2: Unlocked by default
+- Slots 3-4: Locked, require gold to unlock
+- Locked slots show lock overlay with cost
+- Click locked slot to unlock (if player has enough gold)
+- Locked slots reject drag/drop and facility placement
+
+---
+
+#### Step 1: Add Locked State to FacilitySlot
+
+**File:** `scenes/card/facility_slot.gd`
+
+Add new exported properties at the top (after existing `@export` lines):
+
+```gdscript
+@export var is_locked: bool = false
+@export var unlock_cost: int = 100
+```
+
+**Why:** Export allows setting locked state and cost per-slot in the Inspector.
+
+---
+
+#### Step 2: Add Locked Visual Overlay
+
+**File:** `scenes/card/facility_slot.gd`
+
+Add overlay nodes in `_ready()` function, after creating placeholder label and before creating drop zone:
+
+```gdscript
+func _ready():
+	# ... existing placeholder label code ...
+
+	# Create locked overlay if slot is locked
+	if is_locked:
+		_create_locked_overlay()
+
+	# ... existing drop zone code ...
+```
+
+Add new function to create the locked overlay:
+
+```gdscript
+func _create_locked_overlay():
+	# Create semi-transparent overlay
+	var overlay = ColorRect.new()
+	overlay.name = "LockedOverlay"
+	overlay.color = Color(0, 0, 0, 0.7)  # Dark overlay
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP  # Block interactions
+	add_child(overlay)
+
+	# Fill the entire slot
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.set_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Create lock icon (using a Label for now - can be replaced with texture later)
+	var lock_icon = Label.new()
+	lock_icon.text = "🔒"
+	lock_icon.add_theme_font_size_override("font_size", 64)
+	lock_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lock_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	overlay.add_child(lock_icon)
+	lock_icon.set_anchors_preset(Control.PRESET_CENTER)
+
+	# Create cost label
+	var cost_label = Label.new()
+	cost_label.text = "Unlock: %d gold" % unlock_cost
+	cost_label.add_theme_font_size_override("font_size", 20)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overlay.add_child(cost_label)
+	cost_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	cost_label.position.y = -40  # Offset from bottom
+
+	# Make overlay clickable
+	overlay.gui_input.connect(_on_locked_overlay_clicked)
+```
+
+**Why:** Visual feedback shows the slot is locked and displays the unlock cost.
+
+---
+
+#### Step 3: Add Unlock Signal to SignalBus
+
+**File:** `core/signal_bus.gd`
+
+Add new signal in the Facility section:
+
+```gdscript
+# Facility & Slot Management
+signal facility_assigned(creature: CreatureData, facility: FacilityResource)
+signal facility_unassigned(creature: CreatureData, facility: FacilityResource)
+signal facility_slot_unlocked(slot_index: int, cost: int)  # NEW
+```
+
+**Why:** Allows other systems to react to slot unlocks (update UI, save state, etc).
+
+---
+
+#### Step 4: Implement Unlock Logic
+
+**File:** `scenes/card/facility_slot.gd`
+
+Add unlock handler function:
+
+```gdscript
+func _on_locked_overlay_clicked(event: InputEvent):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		attempt_unlock()
+
+func attempt_unlock():
+	if not is_locked:
+		return
+
+	# Check if player has enough gold
+	if not GameManager.player_data or GameManager.player_data.gold < unlock_cost:
+		print("Not enough gold to unlock slot %d (need %d)" % [slot_index, unlock_cost])
+		# TODO: Show feedback to player (shake effect, red flash, etc)
+		return
+
+	# Deduct gold
+	GameManager.player_data.gold -= unlock_cost
+	SignalBus.gold_changed.emit(GameManager.player_data.gold)
+
+	# Unlock the slot
+	is_locked = false
+
+	# Remove locked overlay
+	var overlay = get_node_or_null("LockedOverlay")
+	if overlay:
+		overlay.queue_free()
+
+	# Emit signal
+	SignalBus.facility_slot_unlocked.emit(slot_index, unlock_cost)
+
+	print("Unlocked facility slot %d for %d gold" % [slot_index, unlock_cost])
+```
+
+**Why:** Handles the unlock transaction and updates the slot state.
+
+---
+
+#### Step 5: Prevent Interactions When Locked
+
+**File:** `scenes/card/facility_slot.gd`
+
+Update `place_facility()` to check locked state:
+
+```gdscript
+func place_facility(facility_card: FacilityCard) -> bool:
+	# Check if slot is locked
+	if is_locked:
+		print("Cannot place facility - slot is locked")
+		return false
+
+	# ... rest of existing code ...
+```
+
+Update drop zone creation in `_ready()` to disable when locked:
+
+```gdscript
+func _ready():
+	# ... existing code ...
+
+	# Create drop zone (only if not locked)
+	if not is_locked:
+		var drop_zone = DragDropComponent.new()
+		# ... rest of drop zone setup ...
+```
+
+**Why:** Prevents facility placement in locked slots via both code and drag/drop.
+
+---
+
+#### Step 6: Configure Slots in game_scene.tscn
+
+**File:** `scenes/view/game_scene.tscn`
+
+In Godot editor:
+
+1. Select `FacilitySlot1` (first slot)
+   - Inspector → Is Locked: `false`
+   - Unlock Cost: (doesn't matter, unlocked)
+
+2. Select `FacilitySlot2` (second slot)
+   - Inspector → Is Locked: `false`
+   - Unlock Cost: (doesn't matter, unlocked)
+
+3. Select `FacilitySlot3` (third slot)
+   - Inspector → Is Locked: `true`
+   - Unlock Cost: `100`
+
+4. Select `FacilitySlot4` (fourth slot)
+   - Inspector → Is Locked: `true`
+   - Unlock Cost: `150`
+
+5. Save the scene
+
+**Why:** Sets up the initial locked state for slots 3 and 4.
+
+---
+
+#### Step 7: Update _place_test_facility_in_slot to Use First Unlocked Slot
+
+**File:** `scenes/view/game_scene.gd`
+
+Update the function to find the first unlocked slot:
+
+```gdscript
+func _place_test_facility_in_slot():
+	# Get first unlocked slot from scene tree
+	var first_slot = null
+	for child in get_children():
+		if child is FacilitySlot and not child.is_locked:
+			first_slot = child
+			break
+
+	if first_slot:
+		# Create test facility card
+		var training_facility = FacilityResource.new()
+		# ... rest of existing code ...
+```
+
+**Why:** Ensures test facility is placed in an unlocked slot.
+
+---
+
+### Optional Enhancements (Can Add Later)
+
+1. **Save/Load Unlock State:**
+   - Add unlocked_slots array to PlayerData
+   - Save which slots are unlocked on game save
+   - Restore locked state on load
+
+2. **Visual Feedback:**
+   - Add shake effect when trying to unlock without gold
+   - Add unlock animation (fade out overlay, particles)
+   - Add hover effect on locked slots
+
+3. **Audio:**
+   - Play "unlock" sound effect
+   - Play "error" sound when not enough gold
+
+4. **UI Notifications:**
+   - Show "Slot Unlocked!" message
+   - Update gold display immediately
+
+---
+
+### Testing Checklist
+
+After implementation:
+- [ ] Slots 1-2 start unlocked, 3-4 start locked
+- [ ] Locked slots show dark overlay with lock icon and cost
+- [ ] Cannot drag facilities to locked slots
+- [ ] Cannot drop creatures on locked slots
+- [ ] Click locked slot attempts unlock
+- [ ] Unlock fails if not enough gold (prints message)
+- [ ] Unlock succeeds if enough gold (deducts cost, removes overlay)
+- [ ] Unlocked slot accepts facilities normally
+- [ ] Test facility places in first unlocked slot
+- [ ] Gold amount updates after unlock
 
 ---
 
