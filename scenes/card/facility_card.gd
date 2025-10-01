@@ -222,9 +222,10 @@ func _add_creature_sprite(creature: CreatureData, slot_index: int):
 
 func update_slots():
 	# First, remove all creature drag components from card level
+	# Use free() instead of queue_free() to remove immediately and avoid input conflicts
 	for child in get_children():
 		if child.name.begins_with("CreatureDrag_"):
-			child.queue_free()
+			child.free()  # Immediate removal to prevent duplicate input handling
 
 	# Clear creature sprites from slots
 	for i in range(creature_slots.get_child_count()):
@@ -232,7 +233,7 @@ func update_slots():
 
 		for child in slot_container.get_children():
 			if child is AnimatedSprite2D:
-				child.queue_free()
+				child.free()  # Immediate removal
 
 		if i < assigned_creatures.size():
 			# Show the label with creature name

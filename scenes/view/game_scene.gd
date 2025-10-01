@@ -274,34 +274,21 @@ func _create_week_display():
 	add_child(week_display)
 #
 func _create_facility_slots():
-	# Create container for facility slots
-	var slot_container = HBoxContainer.new()
-	slot_container.name = "FacilitySlotContainer"
-	slot_container.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	slot_container.position = Vector2(50, -500)
-	slot_container.add_theme_constant_override("separation", 20)
-	add_child(slot_container)
-
-	# Create 3 facility slots
-	for i in range(3):
-		var slot = FacilitySlot.new()
-		slot.slot_index = i
-		slot.slot_name = "Facility " + str(i + 1)
-		slot.name = "FacilitySlot_" + str(i)
-		slot_container.add_child(slot)
-
-		# Connect signals
-		slot.facility_placed.connect(_on_facility_placed)
-		slot.facility_removed.connect(_on_facility_removed)
+	# Slots now exist in the scene tree as direct children
+	# Just connect their signals
+	for child in get_children():
+		if child is FacilitySlot:
+			# Connect signals
+			child.facility_placed.connect(_on_facility_placed)
+			child.facility_removed.connect(_on_facility_removed)
 
 	# Place test facility in first slot
 	_place_test_facility_in_slot()
 
 func _place_test_facility_in_slot():
-	# Get first slot
-	var slot_container = $FacilitySlotContainer
-	if slot_container and slot_container.get_child_count() > 0:
-		var first_slot = slot_container.get_child(0)
+	# Get first slot from scene tree
+	var first_slot = $FacilitySlot
+	if first_slot:
 
 		# Create test facility card
 		var training_facility = FacilityResource.new()

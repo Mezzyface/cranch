@@ -132,7 +132,145 @@ popup_closed(popup_name) → [Not connected yet]
 
 ## Implementation Steps Section
 
-### No active tasks
+### 🎯 Current Task: Convert FacilitySlot to Scene
+
+**Goal:** Convert FacilitySlot from a script-only class to a proper scene that can be placed manually in the editor while keeping all functionality.
+
+---
+
+#### Step 1: Create FacilitySlot Scene
+
+**File:** `scenes/card/facility_slot.tscn`
+
+1. In Godot editor, create a new scene: Scene → New Scene
+2. Select "Other Node" and choose **Panel** as the root node
+3. Name the root node: `FacilitySlot`
+4. Attach the existing script: `res://scenes/card/facility_slot.gd`
+
+**Scene Structure:**
+```
+FacilitySlot (Panel)
+└── (Script creates PlaceholderLabel and DragDropComponent in _ready())
+```
+
+**Root Node Settings:**
+- Custom Minimum Size: (320, 420)
+- Layout → Container Sizing → Expand (to fill HBoxContainer)
+
+5. Save the scene as `scenes/card/facility_slot.tscn`
+
+**Why:** Creating a scene allows you to place FacilitySlots directly in game_scene.tscn instead of creating them programmatically.
+
+---
+
+#### Step 2: Update game_scene.tscn to Use FacilitySlot Scenes
+
+**File:** `scenes/view/game_scene.tscn`
+
+1. Open `game_scene.tscn` in the editor
+2. Find the `FacilitySlotContainer` (HBoxContainer) node
+3. Delete any existing FacilitySlot nodes if present
+4. Right-click `FacilitySlotContainer` → "Instance Child Scene"
+5. Select `scenes/card/facility_slot.tscn`
+6. Repeat 2 more times (total 3 FacilitySlot instances)
+7. Name them: `FacilitySlot1`, `FacilitySlot2`, `FacilitySlot3`
+
+**Configure each slot:**
+- Select `FacilitySlot1` → Inspector
+  - Slot Index: `0`
+  - Slot Name: `"Facility 1"`
+- Select `FacilitySlot2` → Inspector
+  - Slot Index: `1`
+  - Slot Name: `"Facility 2"`
+- Select `FacilitySlot3` → Inspector
+  - Slot Index: `2`
+  - Slot Name: `"Facility 3"`
+
+8. Save the scene
+
+**Why:** This removes the need for programmatic creation and allows visual editing of slots in the editor.
+
+---
+
+#### Step 3: Update game_scene.gd to Use Scene Slots
+
+**File:** `scenes/view/game_scene.gd`
+
+Remove the programmatic slot creation. Find `_create_facility_slots()` function (around line 270-292) and replace:
+
+**OLD CODE:**
+```gdscript
+func _create_facility_slots():
+	# Create container for facility slots
+	var slot_container = HBoxContainer.new()
+	slot_container.name = "FacilitySlotContainer"
+	slot_container.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	slot_container.position = Vector2(50, -500)
+	slot_container.add_theme_constant_override("separation", 20)
+	add_child(slot_container)
+
+	# Create 3 facility slots
+	for i in range(3):
+		var slot = FacilitySlot.new()
+		slot.slot_index = i
+		slot.slot_name = "Facility " + str(i + 1)
+		slot.name = "FacilitySlot_" + str(i)
+		slot_container.add_child(slot)
+
+		# Connect signals
+		slot.facility_placed.connect(_on_facility_placed)
+		slot.facility_removed.connect(_on_facility_removed)
+
+	# Place test facility in first slot
+	_place_test_facility_in_slot()
+```
+
+**NEW CODE:**
+```gdscript
+func _create_facility_slots():
+	# Slots now exist in the scene tree
+	# Just connect their signals
+	var slot_container = $FacilitySlotContainer
+	for slot in slot_container.get_children():
+		if slot is FacilitySlot:
+			# Connect signals
+			slot.facility_placed.connect(_on_facility_placed)
+			slot.facility_removed.connect(_on_facility_removed)
+
+	# Place test facility in first slot
+	_place_test_facility_in_slot()
+```
+
+**Why:** Slots are now part of the scene, so we only need to connect signals instead of creating them.
+
+---
+
+#### Step 4: Remove FacilitySlot Preload (Optional Cleanup)
+
+**File:** `scenes/view/game_scene.gd`
+
+Remove the FacilitySlot preload at the top (around line 9):
+
+**REMOVE:**
+```gdscript
+const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
+```
+
+**Why:** We no longer instantiate FacilitySlot programmatically, so the preload isn't needed.
+
+---
+
+### Testing
+
+After implementation:
+- [ ] Open game_scene.tscn and see 3 FacilitySlot instances
+- [ ] Can adjust slot properties in Inspector
+- [ ] Run the game - slots appear at bottom
+- [ ] Drag facility card to slot - works correctly
+- [ ] Slots show placeholder text when empty
+- [ ] All drag/drop functionality intact
+
+---
 
 **Previous task completed:** Creature Stats Popup & Bug Fixes
 - Added creature stats popup with click detection

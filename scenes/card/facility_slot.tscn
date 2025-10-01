@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgvlgnlneqtaa"]
+
+[ext_resource type="Script" uid="uid://dqta5fsh4b34j" path="res://scenes/card/facility_slot.gd" id="1_mnjsy"]
+
+[node name="FacilitySlot" type="Panel"]
+custom_minimum_size = Vector2(320, 420)
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_mnjsy")
