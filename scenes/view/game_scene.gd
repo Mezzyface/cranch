@@ -2,9 +2,12 @@ extends Control
 
 # Preload the debug popup scene
 const DEBUG_POPUP = preload("res://scenes/windows/debug_popup.tscn")
-const CREATURE_DISPLAY = preload("res://scenes/entities/creature_display.tscn")
 const WEEK_DISPLAY = preload("res://scenes/card/week_display.tscn")
+const CREATURE_DISPLAY = preload("res://scenes/entities/creature_display.tscn")
+const CREATURE_STATS_POPUP:PackedScene = preload("res://scenes/windows/creature_stats_popup.tscn")
+
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
+const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
 
 
 @onready var creature_container: PanelContainer = $CreatureContainer
@@ -35,6 +38,7 @@ func _input(event):
 func _connect_signals():
 	SignalBus.player_data_initialized.connect(_on_player_data_ready)
 	SignalBus.creature_added.connect(_on_creature_added)
+	SignalBus.creature_clicked.connect(_on_creature_clicked)
 
 func _on_player_data_ready():
 	# Show debug popup with player data
@@ -108,6 +112,11 @@ func _create_creature_drag_component(creature_instance: CreatureDisplay, creatur
 	drag_component.drag_ended.connect(func(_successful):
 		if creature_instance and is_instance_valid(creature_instance):
 			creature_instance.visible = true
+	)
+
+	drag_component.clicked.connect(func():
+		if creature_instance and is_instance_valid(creature_instance) and creature_instance.creature_data:
+			SignalBus.creature_clicked.emit(creature_instance.creature_data)
 	)
 
 	# Add as sibling to container (not child) to avoid mouse filter conflicts
@@ -301,9 +310,8 @@ func _place_test_facility_in_slot():
 		training_facility.max_creatures = 2
 
 		# Add a strength training activity
-		var strength_activity = ActivityResource.new()
-		strength_activity.activity_name = "Strength Training"
-		strength_activity.description = "Gain +5 Strength"
+		var strength_activity = STRENGTH_TRAINING.new()
+		strength_activity.strength_gain = 5 
 		training_facility.activities.append(strength_activity)
 
 		# Create and place card
@@ -319,5 +327,10 @@ func _on_facility_placed(facility_card: FacilityCard, slot: FacilitySlot):
 
 func _on_facility_removed(facility_card: FacilityCard, slot: FacilitySlot):
 	print("Facility removed from slot ", slot.slot_index)
-	
+
+func _on_creature_clicked(creature_data: CreatureData) -> void:
+	# Create and show popup
+	var popup = CREATURE_STATS_POPUP.instantiate()
+	add_child(popup)
+	popup.setup(creature_data)
 	

@@ -140,9 +140,10 @@ func assign_creature_from_drag(creature: CreatureData, drag_data: Dictionary):
 				# From world - free the creature display
 				source_node.queue_free()
 			elif source_node is AnimatedSprite2D:
-				# From another facility - use the facility_card reference in drag data
+				# From facility (same or different) - use the facility_card reference in drag data
 				var old_facility = drag_data.get("facility_card")
-				if old_facility and old_facility is FacilityCard and old_facility != self:
+				if old_facility and old_facility is FacilityCard:
+					# Remove from source facility (works for same facility too)
 					old_facility.remove_creature_by_sprite(source_node)
 
 		# Emit signal

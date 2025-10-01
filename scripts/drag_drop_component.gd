@@ -39,10 +39,16 @@ var custom_can_drop_callback: Callable
 var drag_data_source: Node  # The node providing the drag data
 var custom_drag_data: Dictionary = {}  # For CUSTOM type
 
+# Click detection
+var _mouse_pressed: bool = false
+var _mouse_press_position: Vector2 = Vector2.ZERO
+var _drag_threshold: float = 10.0  # Pixels of movement to trigger drag vs click
+
 # Signals
 signal drag_started(data: Dictionary)
 signal drag_ended(successful: bool)
 signal drop_received(data: Dictionary)
+signal clicked()
 
 func _ready():
 	# Set mouse filter from exported property
@@ -52,6 +58,23 @@ func _ready():
 	if debug_visualize:
 		draw.connect(_draw_debug)
 		queue_redraw()
+
+func _gui_input(event: InputEvent) -> void:
+	if not can_drag:
+		return
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_mouse_pressed = true
+			_mouse_press_position = event.position
+		else:
+			# Mouse released
+			if _mouse_pressed:
+				var moved_distance = event.position.distance_to(_mouse_press_position)
+				if moved_distance < _drag_threshold:
+					# It's a click, not a drag
+					clicked.emit()
+			_mouse_pressed = false
 
 func _draw_debug():
 	# Draw a semi-transparent overlay to see the drag area

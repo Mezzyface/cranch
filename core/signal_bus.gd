@@ -16,10 +16,11 @@ signal gold_changed(new_amount: int)
 signal creature_added(creature: CreatureData)
 signal creature_stats_changed(creature: CreatureData)
 
-# UI Signals
-signal show_debug_popup_requested()
-signal show_creature_details_requested(creature: CreatureData)
-signal popup_closed(popup_name: String)
+# UI Events
+signal show_debug_popup_requested
+signal show_creature_details_requested(creature)
+signal creature_clicked(creature_data: CreatureData)  # NEW: Emitted when creature is clicked
+signal popup_closed(popup_name)
 
 # Activity & Facility signals
 signal activity_started(creature: CreatureData, activity: ActivityResource)

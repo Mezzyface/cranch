@@ -1,6 +1,7 @@
-[gd_resource type="Theme" load_steps=59 format=3 uid="uid://de72pewi7lkny"]
+[gd_resource type="Theme" load_steps=60 format=3 uid="uid://de72pewi7lkny"]
 
 [ext_resource type="Texture2D" uid="uid://6q1pe22wd6" path="res://ui/button_square.custom/button_square_0.png" id="1"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_7reej"]
 [ext_resource type="Texture2D" uid="uid://wvej3413m4yx" path="res://ui/button_square_pressed.custom/button_square_pressed_0.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://3ghf4yqdyklj" path="res://ui/panel.custom/panel_0.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://d3pf3ry0h8bul" path="res://ui/dialog_box.custom/dialog_box_0.png" id="8"]
@@ -267,6 +268,9 @@ texture_margin_bottom = 8.0
 
 [resource]
 default_font_size = 16
+AcceptDialog/colors/title_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+AcceptDialog/colors/title_outline_modulate = Color(0.8156863, 0.5058824, 0.34901962, 1)
+AcceptDialog/fonts/title_font = ExtResource("1_7reej")
 AcceptDialog/styles/panel = SubResource("StyleBoxTexture_8")
 Banner/base_type = &"Panel"
 Banner/styles/panel = SubResource("banner_style")
