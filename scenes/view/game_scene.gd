@@ -79,7 +79,60 @@ func _spawn_creature(creature_data: CreatureData):
 		randf_range(padding, container_size.y - padding)
 	)
 	creature_instance.position = random_pos
-	
+
+	# Create drag component for this creature - layer 2 (on top of drop zone)
+	_create_creature_drag_component(creature_instance, creature_data)
+
+func _create_creature_drag_component(creature_instance: CreatureDisplay, creature_data: CreatureData):
+	# Create drag component positioned over the creature
+	var drag_component = DragDropComponent.new()
+	drag_component.name = "CreatureDrag_" + creature_data.creature_name
+	drag_component.drag_type = DragDropComponent.DragType.CREATURE
+	drag_component.drag_data_source = creature_instance
+	drag_component.mouse_filter_mode = Control.MOUSE_FILTER_STOP
+	drag_component.z_index = 200  # Well above container elements
+
+	# Size to cover the creature sprite (64x64 typical)
+	drag_component.custom_minimum_size = Vector2(64, 64)
+	drag_component.size = Vector2(64, 64)
+
+	# Connect to creature for position updates
+	drag_component.set_meta("creature_instance", creature_instance)
+
+	# Connect signals
+	drag_component.drag_started.connect(func(_data):
+		if creature_instance and is_instance_valid(creature_instance):
+			creature_instance.visible = false
+	)
+
+	drag_component.drag_ended.connect(func(_successful):
+		if creature_instance and is_instance_valid(creature_instance):
+			creature_instance.visible = true
+	)
+
+	# Add as sibling to container (not child) to avoid mouse filter conflicts
+	add_child(drag_component)
+
+	# Position it over the creature (will be updated each frame)
+	_update_creature_drag_position(drag_component, creature_instance)
+
+func _update_creature_drag_position(drag_component: DragDropComponent, creature_instance: CreatureDisplay):
+	if creature_instance and is_instance_valid(creature_instance):
+		# Position drag component using global coordinates (since it's a sibling, not child)
+		var creature_global_pos = creature_instance.global_position
+		drag_component.global_position = creature_global_pos - Vector2(32, 32)
+
+func _process(_delta):
+	# Update all creature drag component positions and clean up orphans
+	for child in get_children():
+		if child is DragDropComponent and child.name.begins_with("CreatureDrag_"):
+			var creature_instance = child.get_meta("creature_instance", null)
+			if creature_instance and is_instance_valid(creature_instance):
+				_update_creature_drag_position(child, creature_instance)
+			else:
+				# Creature was freed, remove this drag component
+				child.queue_free()
+
 func show_debug_popup():
 	# Create and display the debug popup
 	print("Show Debug Popup")
@@ -103,9 +156,14 @@ func _show_load_notification():
 	# Could add a popup or UI notification here
 
 func _refresh_display():
-	# Clear and respawn creatures with loaded data
+	# Clear creatures from container
 	for child in creature_container.get_children():
 		if child is CreatureDisplay:
+			child.queue_free()
+
+	# Clear creature drag components from game scene
+	for child in get_children():
+		if child is DragDropComponent and child.name.begins_with("CreatureDrag_"):
 			child.queue_free()
 
 	# Respawn creatures from loaded data
@@ -114,17 +172,93 @@ func _refresh_display():
 
 func _setup_container_drop_handling():
 	if creature_container:
-		# Add a Control overlay to handle drops
-		var drop_overlay = Control.new()
-		drop_overlay.name = "DropOverlay"
-		drop_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		drop_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Doesn't block mouse events
-		creature_container.add_child(drop_overlay)
+		# Create drop zone component for the container - layer 1 (base drop layer)
+		var drop_zone = DragDropComponent.new()
+		drop_zone.name = "ContainerDropZone"
+		drop_zone.drag_type = DragDropComponent.DragType.CREATURE
+		drop_zone.can_accept_drops = true
+		drop_zone.can_drag = false  # Drop-only zone
+		drop_zone.mouse_filter_mode = Control.MOUSE_FILTER_STOP
+		drop_zone.z_index = 100
 
-		# Add drop handling script
-		var drop_script = preload("res://scripts/container_drop_handler.gd")
-		drop_overlay.set_script(drop_script)
-		drop_overlay.container = creature_container
+		# Fill the entire container
+		drop_zone.set_anchors_preset(Control.PRESET_FULL_RECT)
+		drop_zone.set_offsets_preset(Control.PRESET_FULL_RECT)
+
+		# Custom validation
+		drop_zone.custom_can_drop_callback = func(data: Dictionary) -> bool:
+			return data.has("creature")
+
+		# Connect drop signal
+		drop_zone.drop_received.connect(_on_container_drop_received)
+
+		# Add to container
+		creature_container.add_child(drop_zone)
+
+		print("Container drop handling enabled")
+
+func _on_container_drop_received(data: Dictionary):
+	if not data.has("creature"):
+		return
+
+	var creature_data = data.get("creature")
+	var source_node = data.get("source_node")
+
+	# Check if dropping from world (source is CreatureDisplay) or facility (source is sprite)
+	if source_node and is_instance_valid(source_node) and source_node is CreatureDisplay:
+		# Dropping from world - just reposition
+		source_node.visible = true
+
+		# Get global mouse position (where the drop occurred)
+		var drop_pos = creature_container.get_global_mouse_position()
+
+		# Convert global position to container local position
+		var local_pos = creature_container.get_global_transform().affine_inverse() * drop_pos
+
+		# Apply position with padding constraints
+		var padding = 20.0
+		var container_size = creature_container.get_rect().size
+		source_node.position = Vector2(
+			clamp(local_pos.x, padding, container_size.x - padding),
+			clamp(local_pos.y, padding, container_size.y - padding)
+		)
+	else:
+		# Dropping from facility - spawn new CreatureDisplay
+		# Get global mouse position
+		var drop_pos = creature_container.get_global_mouse_position()
+		_spawn_creature_at_position(creature_data, drop_pos)
+
+		# Remove from facility if applicable
+		var facility_card = data.get("facility_card")
+		if facility_card and facility_card is FacilityCard:
+			# Remove the sprite from the facility
+			if source_node and is_instance_valid(source_node) and source_node is AnimatedSprite2D:
+				facility_card.remove_creature_by_sprite(source_node)
+
+func _spawn_creature_at_position(creature_data: CreatureData, global_pos: Vector2):
+	var creature_instance = CREATURE_DISPLAY.instantiate()
+	creature_container.add_child(creature_instance)
+
+	# Set creature data
+	creature_instance.set_creature_data(creature_data)
+
+	# Get container bounds and pass to creature
+	var container_size = creature_container.get_rect().size
+	var container_bounds = Rect2(Vector2.ZERO, container_size)
+	creature_instance.set_container_bounds(container_bounds)
+
+	# Convert global position to container local position
+	var local_pos = creature_container.get_global_transform().affine_inverse() * global_pos
+
+	# Apply position with padding constraints
+	var padding = 20.0
+	creature_instance.position = Vector2(
+		clamp(local_pos.x, padding, container_size.x - padding),
+		clamp(local_pos.y, padding, container_size.y - padding)
+	)
+
+	# Create drag component for this creature
+	_create_creature_drag_component(creature_instance, creature_data)
 
 func _create_week_display():
 	var week_display = WEEK_DISPLAY.instantiate()

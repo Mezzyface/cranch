@@ -18,6 +18,18 @@ func register_assignment(creature: CreatureData, facility: FacilityResource):
 		facility_assignments[facility].append(creature)
 		print("Registered ", creature.creature_name, " to ", facility.facility_name, " for training")
 
+func unregister_assignment(creature: CreatureData, facility: FacilityResource):
+	# Remove creature from facility assignment
+	if facility_assignments.has(facility):
+		if creature in facility_assignments[facility]:
+			facility_assignments[facility].erase(creature)
+			print("Unregistered ", creature.creature_name, " from ", facility.facility_name)
+
+			# If facility has no more creatures, remove it from active facilities
+			if facility_assignments[facility].is_empty():
+				facility_assignments.erase(facility)
+				active_facilities.erase(facility)
+
 func process_all_activities(week: int):
 	print("Week ", week, " - Processing all facility activities")
 

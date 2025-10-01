@@ -19,6 +19,9 @@ func _ready():
 	# Visual setup for empty slot
 	_setup_empty_visual()
 
+	# Setup drop handling with DragDropComponent
+	_setup_drop_zone()
+
 func _setup_empty_visual():
 	# Add a dashed border or background to show it's an empty slot
 	modulate = Color(0.5, 0.5, 0.5, 0.8)
@@ -82,11 +85,31 @@ func remove_facility():
 		_setup_empty_visual()
 		facility_removed.emit(card, self)
 
-func _can_drop_data(_position: Vector2, data) -> bool:
-	if typeof(data) != TYPE_DICTIONARY:
-		return false
-	return data.has("facility_card") and can_accept_facility(data.facility_card)
+func _setup_drop_zone():
+	# Create drop zone for facility cards
+	var drop_zone = DragDropComponent.new()
+	drop_zone.name = "FacilitySlotDropZone"
+	drop_zone.drag_type = DragDropComponent.DragType.FACILITY_CARD
+	drop_zone.can_accept_drops = true
+	drop_zone.can_drag = false  # Drop-only zone
+	drop_zone.mouse_filter_mode = Control.MOUSE_FILTER_STOP
+	drop_zone.z_index = 100
 
-func _drop_data(_position: Vector2, data) -> void:
+	# Fill the entire slot
+	drop_zone.set_anchors_preset(Control.PRESET_FULL_RECT)
+	drop_zone.set_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Custom validation
+	drop_zone.custom_can_drop_callback = func(data: Dictionary) -> bool:
+		if data.has("facility_card"):
+			return can_accept_facility(data.facility_card)
+		return false
+
+	# Connect drop signal
+	drop_zone.drop_received.connect(_on_facility_dropped)
+
+	add_child(drop_zone)
+
+func _on_facility_dropped(data: Dictionary):
 	if data.has("facility_card"):
 		place_facility(data.facility_card)

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mcp-toolkit-gateway__get_godot_context",
+      "mcp__mcp-toolkit-gateway__search_documentation",
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" status --short)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "mcp-toolkit-gateway"
+  ]
+}
