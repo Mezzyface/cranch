@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://bncge67knuvjs"]
+
+[ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_44kow"]
+[ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_efka7"]
+[ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_4f616"]
+
+[sub_resource type="Resource" id="Resource_dwcm1"]
+script = ExtResource("1_44kow")
+min_strength = 18
+min_agility = 18
+min_intelligence = 18
+requirement_description = "Champion (all stats ≥ 18)"
+
+[sub_resource type="Resource" id="Resource_hpanb"]
+script = ExtResource("2_efka7")
+gold = 2000
+unlock_message = "Unlocked: Master Collector Title"
+
+[resource]
+script = ExtResource("3_4f616")
+quest_id = "COL-05"
+quest_title = "Ultimate Champion"
+quest_giver = "The Collector"
+description = "The Collector seeks the ultimate champion."
+dialogue = "This is it—the final test. I need a true champion, a creature with exceptional abilities across the board. Can you deliver?"
+prerequisite_quest_ids = Array[String](["COL-04"])
+requirements = Array[ExtResource("1_44kow")]([SubResource("Resource_dwcm1")])
+reward = SubResource("Resource_hpanb")

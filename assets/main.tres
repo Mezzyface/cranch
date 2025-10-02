@@ -203,10 +203,10 @@ texture_margin_bottom = 4.0
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_11"]
 texture = ExtResource("15")
-texture_margin_left = 8.0
-texture_margin_top = 8.0
-texture_margin_right = 8.0
-texture_margin_bottom = 8.0
+texture_margin_left = 14.102213
+texture_margin_top = 14.483601
+texture_margin_right = 14.314124
+texture_margin_bottom = 18.614037
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_9"]
 texture = ExtResource("9")

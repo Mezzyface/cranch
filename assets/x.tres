@@ -1,0 +1,11 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://cn7nw2emmla6n"]
+
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_wx3pq"]
+
+[resource]
+font = ExtResource("1_wx3pq")
+font_size = 32
+font_color = Color(1, 0.9254902, 0.8392157, 1)
+outline_size = 8
+outline_color = Color(0.32941177, 0.30588236, 0.40784314, 1)
+shadow_size = 0

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://dda7y2lwarve7"]
+
+[ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_y8g2x"]
+[ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_2vdlw"]
+[ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_lnqqc"]
+
+[sub_resource type="Resource" id="Resource_ji0ef"]
+script = ExtResource("1_y8g2x")
+min_intelligence = 12
+requirement_description = "Any creature with INT ≥ 12"
+
+[sub_resource type="Resource" id="Resource_rjp6f"]
+script = ExtResource("2_2vdlw")
+gold = 500
+
+[resource]
+script = ExtResource("3_lnqqc")
+quest_id = "COL-03"
+quest_title = "Clever Companion"
+quest_giver = "The Collector"
+description = "The Collector needs an intelligent assistant."
+dialogue = "Impressive! Now I need a clever creature to help me catalog my collection. Intelligence is what matters here."
+prerequisite_quest_ids = Array[String](["COL-02"])
+requirements = Array[ExtResource("1_y8g2x")]([SubResource("Resource_ji0ef")])
+reward = SubResource("Resource_rjp6f")

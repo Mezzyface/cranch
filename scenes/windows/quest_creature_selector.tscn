@@ -1,0 +1,90 @@
+[gd_scene load_steps=4 format=3 uid="uid://b7nlh17uocd64"]
+
+[ext_resource type="Script" path="res://scenes/windows/quest_creature_selector.gd" id="1_abc12"]
+[ext_resource type="LabelSettings" uid="uid://cjqum8bi2y1sn" path="res://assets/heading.tres" id="1_u8kuj"]
+[ext_resource type="LabelSettings" uid="uid://cn7nw2emmla6n" path="res://assets/x.tres" id="2_p8mlq"]
+
+[node name="QuestCreatureSelector" type="Panel"]
+custom_minimum_size = Vector2(800, 800)
+offset_right = 800.0
+offset_bottom = 800.0
+theme_type_variation = &"DefaultPanelContainer"
+script = ExtResource("1_abc12")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 784.0
+offset_bottom = 784.0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Select Creatures for Quest"
+label_settings = ExtResource("1_u8kuj")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="QuestInfo" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+columns = 4
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SelectedInfo" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Selected 0/1"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Turn In"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -52.0
+offset_bottom = 52.0
+grow_horizontal = 0
+theme_type_variation = &"XButton"
+
+[node name="Label" type="Label" parent="CloseButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -16.0
+offset_right = 20.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "X"
+label_settings = ExtResource("2_p8mlq")
+horizontal_alignment = 1
+vertical_alignment = 1

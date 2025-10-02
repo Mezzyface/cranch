@@ -1,0 +1,168 @@
+[gd_scene load_steps=6 format=3 uid="uid://cobmv8noesv68"]
+
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_8bicl"]
+[ext_resource type="Script" uid="uid://bmlx7v67675bj" path="res://scenes/windows/quest_window.gd" id="1_w71vq"]
+[ext_resource type="LabelSettings" uid="uid://cjqum8bi2y1sn" path="res://assets/heading.tres" id="2_5iph4"]
+[ext_resource type="LabelSettings" uid="uid://cn7nw2emmla6n" path="res://assets/x.tres" id="3_eqply"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_42y7i"]
+font = ExtResource("1_8bicl")
+font_size = 32
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 7
+outline_color = Color(0.5529412, 0.4117647, 0.47843137, 1)
+shadow_size = 0
+
+[node name="QuestWindow" type="Panel"]
+custom_minimum_size = Vector2(1200, 700)
+offset_right = 1200.0
+offset_bottom = 700.0
+theme_type_variation = &"DefaultPanelContainer"
+script = ExtResource("1_w71vq")
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(500, 100)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+theme_type_variation = &"Banner"
+
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -35.0
+offset_top = -8.0
+offset_right = 35.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Quest Log"
+label_settings = SubResource("LabelSettings_42y7i")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 10
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="QuestList" type="VBoxContainer" parent="MarginContainer/MarginContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="QuestListLabel" type="Label" parent="MarginContainer/MarginContainer/HSplitContainer/QuestList"]
+layout_mode = 2
+text = "Available Quests"
+label_settings = ExtResource("2_5iph4")
+horizontal_alignment = 1
+
+[node name="QuestListScroll" type="ScrollContainer" parent="MarginContainer/MarginContainer/HSplitContainer/QuestList"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="QuestListContainer" type="VBoxContainer" parent="MarginContainer/MarginContainer/HSplitContainer/QuestList/QuestListScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="QuestDetails" type="VBoxContainer" parent="MarginContainer/MarginContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SelectedQuestTitle" type="Label" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+label_settings = ExtResource("2_5iph4")
+
+[node name="QuestGiver" type="Label" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+
+[node name="QuestDialog" type="RichTextLabel" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+
+[node name="RequirementsLabel" type="Label" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+text = "Requirements:"
+label_settings = ExtResource("2_5iph4")
+
+[node name="RequirementsText" type="RichTextLabel" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+
+[node name="RewardsLabel" type="Label" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+text = "Rewards:"
+label_settings = ExtResource("2_5iph4")
+
+[node name="RewardsText" type="RichTextLabel" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+
+[node name="ActionButtons" type="HBoxContainer" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails"]
+layout_mode = 2
+
+[node name="TurninButton" type="Button" parent="MarginContainer/MarginContainer/HSplitContainer/QuestDetails/ActionButtons"]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "Select Creatures"
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme_type_variation = &"XButton"
+
+[node name="Label" type="Label" parent="Button"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -8.0
+offset_right = 20.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "X"
+label_settings = ExtResource("3_eqply")
+horizontal_alignment = 1
+vertical_alignment = 1

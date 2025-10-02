@@ -1,0 +1,7 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://cjqum8bi2y1sn"]
+
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_q8dwn"]
+
+[resource]
+font = ExtResource("1_q8dwn")
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)

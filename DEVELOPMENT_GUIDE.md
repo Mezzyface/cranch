@@ -150,7 +150,1234 @@ shop_purchase_failed(reason) → ShopWindow shows error (console for now)
 
 ## Implementation Steps Section
 
-*Ready for next task - implementation steps will appear here*
+### 🎯 Quest System Implementation
+
+**Overview**: Building a resource-based quest system with multi-stage quest lines, stat requirements, species requirements, and rewards. Based on quest example but adapted to current creatures (Scuttleguard, Slime, Wind_Dancer) and stats (strength, agility, intelligence).
+
+**Architecture Design:**
+
+```
+QuestResource (defines single quest)
+├── quest_id: String
+├── quest_title: String
+├── quest_giver: String
+├── description: String
+├── dialogue: String
+├── prerequisites: Array[String] (quest IDs)
+├── requirements: Array[QuestRequirement]
+└── rewards: QuestReward
+
+QuestRequirement (what creatures are needed)
+├── quantity: int (how many creatures needed)
+├── species_filter: GlobalEnums.Species (optional - any species if null)
+├── min_strength: int
+├── min_agility: int
+├── min_intelligence: int
+└── tags: Array[String] (future - for extensibility)
+
+QuestReward
+├── gold: int
+├── experience: int
+├── items: Array[ItemResource] (future)
+└── unlock_message: String (special unlocks)
+
+QuestManager (Instance in GameManager)
+├── all_quests: Dictionary[String, QuestResource]
+├── active_quests: Array[String]
+├── completed_quests: Array[String]
+└── Functions: load_quests, accept_quest, validate_creatures, complete_quest
+```
+
+**Quest Line: "The Collector's Needs"**
+
+Adapted from the example with current creatures:
+
+1. **"First Guardian"** (COL-01)
+   - Need: 1 Scuttleguard with STR ≥ 15
+   - Reward: 300 gold
+
+2. **"Swift Scout"** (COL-02)
+   - Prerequisite: COL-01
+   - Need: 1 Wind Dancer with AGI ≥ 15
+   - Reward: 400 gold
+
+3. **"Clever Companion"** (COL-03)
+   - Prerequisite: COL-02
+   - Need: 1 creature (any species) with INT ≥ 12
+   - Reward: 500 gold
+
+4. **"Elite Squad"** (COL-04)
+   - Prerequisite: COL-03
+   - Need: 2 creatures with STR ≥ 12, AGI ≥ 12, INT ≥ 12
+   - Reward: 800 gold
+
+5. **"Ultimate Champion"** (COL-05)
+   - Prerequisite: COL-04
+   - Need: 1 creature with STR ≥ 18, AGI ≥ 18, INT ≥ 18
+   - Reward: 2000 gold, unlock "Master Collector" title
+
+---
+
+#### Step 1: Create QuestRequirement Resource
+
+**File:** `resources/quest_requirement.gd` (NEW FILE)
+
+```gdscript
+# resources/quest_requirement.gd
+extends Resource
+class_name QuestRequirement
+
+# How many creatures needed with these requirements
+@export var quantity: int = 1
+
+# Optional species filter (null = any species)
+@export var species_filter: GlobalEnums.Species = -1  # -1 means no filter
+
+# Stat requirements (0 = no requirement)
+@export var min_strength: int = 0
+@export var min_agility: int = 0
+@export var min_intelligence: int = 0
+
+# Tags for future extensibility (e.g., ["Small", "Territorial"])
+@export var required_tags: Array[String] = []
+
+# Description of this requirement (for UI display)
+@export var requirement_description: String = ""
+
+# Check if a creature meets this requirement
+func creature_matches(creature: CreatureData) -> bool:
+	# Check species filter
+	if species_filter != -1 and creature.species != species_filter:
+		return false
+
+	# Check stat minimums
+	if creature.strength < min_strength:
+		return false
+	if creature.agility < min_agility:
+		return false
+	if creature.intelligence < min_intelligence:
+		return false
+
+	# Future: Check tags when implemented
+	# for tag in required_tags:
+	#     if not creature.has_tag(tag):
+	#         return false
+
+	return true
+
+# Get a human-readable description of requirements
+func get_description() -> String:
+	if requirement_description != "":
+		return requirement_description
+
+	var parts: Array[String] = []
+
+	# Species
+	if species_filter != -1:
+		var species_name = GlobalEnums.Species.keys()[species_filter]
+		parts.append(species_name.capitalize())
+	else:
+		parts.append("Any Species")
+
+	# Stats
+	var stat_parts: Array[String] = []
+	if min_strength > 0:
+		stat_parts.append("STR ≥ %d" % min_strength)
+	if min_agility > 0:
+		stat_parts.append("AGI ≥ %d" % min_agility)
+	if min_intelligence > 0:
+		stat_parts.append("INT ≥ %d" % min_intelligence)
+
+	if stat_parts.size() > 0:
+		parts.append(" | ".join(stat_parts))
+
+	# Tags
+	if required_tags.size() > 0:
+		parts.append("[" + ", ".join(required_tags) + "]")
+
+	return " - ".join(parts)
+```
+
+**Why:** Core validation logic for creature requirements. Extensible with tags for future features. Provides UI-friendly descriptions.
+
+---
+
+#### Step 2: Create QuestReward Resource
+
+**File:** `resources/quest_reward.gd` (NEW FILE)
+
+```gdscript
+# resources/quest_reward.gd
+extends Resource
+class_name QuestReward
+
+@export var gold: int = 0
+@export var experience: int = 0
+
+# Future: Item rewards
+# @export var items: Array[ItemResource] = []
+
+# Special unlocks (e.g., "Unlocked new facility", "Gained Master Collector title")
+@export var unlock_message: String = ""
+
+func has_rewards() -> bool:
+	return gold > 0 or experience > 0 or unlock_message != ""
+
+func get_description() -> String:
+	var parts: Array[String] = []
+
+	if gold > 0:
+		parts.append("%d Gold" % gold)
+	if experience > 0:
+		parts.append("%d XP" % experience)
+	if unlock_message != "":
+		parts.append(unlock_message)
+
+	return "\n".join(parts)
+```
+
+**Why:** Encapsulates all reward types. Easy to extend with items, unlocks, titles, etc.
+
+---
+
+#### Step 3: Create QuestResource
+
+**File:** `resources/quest_resource.gd` (NEW FILE)
+
+```gdscript
+# resources/quest_resource.gd
+extends Resource
+class_name QuestResource
+
+# Quest identification
+@export var quest_id: String = ""
+@export var quest_title: String = "Untitled Quest"
+@export var quest_giver: String = "Unknown"
+
+# Quest content
+@export_multiline var description: String = ""
+@export_multiline var dialogue: String = ""
+
+# Quest chain
+@export var prerequisite_quest_ids: Array[String] = []
+
+# Requirements (can have multiple parts)
+@export var requirements: Array[QuestRequirement] = []
+
+# Rewards
+@export var reward: QuestReward = null
+
+# Check if player meets prerequisites
+func prerequisites_met(completed_quest_ids: Array[String]) -> bool:
+	for prereq_id in prerequisite_quest_ids:
+		if not prereq_id in completed_quest_ids:
+			return false
+	return true
+
+# Validate if provided creatures meet all requirements
+# Returns: { "valid": bool, "missing": Array[String] }
+func validate_creatures(creatures: Array[CreatureData]) -> Dictionary:
+	var result = {
+		"valid": true,
+		"missing": []
+	}
+
+	for req in requirements:
+		var matching_count = 0
+
+		# Count how many creatures match this requirement
+		for creature in creatures:
+			if req.creature_matches(creature):
+				matching_count += 1
+				if matching_count >= req.quantity:
+					break
+
+		# Check if we have enough
+		if matching_count < req.quantity:
+			var needed = req.quantity - matching_count
+			result.valid = false
+			result.missing.append("Need %d more: %s" % [needed, req.get_description()])
+
+	return result
+
+# Get total requirements summary for UI
+func get_requirements_summary() -> String:
+	var parts: Array[String] = []
+	for i in range(requirements.size()):
+		var req = requirements[i]
+		if requirements.size() > 1:
+			parts.append("Part %d: %dx %s" % [i + 1, req.quantity, req.get_description()])
+		else:
+			parts.append("%dx %s" % [req.quantity, req.get_description()])
+	return "\n".join(parts)
+```
+
+**Why:** Complete quest definition. Self-validating with prerequisite checking and creature validation. Resource-based means you can create quests in Godot editor visually.
+
+---
+
+#### Step 4: Create QuestManager Class
+
+**File:** `core/managers/quest_manager.gd` (NEW FILE)
+
+```gdscript
+# core/managers/quest_manager.gd
+extends Node
+class_name QuestManager
+
+# All quests available in the game (loaded from resources)
+var all_quests: Dictionary = {}  # [quest_id: String] -> QuestResource
+
+# Quest progress tracking
+var active_quests: Array[String] = []  # Quest IDs currently active
+var completed_quests: Array[String] = []  # Quest IDs already completed
+
+# Currently selected quest for turn-in UI
+var current_quest_for_turnin: QuestResource = null
+
+func initialize():
+	"""Called by GameManager on game start"""
+	load_all_quests()
+
+	# Auto-accept first quest in chain (only if no quests active/completed)
+	if active_quests.is_empty() and completed_quests.is_empty():
+		if all_quests.has("COL-01"):
+			accept_quest("COL-01")
+
+# Load quest resources from disk
+func load_all_quests():
+	all_quests.clear()
+
+	# Load quests from resources folder
+	# For now, we'll register them manually
+	# Future: Use DirAccess to scan resources/quests/ folder
+
+	register_quest(create_quest_col_01())
+	register_quest(create_quest_col_02())
+	register_quest(create_quest_col_03())
+	register_quest(create_quest_col_04())
+	register_quest(create_quest_col_05())
+
+func register_quest(quest: QuestResource):
+	all_quests[quest.quest_id] = quest
+
+# Accept a quest
+func accept_quest(quest_id: String) -> bool:
+	if not all_quests.has(quest_id):
+		print("Quest not found: ", quest_id)
+		return false
+
+	if quest_id in active_quests or quest_id in completed_quests:
+		print("Quest already active or completed: ", quest_id)
+		return false
+
+	var quest = all_quests[quest_id]
+
+	# Check prerequisites
+	if not quest.prerequisites_met(completed_quests):
+		print("Prerequisites not met for quest: ", quest_id)
+		return false
+
+	active_quests.append(quest_id)
+	SignalBus.quest_accepted.emit(quest)
+	print("Quest accepted: ", quest.quest_title)
+	return true
+
+# Validate if player can complete quest with selected creatures
+func can_complete_quest(quest_id: String, creatures: Array[CreatureData]) -> Dictionary:
+	if not all_quests.has(quest_id):
+		return {"valid": false, "missing": ["Quest not found"]}
+
+	var quest = all_quests[quest_id]
+	return quest.validate_creatures(creatures)
+
+# Complete a quest and give rewards
+func complete_quest(quest_id: String, creatures: Array[CreatureData]) -> bool:
+	if not quest_id in active_quests:
+		print("Quest not active: ", quest_id)
+		return false
+
+	var quest = all_quests[quest_id]
+	var validation = quest.validate_creatures(creatures)
+
+	if not validation.valid:
+		print("Creatures don't meet requirements: ", validation.missing)
+		SignalBus.quest_turn_in_failed.emit(quest, validation.missing)
+		return false
+
+	# Remove from active, add to completed
+	active_quests.erase(quest_id)
+	completed_quests.append(quest_id)
+
+	# Give rewards
+	if quest.reward:
+		if quest.reward.gold > 0:
+			SignalBus.gold_change_requested.emit(quest.reward.gold)
+		# Future: Give XP, items, etc.
+
+	# Remove creatures from player's collection (they've been turned in)
+	for creature in creatures:
+		GameManager.remove_creature(creature)
+
+	SignalBus.quest_completed.emit(quest)
+	print("Quest completed: ", quest.quest_title)
+
+	# Check for next quest in chain
+	check_unlock_next_quests()
+
+	return true
+
+# Check if completing a quest unlocks the next one
+func check_unlock_next_quests():
+	for quest_id in all_quests.keys():
+		if quest_id in active_quests or quest_id in completed_quests:
+			continue
+
+		var quest = all_quests[quest_id]
+		if quest.prerequisites_met(completed_quests):
+			accept_quest(quest_id)
+
+# Get all available quests (not completed)
+func get_available_quests() -> Array[QuestResource]:
+	var available: Array[QuestResource] = []
+	for quest_id in active_quests:
+		if all_quests.has(quest_id):
+			available.append(all_quests[quest_id])
+	return available
+
+# Get all completed quests
+func get_completed_quests() -> Array[QuestResource]:
+	var completed: Array[QuestResource] = []
+	for quest_id in completed_quests:
+		if all_quests.has(quest_id):
+			completed.append(all_quests[quest_id])
+	return completed
+
+# === QUEST DEFINITIONS ===
+# Future: Move these to .tres resource files in resources/quests/
+
+func create_quest_col_01() -> QuestResource:
+	var quest = QuestResource.new()
+	quest.quest_id = "COL-01"
+	quest.quest_title = "First Guardian"
+	quest.quest_giver = "The Collector"
+	quest.dialogue = "I need a strong guardian to protect my treasures. A Scuttleguard would be perfect—something with real strength!"
+	quest.description = "The Collector needs a strong guardian."
+
+	var req = QuestRequirement.new()
+	req.quantity = 1
+	req.species_filter = GlobalEnums.Species.SCUTTLEGUARD
+	req.min_strength = 15
+	req.requirement_description = "Scuttleguard with STR ≥ 15"
+	quest.requirements = [req]
+
+	var reward = QuestReward.new()
+	reward.gold = 300
+	quest.reward = reward
+
+	return quest
+
+func create_quest_col_02() -> QuestResource:
+	var quest = QuestResource.new()
+	quest.quest_id = "COL-02"
+	quest.quest_title = "Swift Scout"
+	quest.quest_giver = "The Collector"
+	quest.dialogue = "Excellent work! Now I need something fast to scout the perimeter. A Wind Dancer with great agility would be ideal."
+	quest.description = "The Collector needs a swift scout."
+	quest.prerequisite_quest_ids = ["COL-01"]
+
+	var req = QuestRequirement.new()
+	req.quantity = 1
+	req.species_filter = GlobalEnums.Species.WIND_DANCER
+	req.min_agility = 15
+	req.requirement_description = "Wind Dancer with AGI ≥ 15"
+	quest.requirements = [req]
+
+	var reward = QuestReward.new()
+	reward.gold = 400
+	quest.reward = reward
+
+	return quest
+
+func create_quest_col_03() -> QuestResource:
+	var quest = QuestResource.new()
+	quest.quest_id = "COL-03"
+	quest.quest_title = "Clever Companion"
+	quest.quest_giver = "The Collector"
+	quest.dialogue = "Impressive! Now I need a clever creature to help me catalog my collection. Intelligence is what matters here."
+	quest.description = "The Collector needs an intelligent assistant."
+	quest.prerequisite_quest_ids = ["COL-02"]
+
+	var req = QuestRequirement.new()
+	req.quantity = 1
+	# No species filter - any species allowed
+	req.species_filter = -1
+	req.min_intelligence = 12
+	req.requirement_description = "Any creature with INT ≥ 12"
+	quest.requirements = [req]
+
+	var reward = QuestReward.new()
+	reward.gold = 500
+	quest.reward = reward
+
+	return quest
+
+func create_quest_col_04() -> QuestResource:
+	var quest = QuestResource.new()
+	quest.quest_id = "COL-04"
+	quest.quest_title = "Elite Squad"
+	quest.quest_giver = "The Collector"
+	quest.dialogue = "You've proven yourself! I'm expanding my operations and need an elite squad—two well-rounded creatures."
+	quest.description = "The Collector needs two elite creatures."
+	quest.prerequisite_quest_ids = ["COL-03"]
+
+	var req = QuestRequirement.new()
+	req.quantity = 2
+	req.species_filter = -1  # Any species
+	req.min_strength = 12
+	req.min_agility = 12
+	req.min_intelligence = 12
+	req.requirement_description = "Well-rounded creature (all stats ≥ 12)"
+	quest.requirements = [req]
+
+	var reward = QuestReward.new()
+	reward.gold = 800
+	quest.reward = reward
+
+	return quest
+
+func create_quest_col_05() -> QuestResource:
+	var quest = QuestResource.new()
+	quest.quest_id = "COL-05"
+	quest.quest_title = "Ultimate Champion"
+	quest.quest_giver = "The Collector"
+	quest.dialogue = "This is it—the final test. I need a true champion, a creature with exceptional abilities across the board. Can you deliver?"
+	quest.description = "The Collector seeks the ultimate champion."
+	quest.prerequisite_quest_ids = ["COL-04"]
+
+	var req = QuestRequirement.new()
+	req.quantity = 1
+	req.species_filter = -1  # Any species
+	req.min_strength = 18
+	req.min_agility = 18
+	req.min_intelligence = 18
+	req.requirement_description = "Champion (all stats ≥ 18)"
+	quest.requirements = [req]
+
+	var reward = QuestReward.new()
+	reward.gold = 2000
+	reward.unlock_message = "Unlocked: Master Collector Title"
+	quest.reward = reward
+
+	return quest
+```
+
+**Why:** Central quest management. Handles progression, validation, rewards. Quests are defined in code for now (easy to move to .tres files later). Auto-accepts next quest in chain when prerequisites are met.
+
+---
+
+#### Step 5: Add QuestManager Instance to GameManager
+
+**File:** `core/game_manager.gd`
+
+**Add member variable** at the top of the file (around line 5-10, after other variables):
+
+```gdscript
+# Quest management
+var quest_manager: QuestManager
+```
+
+**In `_ready()` function**, create QuestManager instance (around line 15-20):
+
+```gdscript
+func _ready():
+	SignalBus.game_started.connect(initialize_new_game)
+	SignalBus.gold_change_requested.connect(_on_gold_change_requested)
+	SignalBus.facility_assigned.connect(facility_manager.register_assignment)
+	SignalBus.facility_unassigned.connect(facility_manager.unregister_assignment)
+	SignalBus.week_advanced.connect(facility_manager.process_all_activities)
+
+	# Create quest manager instance (NEW)
+	quest_manager = QuestManager.new()
+	add_child(quest_manager)
+```
+
+**In `initialize_new_game()` function**, initialize quest manager (around line 25-30):
+
+```gdscript
+func initialize_new_game():
+	# Existing initialization code...
+	player_data = PlayerData.new()
+	player_data.gold = 1000
+	# ... create starter creatures ...
+
+	# Initialize quest manager (NEW)
+	quest_manager.initialize()
+
+	SignalBus.player_data_initialized.emit()
+```
+
+**Why:** QuestManager as GameManager instance (like FacilityManager). No new autoload needed. Keeps architecture clean.
+
+---
+
+#### Step 6: Update Access to QuestManager
+
+**Throughout the implementation**, replace references to `QuestManager` with `GameManager.quest_manager`:
+
+- In UI scripts: `GameManager.quest_manager.get_available_quests()`
+- In signal handlers: `GameManager.quest_manager.complete_quest()`
+- Example from quest_window.gd line 863: `var available = GameManager.quest_manager.get_available_quests()`
+
+**Why:** Since QuestManager is now accessed via GameManager, all references need the prefix.
+
+---
+
+#### Step 7: Add Quest Signals to SignalBus
+
+**File:** `core/signal_bus.gd`
+
+**Add at the end of the file** (after existing signals):
+
+```gdscript
+# Quest System
+signal quest_accepted(quest: QuestResource)
+signal quest_completed(quest: QuestResource)
+signal quest_turn_in_failed(quest: QuestResource, missing_requirements: Array)
+signal quest_log_opened()
+signal quest_log_closed()
+```
+
+**Why:** Decoupled communication for quest events. UI can react to quest changes without direct dependencies.
+
+---
+
+#### Step 7: Add remove_creature to GameManager
+
+**File:** `core/game_manager.gd`
+
+**Add this function** after the `add_generated_creature()` function (around line 50-60):
+
+```gdscript
+func remove_creature(creature: CreatureData):
+	if player_data and creature in player_data.creatures:
+		player_data.creatures.erase(creature)
+		SignalBus.creature_removed.emit(creature)
+		print("Removed creature: ", creature.creature_name)
+```
+
+**Why:** Quest turn-ins remove creatures from player's collection. Need a way to delete creatures.
+
+---
+
+#### Step 8: Add creature_removed Signal to SignalBus
+
+**File:** `core/signal_bus.gd`
+
+**Add in the Player & Resources section** (around line 18-20):
+
+```gdscript
+# Player & Resources
+signal gold_change_requested(amount: int)
+signal gold_changed(new_amount: int)
+signal creature_added(creature: CreatureData)
+signal creature_removed(creature: CreatureData)  # NEW
+signal creature_stats_changed(creature: CreatureData)
+```
+
+**Why:** UI needs to know when creatures are removed (from turn-ins or other systems).
+
+---
+
+#### Step 9: Create QuestWindow UI
+
+**File:** `scenes/windows/quest_window.tscn` (NEW SCENE)
+
+**Create this scene structure in Godot:**
+```
+QuestWindow (PanelContainer)
+├── MarginContainer
+│   └── VBoxContainer
+│       ├── TitleBar (HBoxContainer)
+│       │   ├── QuestTitle (Label) - "Quest Log"
+│       │   └── CloseButton (Button) - "X"
+│       ├── HSeparator
+│       ├── ContentArea (HBoxContainer)
+│       │   ├── QuestList (VBoxContainer) - Left side
+│       │   │   ├── QuestListLabel (Label) - "Available Quests"
+│       │   │   └── QuestListScroll (ScrollContainer)
+│       │   │       └── QuestListContainer (VBoxContainer)
+│       │   └── QuestDetails (VBoxContainer) - Right side
+│       │       ├── SelectedQuestTitle (Label)
+│       │       ├── QuestGiver (Label)
+│       │       ├── QuestDialogue (RichTextLabel)
+│       │       ├── HSeparator2
+│       │       ├── RequirementsLabel (Label) - "Requirements:"
+│       │       ├── RequirementsText (RichTextLabel)
+│       │       ├── HSeparator3
+│       │       ├── RewardsLabel (Label) - "Rewards:"
+│       │       ├── RewardsText (RichTextLabel)
+│       │       ├── HSeparator4
+│       │       └── ActionButtons (HBoxContainer)
+│       │           └── TurnInButton (Button) - "Select Creatures"
+```
+
+**Configure:**
+- QuestWindow: custom_minimum_size = (1200, 700)
+- ContentArea: Size flags horizontal = Expand Fill, separation = 20
+- QuestList: custom_minimum_size.x = 300
+- QuestDetails: Size flags horizontal = Expand Fill
+
+**Attach script:** `scenes/windows/quest_window.gd`
+
+---
+
+#### Step 10: Create QuestWindow Script
+
+**File:** `scenes/windows/quest_window.gd` (NEW FILE)
+
+```gdscript
+# scenes/windows/quest_window.gd
+extends PanelContainer
+
+@onready var quest_list_container = $MarginContainer/VBoxContainer/ContentArea/QuestList/QuestListScroll/QuestListContainer
+@onready var selected_quest_title = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/SelectedQuestTitle
+@onready var quest_giver = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/QuestGiver
+@onready var quest_dialogue = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/QuestDialogue
+@onready var requirements_text = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/RequirementsText
+@onready var rewards_text = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/RewardsText
+@onready var turn_in_button = $MarginContainer/VBoxContainer/ContentArea/QuestDetails/ActionButtons/TurnInButton
+@onready var close_button = $MarginContainer/VBoxContainer/TitleBar/CloseButton
+
+var selected_quest: QuestResource = null
+
+func _ready():
+	close_button.pressed.connect(_on_close_pressed)
+	turn_in_button.pressed.connect(_on_turn_in_pressed)
+
+	SignalBus.quest_accepted.connect(_on_quest_accepted)
+	SignalBus.quest_completed.connect(_on_quest_completed)
+
+	# Center on screen
+	position = Vector2(
+		(get_viewport_rect().size.x - size.x) / 2,
+		(get_viewport_rect().size.y - size.y) / 2
+	)
+
+	refresh_quest_list()
+
+func _on_close_pressed():
+	SignalBus.quest_log_closed.emit()
+	queue_free()
+
+func _on_turn_in_pressed():
+	if selected_quest:
+		GameManager.quest_manager.current_quest_for_turnin = selected_quest
+		SignalBus.quest_turn_in_started.emit(selected_quest)
+		# Open creature selection window (to be implemented)
+		print("Select creatures to turn in for quest: ", selected_quest.quest_title)
+
+func _on_quest_accepted(quest: QuestResource):
+	refresh_quest_list()
+
+func _on_quest_completed(quest: QuestResource):
+	refresh_quest_list()
+	# Show completion message
+	show_quest_completed_popup(quest)
+
+func refresh_quest_list():
+	# Clear existing quest buttons
+	for child in quest_list_container.get_children():
+		child.queue_free()
+
+	# Add active quests
+	var available = GameManager.quest_manager.get_available_quests()
+	for quest in available:
+		var button = Button.new()
+		button.text = quest.quest_title
+		button.pressed.connect(func(): select_quest(quest))
+		quest_list_container.add_child(button)
+
+	# Select first quest by default
+	if available.size() > 0:
+		select_quest(available[0])
+	else:
+		clear_quest_details()
+
+func select_quest(quest: QuestResource):
+	selected_quest = quest
+
+	# Update UI
+	selected_quest_title.text = quest.quest_title
+	quest_giver.text = "Quest Giver: " + quest.quest_giver
+	quest_dialogue.text = quest.dialogue
+	requirements_text.text = quest.get_requirements_summary()
+
+	if quest.reward:
+		rewards_text.text = quest.reward.get_description()
+	else:
+		rewards_text.text = "No rewards"
+
+	turn_in_button.disabled = false
+
+func clear_quest_details():
+	selected_quest = null
+	selected_quest_title.text = "No Active Quests"
+	quest_giver.text = ""
+	quest_dialogue.text = ""
+	requirements_text.text = ""
+	rewards_text.text = ""
+	turn_in_button.disabled = true
+
+func show_quest_completed_popup(quest: QuestResource):
+	# Future: Show a fancy completion popup
+	print("QUEST COMPLETED: ", quest.quest_title)
+	if quest.reward:
+		print("Rewards: ", quest.reward.get_description())
+```
+
+**Why:** Main UI for viewing and interacting with quests. Shows quest details, requirements, rewards. Handles quest selection and turn-in initiation.
+
+---
+
+#### Step 11: Add quest_turn_in_started Signal
+
+**File:** `core/signal_bus.gd`
+
+**Add to Quest System section:**
+
+```gdscript
+# Quest System
+signal quest_accepted(quest: QuestResource)
+signal quest_completed(quest: QuestResource)
+signal quest_turn_in_failed(quest: QuestResource, missing_requirements: Array)
+signal quest_turn_in_started(quest: QuestResource)  # NEW
+signal quest_log_opened()
+signal quest_log_closed()
+```
+
+**Why:** Notifies when player initiates quest turn-in. Used to open creature selection UI.
+
+---
+
+#### Step 12: Add Quest Window Opener to GameScene
+
+**File:** `scenes/view/game_scene.gd`
+
+**Add after existing InputEvent handling** (around line 20-30, in `_input` or create new function):
+
+```gdscript
+func _input(event):
+	# Existing code for F5/F9 save/load...
+
+	# Open Quest Log with Q key
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_Q:
+			open_quest_window()
+
+func open_quest_window():
+	# Prevent multiple instances
+	if get_node_or_null("QuestWindow"):
+		return
+
+	var quest_window_scene = preload("res://scenes/windows/quest_window.tscn")
+	var quest_window = quest_window_scene.instantiate()
+	quest_window.name = "QuestWindow"
+	add_child(quest_window)
+
+	SignalBus.quest_log_opened.emit()
+```
+
+**Why:** Opens quest window with Q key. Can also add UI button later.
+
+---
+
+#### Step 13: Create Creature Selection Window for Turn-Ins
+
+**File:** `scenes/windows/quest_creature_selector.tscn` (NEW SCENE)
+
+**Create this scene structure:**
+```
+QuestCreatureSelector (PanelContainer)
+├── MarginContainer
+│   └── VBoxContainer
+│       ├── TitleBar (HBoxContainer)
+│       │   ├── Title (Label) - "Select Creatures for Quest"
+│       │   └── CloseButton (Button) - "X"
+│       ├── QuestInfo (Label)
+│       ├── HSeparator
+│       ├── CreatureGrid (GridContainer) - columns = 4
+│       ├── HSeparator2
+│       ├── SelectedInfo (Label) - "Selected: 0/1"
+│       └── ButtonRow (HBoxContainer)
+│           ├── CancelButton (Button) - "Cancel"
+│           └── ConfirmButton (Button) - "Turn In"
+```
+
+**Configure:**
+- QuestCreatureSelector: custom_minimum_size = (800, 600)
+- CreatureGrid: columns = 4, separation = 10
+
+**Attach script:** `scenes/windows/quest_creature_selector.gd`
+
+---
+
+#### Step 14: Create Creature Selector Script
+
+**File:** `scenes/windows/quest_creature_selector.gd` (NEW FILE)
+
+```gdscript
+# scenes/windows/quest_creature_selector.gd
+extends PanelContainer
+
+@onready var title = $MarginContainer/VBoxContainer/TitleBar/Title
+@onready var quest_info = $MarginContainer/VBoxContainer/QuestInfo
+@onready var creature_grid = $MarginContainer/VBoxContainer/CreatureGrid
+@onready var selected_info = $MarginContainer/VBoxContainer/SelectedInfo
+@onready var cancel_button = $MarginContainer/VBoxContainer/ButtonRow/CancelButton
+@onready var confirm_button = $MarginContainer/VBoxContainer/ButtonRow/ConfirmButton
+@onready var close_button = $MarginContainer/VBoxContainer/TitleBar/CloseButton
+
+var quest: QuestResource = null
+var selected_creatures: Array[CreatureData] = []
+var required_count: int = 0
+
+func _ready():
+	close_button.pressed.connect(close_window)
+	cancel_button.pressed.connect(close_window)
+	confirm_button.pressed.connect(_on_confirm_pressed)
+
+	# Center on screen
+	position = Vector2(
+		(get_viewport_rect().size.x - size.x) / 2,
+		(get_viewport_rect().size.y - size.y) / 2
+	)
+
+func setup(quest_resource: QuestResource):
+	quest = quest_resource
+
+	# Calculate total creatures needed
+	required_count = 0
+	for req in quest.requirements:
+		required_count += req.quantity
+
+	title.text = "Select Creatures: " + quest.quest_title
+	quest_info.text = quest.get_requirements_summary()
+
+	populate_creature_grid()
+	update_selected_info()
+
+func populate_creature_grid():
+	# Clear existing
+	for child in creature_grid.get_children():
+		child.queue_free()
+
+	# Add creature buttons
+	if GameManager.player_data:
+		for creature in GameManager.player_data.creatures:
+			var button = create_creature_button(creature)
+			creature_grid.add_child(button)
+
+func create_creature_button(creature: CreatureData) -> Button:
+	var button = Button.new()
+	button.custom_minimum_size = Vector2(180, 80)
+	button.toggle_mode = true
+
+	# Button text with creature info
+	var species_name = GlobalEnums.Species.keys()[creature.species]
+	button.text = "%s\n%s\nSTR:%d AGI:%d INT:%d" % [
+		creature.creature_name,
+		species_name,
+		creature.strength,
+		creature.agility,
+		creature.intelligence
+	]
+
+	# Check if creature matches ANY requirement
+	var matches_any = false
+	for req in quest.requirements:
+		if req.creature_matches(creature):
+			matches_any = true
+			break
+
+	# Color code: Green if matches, Red if doesn't
+	if matches_any:
+		button.modulate = Color(0.8, 1.0, 0.8)  # Light green
+	else:
+		button.modulate = Color(1.0, 0.8, 0.8)  # Light red
+
+	button.toggled.connect(func(pressed): _on_creature_toggled(creature, pressed))
+
+	return button
+
+func _on_creature_toggled(creature: CreatureData, pressed: bool):
+	if pressed:
+		if selected_creatures.size() < required_count:
+			selected_creatures.append(creature)
+		else:
+			# Deselect if too many
+			find_creature_button(creature).button_pressed = false
+			return
+	else:
+		selected_creatures.erase(creature)
+
+	update_selected_info()
+
+func find_creature_button(creature: CreatureData) -> Button:
+	for child in creature_grid.get_children():
+		if child is Button:
+			# Match by checking creature data (simple approach)
+			if creature in selected_creatures:
+				return child
+	return null
+
+func update_selected_info():
+	selected_info.text = "Selected: %d/%d" % [selected_creatures.size(), required_count]
+	confirm_button.disabled = selected_creatures.size() != required_count
+
+func _on_confirm_pressed():
+	# Validate creatures
+	var validation = quest.validate_creatures(selected_creatures)
+
+	if validation.valid:
+		# Attempt turn in
+		var success = GameManager.quest_manager.complete_quest(quest.quest_id, selected_creatures)
+		if success:
+			close_window()
+		else:
+			show_error("Failed to complete quest!")
+	else:
+		# Show what's missing
+		var missing_text = "\n".join(validation.missing)
+		show_error("Requirements not met:\n" + missing_text)
+
+func show_error(message: String):
+	# Future: Show error popup
+	print("ERROR: ", message)
+
+func close_window():
+	queue_free()
+```
+
+**Why:** Allows player to select which creatures to turn in for quests. Visual feedback shows which creatures match requirements. Validates before submission.
+
+---
+
+#### Step 15: Connect Creature Selector to Quest Turn-In
+
+**File:** `scenes/view/game_scene.gd`
+
+**Add signal connection in `_ready()`:**
+
+```gdscript
+func _ready():
+	# Existing connections...
+
+	SignalBus.quest_turn_in_started.connect(_on_quest_turn_in_started)
+
+# Add this function
+func _on_quest_turn_in_started(quest: QuestResource):
+	# Prevent multiple instances
+	if get_node_or_null("QuestCreatureSelector"):
+		return
+
+	var selector_scene = preload("res://scenes/windows/quest_creature_selector.tscn")
+	var selector = selector_scene.instantiate()
+	selector.name = "QuestCreatureSelector"
+	add_child(selector)
+	selector.setup(quest)
+```
+
+**Why:** Opens creature selector when player clicks "Turn In" in quest window.
+
+---
+
+#### Step 16: Save/Load Quest Progress
+
+**File:** `resources/save_game.gd`
+
+**Add quest progress fields:**
+
+```gdscript
+# Existing fields...
+@export var player_data: PlayerData
+@export var current_week: int = 1
+@export var metadata: Dictionary = {}
+
+# Quest progress (NEW)
+@export var active_quest_ids: Array[String] = []
+@export var completed_quest_ids: Array[String] = []
+```
+
+**Why:** Persist quest progress across save/load.
+
+---
+
+#### Step 17: Update SaveManager for Quest Data
+
+**File:** `core/save_manager.gd`
+
+**Update `save_game()` function** to include quest data (around line 30-40):
+
+```gdscript
+func save_game() -> bool:
+	var save_data = SaveGame.new()
+	save_data.player_data = GameManager.player_data
+	save_data.current_week = GameManager.current_week
+	save_data.active_quest_ids = GameManager.quest_manager.active_quests  # NEW
+	save_data.completed_quest_ids = GameManager.quest_manager.completed_quests  # NEW
+
+	# ... rest of save logic
+```
+
+**Update `load_game()` function** to restore quest data (around line 60-70):
+
+```gdscript
+func load_game() -> bool:
+	# ... existing load logic ...
+
+	if save_data:
+		GameManager.player_data = save_data.player_data
+		GameManager.current_week = save_data.current_week
+
+		# Restore quest progress (NEW)
+		GameManager.quest_manager.active_quests = save_data.active_quest_ids
+		GameManager.quest_manager.completed_quests = save_data.completed_quest_ids
+
+		# ... rest of load logic
+```
+
+**Why:** Saves and restores quest progress. Player won't lose quest state on load.
+
+---
+
+#### Step 18: Update Architecture Documentation
+
+**File:** `DEVELOPMENT_GUIDE.md`
+
+**After completing implementation, add to "Completed Implementations" section:**
+
+```markdown
+### ✅ Quest System with Resource-Based Design
+**Implemented complete quest system with multi-stage quest lines:**
+
+**Features:**
+- Resource-based quest definitions (QuestResource, QuestRequirement, QuestReward)
+- QuestManager autoload for progression tracking
+- Quest validation with stat and species requirements
+- Quest chain with prerequisites
+- Creature turn-in system with selection UI
+- Save/load quest progress
+- "The Collector's Needs" quest line (5 quests)
+- Q key to open quest log
+
+**Architecture:**
+- **QuestRequirement**: Defines creature requirements (species, stats, quantity, tags)
+- **QuestReward**: Gold, XP, special unlocks
+- **QuestResource**: Complete quest definition with validation
+- **QuestManager**: Quest progression, validation, completion
+- **QuestWindow**: Quest log UI
+- **QuestCreatureSelector**: Creature selection for turn-ins
+
+**Quest Line "The Collector's Needs":**
+1. COL-01 "First Guardian": 1 Scuttleguard STR ≥ 15 → 300g
+2. COL-02 "Swift Scout": 1 Wind Dancer AGI ≥ 15 → 400g
+3. COL-03 "Clever Companion": 1 any creature INT ≥ 12 → 500g
+4. COL-04 "Elite Squad": 2 creatures all stats ≥ 12 → 800g
+5. COL-05 "Ultimate Champion": 1 creature all stats ≥ 18 → 2000g + title
+
+**Files Created:**
+- `resources/quest_requirement.gd`
+- `resources/quest_reward.gd`
+- `resources/quest_resource.gd`
+- `core/managers/quest_manager.gd` (instance, not autoload)
+- `scenes/windows/quest_window.tscn/gd`
+- `scenes/windows/quest_creature_selector.tscn/gd`
+
+**Signals Added:**
+- `quest_accepted(quest)`
+- `quest_completed(quest)`
+- `quest_turn_in_failed(quest, missing)`
+- `quest_turn_in_started(quest)`
+- `quest_log_opened()`
+- `quest_log_closed()`
+- `creature_removed(creature)`
+
+**Future Extensibility:**
+- Tags system ready (required_tags array)
+- Item rewards ready (items array)
+- Easy to create new quests as .tres files
+- Multi-part requirements supported
+```
+
+**And update "Current Architecture Summary":**
+
+```markdown
+**GameManager**
+- Manages PlayerData (gold, creatures)
+- Handles game initialization
+- Controls week progression
+- Contains `facility_manager` instance (FacilityManager)
+- Contains `quest_manager` instance (QuestManager) (NEW)
+```
+
+**Why:** Keeps documentation current. QuestManager follows same pattern as FacilityManager (instance, not autoload).
+
+---
+
+### Testing the Quest System
+
+Once implemented, test with these steps:
+
+1. **Start new game**
+   - Quest COL-01 should auto-accept
+   - Check console for "Quest accepted: First Guardian"
+
+2. **Press Q to open Quest Log**
+   - Should see "First Guardian" in quest list
+   - Requirements should show: "Scuttleguard - STR ≥ 15"
+   - Rewards should show: "300 Gold"
+
+3. **Generate qualifying creature**
+   - Use F12 or shop to get/generate a Scuttleguard with STR ≥ 15
+   - (Starter creatures might already qualify!)
+
+4. **Turn in quest**
+   - Click "Select Creatures" button
+   - Creature selector opens
+   - Green creatures match requirements, red don't
+   - Select qualifying creature
+   - Click "Turn In"
+   - Creature removed, gold awarded
+   - Quest COL-02 auto-accepts
+
+5. **Test quest chain**
+   - Complete COL-02 (Wind Dancer AGI ≥ 15)
+   - Complete COL-03 (Any creature INT ≥ 12)
+   - Complete COL-04 (2 creatures all stats ≥ 12)
+   - Complete COL-05 (1 creature all stats ≥ 18)
+
+6. **Test save/load**
+   - Complete a quest
+   - Press F5 to save
+   - Close game
+   - Reopen, press F9 to load
+   - Quest progress should persist
+
+---
+
+### Future Enhancements
+
+**Easy additions after base system:**
+- Create .tres files for quests (visual editing in Godot)
+- Add creature tags system
+- Item rewards
+- Quest notifications/popups
+- Quest markers in world
+- Radiant/repeatable quests
+- Quest journal categories (Active, Completed, Failed)
+- Time-limited quests
+- Multi-stage quest objectives
 
 ---
 

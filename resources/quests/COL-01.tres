@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://lkv5ev421n8k"]
+
+[ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_2m04m"]
+[ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_jutvl"]
+[ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_jq450"]
+
+[sub_resource type="Resource" id="Resource_blfdm"]
+script = ExtResource("1_2m04m")
+species_filter = 0
+min_strength = 15
+requirement_description = "Scuttleguard with STR ≥ 15"
+
+[sub_resource type="Resource" id="Resource_7rrgs"]
+script = ExtResource("2_jutvl")
+gold = 300
+
+[resource]
+script = ExtResource("3_jq450")
+quest_id = "COL-01"
+quest_title = "First Guardian"
+quest_giver = "The Collector"
+description = "The Collector needs a strong guardian."
+dialogue = "I need a strong guardian to protect my treasures. A Scuttleguard would be perfect—something with real strength!"
+requirements = Array[ExtResource("1_2m04m")]([SubResource("Resource_blfdm")])
+reward = SubResource("Resource_7rrgs")

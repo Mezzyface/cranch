@@ -4,6 +4,7 @@ extends Node
 var current_week: int = 1
 var player_data: PlayerData
 var facility_manager: FacilityManager
+var quest_manager: QuestManager
 
 const SAVE_PATH = "user://savegame.tres"
 
@@ -15,6 +16,10 @@ func _create_managers():
 	facility_manager = FacilityManager.new()
 	facility_manager.name = "FacilityManager"
 	add_child(facility_manager)
+
+	quest_manager = QuestManager.new()
+	quest_manager.name = "QuestManager"
+	add_child(quest_manager)
 
 func _connect_signals():
 	SignalBus.game_started.connect(initialize_new_game)
@@ -44,6 +49,9 @@ func initialize_new_game():
 	SignalBus.player_data_initialized.emit()
 	SignalBus.gold_changed.emit(player_data.gold)
 
+	# Initialize quest manager
+	quest_manager.initialize()
+
 	create_test_facility()
 
 # Helper function to add a generated creature to player's collection
@@ -52,6 +60,13 @@ func add_generated_creature(species: GlobalEnums.Species, creature_name: String 
 	player_data.creatures.append(creature)
 	SignalBus.creature_added.emit(creature)
 	return creature
+
+# Remove a creature from player's collection
+func remove_creature(creature: CreatureData):
+	if player_data and creature in player_data.creatures:
+		player_data.creatures.erase(creature)
+		SignalBus.creature_removed.emit(creature)
+		print("Removed creature: ", creature.creature_name)
 	
 func advance_week():
 	current_week += 1

@@ -14,6 +14,7 @@ signal save_failed()
 # Player & Resource Signals
 signal gold_changed(new_amount: int)
 signal creature_added(creature: CreatureData)
+signal creature_removed(creature: CreatureData)
 signal creature_stats_changed(creature: CreatureData)
 
 # UI Events
@@ -38,3 +39,11 @@ signal shop_purchase_failed(reason: String)
 
 # Gold Management
 signal gold_change_requested(amount: int)  # Request to add/remove gold (negative = spend)
+
+# Quest System
+signal quest_accepted(quest: QuestResource)
+signal quest_completed(quest: QuestResource)
+signal quest_turn_in_failed(quest: QuestResource, missing_requirements: Array)
+signal quest_turn_in_started(quest: QuestResource)
+signal quest_log_opened()
+signal quest_log_closed()

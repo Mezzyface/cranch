@@ -6,6 +6,8 @@ const WEEK_DISPLAY = preload("res://scenes/card/week_display.tscn")
 const CREATURE_DISPLAY = preload("res://scenes/entities/creature_display.tscn")
 const CREATURE_STATS_POPUP:PackedScene = preload("res://scenes/windows/creature_stats_popup.tscn")
 const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
+const QUEST_WINDOW = preload("res://scenes/windows/quest_window.tscn")
+const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_selector.tscn")
 
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
@@ -43,10 +45,17 @@ func _input(event):
 	elif event.is_action_pressed("ui_text_backspace"):  # F6 key
 		_open_test_shop()
 
+	# Open Quest Log with Q key
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_Q:
+			open_quest_window()
+
 func _connect_signals():
 	SignalBus.player_data_initialized.connect(_on_player_data_ready)
 	SignalBus.creature_added.connect(_on_creature_added)
+	SignalBus.creature_removed.connect(_on_creature_removed)
 	SignalBus.creature_clicked.connect(_on_creature_clicked)
+	SignalBus.quest_turn_in_started.connect(_on_quest_turn_in_started)
 
 func _on_player_data_ready():
 	# Show debug popup with player data
@@ -56,6 +65,22 @@ func _on_creature_added(creature: CreatureData):
 	print("_on_creature_added")
 	# Spawn individual creature when added
 	_spawn_creature(creature)
+
+func _on_creature_removed(creature: CreatureData):
+	print("_on_creature_removed: ", creature.creature_name)
+	# Find and remove the CreatureDisplay node for this creature
+	for child in creature_container.get_children():
+		if child is CreatureDisplay and child.creature_data == creature:
+			print("Removing CreatureDisplay for: ", creature.creature_name)
+			child.queue_free()
+			break
+
+	# Clean up the associated drag component
+	for child in get_children():
+		if child is DragDropComponent and child.name == "CreatureDrag_" + creature.creature_name:
+			print("Removing drag component for: ", creature.creature_name)
+			child.queue_free()
+			break
 	
 func _spawn_player_creatures():
 	print("_spawn_player_creatures")
@@ -393,3 +418,24 @@ func _create_fallback_shop() -> ShopResource:
 	shop._initialize_stock()
 
 	return shop
+
+func open_quest_window():
+	# Prevent multiple instances
+	if get_node_or_null("QuestWindow"):
+		return
+
+	var quest_window = QUEST_WINDOW.instantiate()
+	quest_window.name = "QuestWindow"
+	add_child(quest_window)
+
+	SignalBus.quest_log_opened.emit()
+
+func _on_quest_turn_in_started(quest: QuestResource):
+	# Prevent multiple instances
+	if get_node_or_null("QuestCreatureSelector"):
+		return
+
+	var selector = QUEST_CREATURE_SELECTOR.instantiate()
+	selector.name = "QuestCreatureSelector"
+	add_child(selector)
+	selector.setup(quest)
