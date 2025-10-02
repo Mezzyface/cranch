@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FacilityResource" load_steps=5 format=3 uid="uid://c1j04b6pup2se"]
+
+[ext_resource type="Script" uid="uid://cwfaj7e4sd2pt" path="res://resources/activity_data.gd" id="1_rsfeh"]
+[ext_resource type="Script" uid="uid://cvadrdyrqdtpq" path="res://resources/activities/intelligence_training.gd" id="2_uoloa"]
+[ext_resource type="Script" uid="uid://blvcev25noqpa" path="res://resources/facility_data.gd" id="3_xciko"]
+
+[sub_resource type="Resource" id="Resource_pims0"]
+script = ExtResource("2_uoloa")
+activity_name = "Intelligence Training"
+description = "Increases creature's intelligence"
+
+[resource]
+script = ExtResource("3_xciko")
+facility_name = "Study Hall"
+description = "A quiet library for mental development and learning"
+activities = Array[ExtResource("1_rsfeh")]([SubResource("Resource_pims0")])
+max_creatures = 3
