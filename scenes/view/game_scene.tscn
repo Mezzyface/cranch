@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://bw2rpq8e545hs"]
+[gd_scene load_steps=6 format=3 uid="uid://bw2rpq8e545hs"]
 
 [ext_resource type="Script" uid="uid://d0lp8rta5wmar" path="res://scenes/view/game_scene.gd" id="1_dlcv3"]
 [ext_resource type="PackedScene" uid="uid://bgvlgnlneqtaa" path="res://scenes/card/facility_slot.tscn" id="3_hega7"]
 [ext_resource type="Texture2D" uid="uid://chxfeo782kaj7" path="res://assets/backgrounds/origbig.png" id="3_x3lul"]
+[ext_resource type="Resource" uid="uid://c1j04b6pup2se" path="res://resources/facilities/intelligence_training.tres" id="4_u0bsg"]
+[ext_resource type="Resource" uid="uid://xvy1kjdrracx" path="res://resources/facilities/balanced_training.tres" id="5_v4xqf"]
 
 [node name="GameScene" type="Control"]
 layout_mode = 3
@@ -59,6 +61,7 @@ offset_right = 1721.0
 offset_bottom = 960.0
 slot_index = 2
 is_locked = true
+unlock_facility = ExtResource("4_u0bsg")
 
 [node name="FacilitySlot4" parent="." instance=ExtResource("3_hega7")]
 layout_mode = 0
@@ -68,3 +71,4 @@ offset_right = 1721.0
 offset_bottom = 540.0
 slot_index = 3
 is_locked = true
+unlock_facility = ExtResource("5_v4xqf")

@@ -19,6 +19,7 @@ func _run():
 	generate_strength_training_facility()
 	generate_agility_training_facility()
 	generate_intelligence_training_facility()
+	generate_balanced_training_facility()
 
 	print("Facility generation complete!")
 
@@ -72,3 +73,20 @@ func generate_intelligence_training_facility():
 		print("ERROR saving intelligence_training.tres: ", err)
 	else:
 		print("✓ Created intelligence_training.tres")
+
+func generate_balanced_training_facility():
+	var facility = FacilityResource.new()
+	facility.facility_name = "Balanced Training Dojo"
+	facility.description = "A comprehensive training facility for all-around development"
+	facility.max_creatures = 3
+
+	var activity = BalancedTrainingActivity.new()
+	activity.stat_gain = 3
+
+	facility.activities.append(activity)
+
+	var err = ResourceSaver.save(facility, "res://resources/facilities/balanced_training.tres")
+	if err != OK:
+		print("ERROR saving balanced_training.tres: ", err)
+	else:
+		print("✓ Created balanced_training.tres")

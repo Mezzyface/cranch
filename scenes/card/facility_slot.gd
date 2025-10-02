@@ -6,6 +6,7 @@ class_name FacilitySlot
 @export var slot_name: String = "Facility Slot"
 @export var is_locked: bool = false
 @export var unlock_cost: int = 100
+@export var unlock_facility: FacilityResource = null  # Facility to place when unlocked
 
 var current_facility_card: FacilityCard = null
 var is_hover: bool = false
@@ -183,8 +184,18 @@ func attempt_unlock():
 	var overlay = get_node_or_null("LockedOverlay")
 	if overlay:
 		overlay.queue_free()
-	
+
 	_setup_drop_zone()
+
+	# Auto-place facility if one is assigned
+	if unlock_facility:
+		var card_scene = preload("res://scenes/card/facility_card.tscn")
+		var card = card_scene.instantiate()
+		card.facility_resource = unlock_facility
+		card.add_to_group("facility_cards")
+		place_facility(card)
+		print("Auto-placed facility: ", unlock_facility.facility_name)
+
 	# Emit signal
 	SignalBus.facility_slot_unlocked.emit(slot_index, unlock_cost)
 

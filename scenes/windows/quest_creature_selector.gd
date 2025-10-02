@@ -71,8 +71,16 @@ func populate_creature_grid():
 
 func create_creature_button(creature: CreatureData) -> Button:
 	var button = Button.new()
-	button.custom_minimum_size = Vector2(180, 100)  # Taller to fit tags
+	button.custom_minimum_size = Vector2(220, 140)  # Wider and taller for wrapped text
 	button.toggle_mode = true
+
+	# Enable text wrapping and clipping
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.clip_text = false  # Allow text to wrap instead of clipping
+	button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+
+	# Vertical alignment for better readability
+	button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 
 	# Button text with creature info and tags
 	var species_name = GlobalEnums.Species.keys()[creature.species]

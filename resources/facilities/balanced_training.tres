@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FacilityResource" load_steps=5 format=3 uid="uid://xvy1kjdrracx"]
+
+[ext_resource type="Script" uid="uid://cwfaj7e4sd2pt" path="res://resources/activity_data.gd" id="1_r5bec"]
+[ext_resource type="Script" uid="uid://ds3bidkw7e3jw" path="res://resources/activities/balanced_training.gd" id="2_tbdo1"]
+[ext_resource type="Script" uid="uid://blvcev25noqpa" path="res://resources/facility_data.gd" id="3_4fr6t"]
+
+[sub_resource type="Resource" id="Resource_xwfj8"]
+script = ExtResource("2_tbdo1")
+activity_name = "Balanced Training"
+description = "Increases all stats evenly"
+
+[resource]
+script = ExtResource("3_4fr6t")
+facility_name = "Balanced Training Dojo"
+description = "A comprehensive training facility for all-around development"
+activities = Array[ExtResource("1_r5bec")]([SubResource("Resource_xwfj8")])
+max_creatures = 3
