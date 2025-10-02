@@ -56,7 +56,8 @@ game_loaded → [Not connected yet]
 save_failed → [Not connected yet]
 
 # Player & Resources
-gold_changed(amount) → [Not connected yet]
+gold_change_requested(amount) → GameManager._on_gold_change_requested()
+gold_changed(amount) → UI components (for display updates)
 creature_added(creature) → game_scene._on_creature_added()
 creature_stats_changed(creature) → [Not connected yet]
 
@@ -75,12 +76,18 @@ show_debug_popup_requested → [Not connected yet]
 show_creature_details_requested(creature) → [Not connected yet]
 creature_clicked(creature_data) → game_scene._on_creature_clicked()
 popup_closed(popup_name) → [Not connected yet]
+
+# Shop & Commerce
+shop_opened(shop) → [UI components listen]
+shop_closed() → [UI components listen]
+shop_purchase_completed(item_name, cost) → [UI feedback]
+shop_purchase_failed(reason) → [UI feedback]
 ```
 
 ### System Overview
 
 #### Autoload Order (Important!)
-1. `GlobalEnums` - Game enumerations and constants
+1. `GlobalEnums` - Game enumerations and constants (Species, CreatureState, FacingDirection, Emote, ItemType)
 2. `SignalBus` - Central signal hub
 3. `GameManager` - Game state management
 4. `SaveManager` - Save/load operations
@@ -91,6 +98,7 @@ popup_closed(popup_name) → [Not connected yet]
 - Manages PlayerData (gold, creatures)
 - Handles game initialization
 - Controls week progression
+- Listens for `gold_change_requested` signal and updates player gold
 - Emits state changes through SignalBus
 - Contains `facility_manager` instance (FacilityManager)
 
@@ -128,11 +136,829 @@ popup_closed(popup_name) → [Not connected yet]
 - Visual preview generation
 - Signal-based communication (`drag_started`, `drag_ended`, `drop_received`)
 
+**CreatureGenerator** (`scripts/creature_generation.gd`)
+- Static utility class for procedural creature generation
+- Species-based stat curves with normal distribution
+- Random name generation per species
+
+**ShopManager** (`scripts/shop_manager.gd`) - if implemented
+- Static utility class for shop purchases
+- Handles validation, gold transactions, SignalBus integration
+- Not an autoload - called directly by UI components
+
 ---
 
 ## Implementation Steps Section
 
-*No active implementation tasks. Ready for next feature.*
+### 🎯 Current Task: Resource-Based Shop System
+
+**Goal:** Create a flexible, resource-based shop system that can be reused for multiple vendors and shop types (creatures, items, etc).
+
+**Design:**
+- **ItemResource**: Defines inventory items (potions, equipment, etc) - reusable across shop, inventory, drops, etc
+- **ShopEntry**: Defines what's for sale (creature, item, or service) with price and stock
+- **ShopResource**: Defines shop inventory (vendor info, array of ShopEntries)
+- **ShopWindow**: Reusable UI scene for displaying and interacting with shops
+- **ShopManager**: Static utility class for purchase logic and SignalBus integration
+- Easy to create new shops by making new ShopResource files
+
+**Purchase Types:**
+- **Creature purchases** - Directly generate and add creature to player array (no item created)
+- **Item purchases** - Add ItemResource to player inventory (future)
+- **Service purchases** - Trigger immediate action (healing, training boost, etc.)
+
+---
+
+#### Step 1: Add ShopEntryType to GlobalEnums
+
+**File:** `core/global_enums.gd`
+
+Add this enum to the GlobalEnums script:
+
+```gdscript
+enum ShopEntryType {
+	CREATURE,     # Purchase generates a creature directly
+	ITEM,         # Purchase gives an item to inventory
+	SERVICE       # Purchase triggers an immediate action
+}
+```
+
+**Why:** ShopEntryType defines what kind of purchase this is, not what type of item. Creatures bypass inventory entirely.
+
+---
+
+#### Step 2: Create ItemResource (for inventory items only)
+
+**File:** `resources/item_resource.gd` (NEW FILE)
+
+```gdscript
+# resources/item_resource.gd
+extends Resource
+class_name ItemResource
+
+@export var item_name: String = "Mystery Item"
+@export var description: String = "A wonderful item!"
+@export var item_id: String = ""  # Unique identifier
+@export var icon_texture: Texture2D = null
+
+# Item properties (future)
+# @export var consumable: bool = false
+# @export var stackable: bool = true
+# @export var max_stack: int = 99
+```
+
+**Why:** Defines actual inventory items (potions, equipment). NOT used for creatures - those generate directly.
+
+---
+
+#### Step 3: Create ShopEntry Class
+
+**File:** `resources/shop_entry.gd` (NEW FILE)
+
+```gdscript
+# resources/shop_entry.gd
+extends Resource
+class_name ShopEntry
+
+@export var entry_name: String = "Mystery Purchase"
+@export var description: String = "Something wonderful!"
+@export var entry_type: GlobalEnums.ShopEntryType = GlobalEnums.ShopEntryType.CREATURE
+@export var cost: int = 50
+@export var stock: int = -1  # -1 = unlimited
+@export var icon_texture: Texture2D = null
+
+# Type-specific data
+@export var creature_species: GlobalEnums.Species = GlobalEnums.Species.SLIME  # For CREATURE type
+@export var item: ItemResource = null  # For ITEM type
+# For SERVICE type: no extra data needed (yet)
+```
+
+**Why:** Each shop entry is self-contained. Creature purchases define species directly, item purchases reference ItemResource.
+
+---
+
+#### Step 4: Create ShopResource
+
+**File:** `resources/shop_resource.gd` (NEW FILE)
+
+```gdscript
+# resources/shop_resource.gd
+extends Resource
+class_name ShopResource
+
+@export var shop_name: String = "General Shop"
+@export var vendor_name: String = "Shopkeeper"
+@export var greeting: String = "Welcome to my shop!"
+
+# Array of ShopEntry (each contains ItemResource + price + stock)
+@export var entries: Array[ShopEntry] = []
+
+# Track current stock for items with limited quantity
+var current_stock: Dictionary = {}  # entry_index -> remaining stock
+
+func _init():
+	_initialize_stock()
+
+func _initialize_stock():
+	current_stock.clear()
+	for i in range(entries.size()):
+		if entries[i].stock > 0:
+			current_stock[i] = entries[i].stock
+
+func get_remaining_stock(entry_index: int) -> int:
+	var entry = entries[entry_index]
+	if entry.stock == -1:
+		return -1  # Unlimited
+	return current_stock.get(entry_index, 0)
+
+func can_purchase(entry_index: int) -> bool:
+	if entry_index < 0 or entry_index >= entries.size():
+		return false
+	var remaining = get_remaining_stock(entry_index)
+	return remaining == -1 or remaining > 0
+
+func purchase_item(entry_index: int) -> bool:
+	if not can_purchase(entry_index):
+		return false
+	var entry = entries[entry_index]
+	if entry.stock > 0:
+		current_stock[entry_index] -= 1
+	return true
+```
+
+**Why:** Shop contains references to items with shop-specific pricing/stock. Items can be reused across multiple systems.
+
+---
+
+#### Step 5: Create ShopManager Utility Class
+
+**File:** `scripts/shop_manager.gd` (NEW FILE)
+
+```gdscript
+# scripts/shop_manager.gd
+class_name ShopManager
+
+# Handle shop purchases and validation
+static func attempt_purchase(shop: ShopResource, entry_index: int) -> bool:
+	if not shop or entry_index < 0 or entry_index >= shop.entries.size():
+		push_error("Invalid shop or entry index")
+		return false
+
+	var entry = shop.entries[entry_index]
+
+	# Check if item is in stock
+	if not shop.can_purchase(entry_index):
+		SignalBus.shop_purchase_failed.emit("Out of stock!")
+		return false
+
+	# Check if player has enough gold
+	if not GameManager.player_data or GameManager.player_data.gold < entry.cost:
+		SignalBus.shop_purchase_failed.emit("Not enough gold!")
+		return false
+
+	# Request gold deduction (negative amount = spend)
+	SignalBus.gold_change_requested.emit(-entry.cost)
+
+	# Process purchase based on entry type
+	match entry.entry_type:
+		GlobalEnums.ShopEntryType.CREATURE:
+			_purchase_creature(entry)
+		GlobalEnums.ShopEntryType.ITEM:
+			_purchase_item(entry)
+		GlobalEnums.ShopEntryType.SERVICE:
+			_purchase_service(entry)
+
+	# Update shop stock
+	shop.purchase_item(entry_index)
+
+	# Emit success signal
+	SignalBus.shop_purchase_completed.emit(entry.entry_name, entry.cost)
+
+	return true
+
+static func _purchase_creature(entry: ShopEntry):
+	# Generate creature directly and add to player array
+	var creature = CreatureGenerator.generate_creature(entry.creature_species)
+	GameManager.player_data.creatures.append(creature)
+	SignalBus.creature_added.emit(creature)
+	print("Purchased creature: %s (%s)" % [creature.creature_name, entry.entry_name])
+
+static func _purchase_item(entry: ShopEntry):
+	# TODO: Add to player inventory when item system exists
+	if entry.item:
+		print("Purchased item: %s" % entry.item.item_name)
+	else:
+		push_error("ShopEntry has ITEM type but no ItemResource assigned!")
+
+static func _purchase_service(entry: ShopEntry):
+	# TODO: Trigger service action (healing, training boost, etc)
+	print("Purchased service: %s" % entry.entry_name)
+```
+
+**Why:** Creature purchases bypass inventory entirely. Item purchases will use ItemResource when inventory exists. Services are immediate actions. Gold changes via signal maintain decoupled architecture.
+
+---
+
+#### Step 6b: Update GameManager to Handle Gold Changes
+
+**File:** `core/game_manager.gd`
+
+Add this signal connection in `_connect_signals()`:
+
+```gdscript
+func _connect_signals():
+	SignalBus.game_started.connect(initialize_new_game)
+	SignalBus.gold_change_requested.connect(_on_gold_change_requested)
+```
+
+Add this handler function:
+
+```gdscript
+func _on_gold_change_requested(amount: int):
+	if not player_data:
+		push_error("Cannot change gold: no player_data")
+		return
+
+	player_data.gold += amount
+
+	# Prevent negative gold
+	if player_data.gold < 0:
+		player_data.gold = 0
+
+	# Emit update signal for UI
+	SignalBus.gold_changed.emit(player_data.gold)
+
+	if amount > 0:
+		print("Gained %d gold (Total: %d)" % [amount, player_data.gold])
+	else:
+		print("Spent %d gold (Total: %d)" % [-amount, player_data.gold])
+```
+
+**Why:** GameManager is the single source of truth for player data. All gold changes go through SignalBus, maintaining decoupled architecture.
+
+---
+
+#### Step 7: Create ShopWindow UI Scene
+
+**File:** `scenes/windows/shop_window.tscn` and `scenes/windows/shop_window.gd`
+
+**Create the scene in Godot Editor:**
+
+1. Scene → New Scene → User Interface
+2. Rename root to `ShopWindow` (Panel or Window node)
+3. Add these child nodes:
+   ```
+   ShopWindow (Window)
+   ├── MarginContainer
+   │   └── VBoxContainer
+   │       ├── Header (HBoxContainer)
+   │       │   ├── ShopNameLabel (Label)
+   │       │   └── CloseButton (Button)
+   │       ├── GreetingLabel (Label)
+   │       ├── ItemList (ScrollContainer → VBoxContainer)
+   │       └── Footer (HBoxContainer)
+   │           └── GoldLabel (Label)
+   ```
+
+4. Configure nodes:
+   - ShopWindow: title = "Shop", size = (600, 400), exclusive = true
+   - ItemList VBoxContainer: name it "ItemListContainer"
+   - CloseButton: text = "✕"
+
+5. Save as `scenes/windows/shop_window.tscn`
+
+**Attach script:** `scenes/windows/shop_window.gd`
+
+```gdscript
+# scenes/windows/shop_window.gd
+extends Window
+
+@onready var shop_name_label = $MarginContainer/VBoxContainer/Header/ShopNameLabel
+@onready var greeting_label = $MarginContainer/VBoxContainer/GreetingLabel
+@onready var item_list_container = $MarginContainer/VBoxContainer/ItemList/VBoxContainer
+@onready var gold_label = $MarginContainer/VBoxContainer/Footer/GoldLabel
+@onready var close_button = $MarginContainer/VBoxContainer/Header/CloseButton
+
+var current_shop: ShopResource
+
+# Preload shop item entry scene
+const SHOP_ITEM_ENTRY = preload("res://scenes/ui/shop_item_entry.tscn")
+
+func _ready():
+	close_button.pressed.connect(_on_close_pressed)
+	close_requested.connect(_on_close_pressed)
+
+	# Connect to signals
+	SignalBus.gold_changed.connect(_update_gold_display)
+	SignalBus.shop_purchase_completed.connect(_on_purchase_completed)
+	SignalBus.shop_purchase_failed.connect(_on_purchase_failed)
+
+func setup(shop: ShopResource):
+	current_shop = shop
+
+	# Set header
+	shop_name_label.text = shop.shop_name
+	greeting_label.text = shop.greeting
+
+	# Populate item list
+	_populate_items()
+
+	# Update gold display
+	_update_gold_display(GameManager.player_data.gold if GameManager.player_data else 0)
+
+	# Emit signal
+	SignalBus.shop_opened.emit(shop)
+
+func _populate_items():
+	# Clear existing items
+	for child in item_list_container.get_children():
+		child.queue_free()
+
+	# Add shop entries
+	for i in range(current_shop.entries.size()):
+		var shop_entry = current_shop.entries[i]
+		var entry = SHOP_ITEM_ENTRY.instantiate()
+		item_list_container.add_child(entry)
+		entry.setup(shop_entry, i, current_shop)
+		entry.purchase_requested.connect(_on_purchase_requested)
+
+func _on_purchase_requested(entry_index: int):
+	ShopManager.attempt_purchase(current_shop, entry_index)
+
+func _on_purchase_completed(item_name: String, cost: int):
+	print("Purchase successful: %s for %d gold" % [item_name, cost])
+	# Refresh item list to update stock displays
+	_populate_items()
+
+func _on_purchase_failed(reason: String):
+	print("Purchase failed: %s" % reason)
+	# TODO: Show visual feedback (popup, shake, flash red, etc)
+
+func _update_gold_display(gold_amount: int):
+	gold_label.text = "Gold: %d" % gold_amount
+
+func _on_close_pressed():
+	SignalBus.shop_closed.emit()
+	queue_free()
+```
+
+**Why:** Reusable shop window that works with any ShopResource. Handles display and purchase requests.
+
+---
+
+#### Step 8: Create ShopItemEntry UI Component
+
+**File:** `scenes/ui/shop_item_entry.tscn` and `scenes/ui/shop_item_entry.gd`
+
+**Create the scene:**
+
+1. Scene → New Scene → User Interface
+2. Root: PanelContainer named "ShopItemEntry"
+3. Add children:
+   ```
+   ShopItemEntry (PanelContainer)
+   └── HBoxContainer
+       ├── IconRect (TextureRect) - size 64x64
+       ├── InfoVBox (VBoxContainer)
+       │   ├── ItemNameLabel (Label)
+       │   ├── DescriptionLabel (Label)
+       │   └── StockLabel (Label)
+       └── BuyButton (Button) - text "Buy (50g)"
+   ```
+
+4. Configure:
+   - ItemNameLabel: larger font, bold if possible
+   - DescriptionLabel: smaller font, modulate slightly gray
+   - BuyButton: minimum width 100px
+
+5. Save as `scenes/ui/shop_item_entry.tscn`
+
+**Attach script:**
+
+```gdscript
+# scenes/ui/shop_item_entry.gd
+extends PanelContainer
+
+signal purchase_requested(item_index: int)
+
+@onready var icon_rect = $HBoxContainer/IconRect
+@onready var item_name_label = $HBoxContainer/InfoVBox/ItemNameLabel
+@onready var description_label = $HBoxContainer/InfoVBox/DescriptionLabel
+@onready var stock_label = $HBoxContainer/InfoVBox/StockLabel
+@onready var buy_button = $HBoxContainer/BuyButton
+
+var shop_entry: ShopEntry
+var entry_index: int
+var shop: ShopResource
+
+func setup(entry: ShopEntry, index: int, shop_ref: ShopResource):
+	shop_entry = entry
+	entry_index = index
+	shop = shop_ref
+
+	# Set display from entry data
+	item_name_label.text = entry.entry_name
+	description_label.text = entry.description
+	buy_button.text = "Buy (%dg)" % entry.cost
+
+	if entry.icon_texture:
+		icon_rect.texture = entry.icon_texture
+
+	# Update stock display
+	_update_stock_display()
+
+	# Connect button
+	buy_button.pressed.connect(_on_buy_pressed)
+
+func _update_stock_display():
+	var remaining = shop.get_remaining_stock(entry_index)
+
+	if remaining == -1:
+		stock_label.text = "Stock: Unlimited"
+	else:
+		stock_label.text = "Stock: %d" % remaining
+		if remaining == 0:
+			buy_button.disabled = true
+			stock_label.text = "SOLD OUT"
+
+func _on_buy_pressed():
+	purchase_requested.emit(entry_index)
+```
+
+**Why:** Modular item entry that displays all necessary info and handles the buy button click.
+
+---
+
+#### Step 9: Create Example Creature Shop
+
+**In Godot Editor:**
+
+1. FileSystem → Right-click `resources/shops/` folder (create if needed) → Create New → Resource
+2. Search for and select `ShopResource`
+3. Save as `resources/shops/creature_shop_1.tres`
+4. In Inspector:
+   - Shop Name: "Creature Emporium"
+   - Vendor Name: "Greta the Breeder"
+   - Greeting: "Looking for a new companion? I've got just the thing!"
+5. Entries array → Add 3 elements
+6. For each entry, create new `ShopEntry`:
+
+**Entry 0 - Slime Egg:**
+- Entry Name: "Slime Egg"
+- Description: "A balanced starter creature"
+- Entry Type: CREATURE
+- Cost: 50
+- Stock: -1 (unlimited)
+- Creature Species: SLIME
+
+**Entry 1 - Scuttleguard Egg:**
+- Entry Name: "Scuttleguard Egg"
+- Description: "A tough, defensive creature"
+- Entry Type: CREATURE
+- Cost: 75
+- Stock: 3
+- Creature Species: SCUTTLEGUARD
+
+**Entry 2 - Wind Dancer Egg:**
+- Entry Name: "Wind Dancer Egg"
+- Description: "A swift and intelligent creature"
+- Entry Type: CREATURE
+- Cost: 100
+- Stock: 2
+- Creature Species: WIND_DANCER
+
+7. Save the shop resource
+
+**Why:** Creature purchases are self-contained in ShopEntry. No separate item files needed since creatures generate directly.
+
+---
+
+#### Step 10: Add Shop Opening to Game Scene (Test)
+
+**File:** `scenes/view/game_scene.gd`
+
+Add a test function to open the shop:
+
+```gdscript
+# Preload shop window and test shop
+const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
+const TEST_SHOP = preload("res://resources/shops/creature_shop_1.tres")
+
+func _input(event):
+	# Existing F5/F9 save/load code...
+
+	# TEST: Open shop with F6
+	if event.is_action_pressed("ui_text_backspace"):  # F6 is usually ui_text_backspace
+		_open_test_shop()
+
+func _open_test_shop():
+	var shop_window = SHOP_WINDOW.instantiate()
+	add_child(shop_window)
+	shop_window.setup(TEST_SHOP)
+	shop_window.popup_centered()
+```
+
+**Why:** Quick way to test the shop system. Press F6 to open shop.
+
+---
+
+### Testing Checklist
+
+After implementation:
+- [ ] Press F6 to open creature shop
+- [ ] Shop displays 3 creature types with correct info
+- [ ] Gold amount displays correctly
+- [ ] Click "Buy" button purchases creature
+- [ ] Gold is deducted
+- [ ] Creature appears in game world
+- [ ] Limited stock items decrease count
+- [ ] Sold out items become disabled
+- [ ] Can't purchase with insufficient gold
+- [ ] Close button works
+
+---
+
+### Future Enhancements
+
+1. **Inventory System:**
+   - Create PlayerInventory resource
+   - Add ItemResource instances to inventory
+   - Item shops sell ItemResources (potions, equipment, etc.)
+   - Use same ShopEntry system with entry_type = ITEM
+
+2. **Shop Features:**
+   - Daily restocking system
+   - Random shop inventories
+   - Discount events/sales
+   - Shop unlock progression
+   - Service purchases (healing, training boosts, facility upgrades)
+
+3. **Better UI:**
+   - Creature preview in shop (show stat ranges)
+   - Tooltips with detailed info
+   - Purchase animations
+   - Category tabs for large inventories
+
+4. **Vendor System:**
+   - Vendor reputation/friendship
+   - Unlock special entries through reputation
+   - Different vendors in different locations
+   - Wandering merchants with random stock
+
+---
+
+### 🎯 Previous Task: Creature Generation with Species-Based Stat Curves (COMPLETED)
+
+**Goal:** Create a system to generate creatures with randomized stats based on species profiles using distribution curves.
+
+**Design:**
+- Each species has a stat profile (base + variance)
+- Stats generated using normal distribution for natural variation
+- Centralized CreatureGenerator for consistent generation
+- Replace hardcoded creature creation with generated creatures
+
+**Species Stat Profiles:**
+```
+SCUTTLEGUARD: Tank/Defense
+- Strength: 12 ± 3  (high)
+- Agility: 6 ± 2   (low)
+- Intelligence: 8 ± 2 (medium)
+
+SLIME: Balanced
+- Strength: 8 ± 2
+- Agility: 8 ± 2
+- Intelligence: 8 ± 2
+
+WIND_DANCER: Speed/Magic
+- Strength: 6 ± 2   (low)
+- Agility: 12 ± 3  (high)
+- Intelligence: 10 ± 2 (medium-high)
+```
+
+---
+
+#### Step 1: Create CreatureGenerator Utility Class
+
+**File:** `scripts/creature_generation.gd` (NEW FILE)
+
+Create this new file with the following content:
+
+```gdscript
+# scripts/creature_generation.gd
+class_name CreatureGenerator
+
+# Species stat templates: [base_value, variance]
+# Stats are generated as: base ± variance using normal distribution
+const SPECIES_STATS = {
+	GlobalEnums.Species.SCUTTLEGUARD: {
+		"strength": [12, 3],      # Tank - High strength
+		"agility": [6, 2],        # Low agility
+		"intelligence": [8, 2]    # Medium intelligence
+	},
+	GlobalEnums.Species.SLIME: {
+		"strength": [8, 2],       # Balanced stats
+		"agility": [8, 2],
+		"intelligence": [8, 2]
+	},
+	GlobalEnums.Species.WIND_DANCER: {
+		"strength": [6, 2],       # Mage - Low strength
+		"agility": [12, 3],       # High agility
+		"intelligence": [10, 2]   # High intelligence
+	}
+}
+
+# Generate a creature with stats based on species profile
+static func generate_creature(species: GlobalEnums.Species, creature_name: String = "") -> CreatureData:
+	var creature = CreatureData.new()
+
+	# Set name (or generate random if not provided)
+	creature.creature_name = creature_name if creature_name != "" else _generate_random_name(species)
+
+	# Set species
+	creature.species = species
+
+	# Generate stats based on species profile
+	if species in SPECIES_STATS:
+		var profile = SPECIES_STATS[species]
+		creature.strength = _generate_stat(profile["strength"])
+		creature.agility = _generate_stat(profile["agility"])
+		creature.intelligence = _generate_stat(profile["intelligence"])
+	else:
+		# Fallback if species not defined
+		push_warning("No stat profile for species: %s, using defaults" % species)
+		creature.strength = 10
+		creature.agility = 10
+		creature.intelligence = 10
+
+	return creature
+
+# Generate a stat value using normal distribution
+# params: [base, variance] where stat = base ± variance
+static func _generate_stat(params: Array) -> int:
+	var base = params[0]
+	var variance = params[1]
+
+	# Use randfn for normal distribution (bell curve)
+	# randfn(mean, deviation) - most values cluster around mean
+	var value = randfn(base, variance / 2.0)  # Divide by 2 so most values stay within ± variance
+
+	# Clamp to reasonable range (1-20 for now)
+	return int(clamp(value, 1, 20))
+
+# Generate a random name based on species
+static func _generate_random_name(species: GlobalEnums.Species) -> String:
+	# Name pools per species
+	var name_prefixes = {
+		GlobalEnums.Species.SCUTTLEGUARD: ["Crunch", "Shell", "Guard", "Scuttle", "Armor"],
+		GlobalEnums.Species.SLIME: ["Goo", "Blob", "Squish", "Slip", "Ooze"],
+		GlobalEnums.Species.WIND_DANCER: ["Breeze", "Gale", "Whisper", "Zephyr", "Swift"]
+	}
+
+	var suffixes = ["", "y", "ie", "ster", "ling", "let"]
+
+	var prefixes = name_prefixes.get(species, ["Creature"])
+	var prefix = prefixes[randi() % prefixes.size()]
+	var suffix = suffixes[randi() % suffixes.size()]
+
+	return prefix + suffix
+```
+
+**Why:**
+- Simple utility class with static functions - no autoload needed
+- Uses normal distribution (randfn) for realistic stat variation
+- Each species has distinct stat tendencies (tank, balanced, mage)
+- Extensible for future species
+
+---
+
+#### Step 2: Update GameManager to Use CreatureGenerator
+
+**File:** `core/game_manager.gd`
+
+**Location:** In `initialize_new_game()` function, replace the hardcoded creature creation
+
+**Before:**
+```gdscript
+func initialize_new_game():
+	# Create player data container
+	player_data = PlayerData.new()
+	player_data.gold = 100
+
+	# Create starter creature with proper species
+	var starter_creature = CreatureData.new()
+	starter_creature.creature_name = "Scuttle"
+	starter_creature.species = GlobalEnums.Species.SCUTTLEGUARD
+	starter_creature.strength = 10
+	starter_creature.agility = 8
+	starter_creature.intelligence = 6
+
+	player_data.creatures.append(starter_creature)
+	SignalBus.creature_added.emit(starter_creature)
+
+	starter_creature = CreatureData.new()
+	starter_creature.creature_name = "Squish"
+	starter_creature.species = GlobalEnums.Species.SLIME
+	starter_creature.strength = 10
+	starter_creature.agility = 8
+	starter_creature.intelligence = 6
+
+	player_data.creatures.append(starter_creature)
+
+	# Use SignalBus instead of local signals
+	SignalBus.player_data_initialized.emit()
+	SignalBus.creature_added.emit(starter_creature)
+	SignalBus.gold_changed.emit(player_data.gold)
+
+	create_test_facility()
+```
+
+**After:**
+```gdscript
+func initialize_new_game():
+	# Create player data container
+	player_data = PlayerData.new()
+	player_data.gold = 100
+
+	# Generate starter creatures using CreatureGenerator
+	var starter_1 = CreatureGenerator.generate_creature(
+		GlobalEnums.Species.SCUTTLEGUARD,
+		"Scuttle"  # Optional: keep specific name or use "" for random
+	)
+	player_data.creatures.append(starter_1)
+	SignalBus.creature_added.emit(starter_1)
+
+	var starter_2 = CreatureGenerator.generate_creature(
+		GlobalEnums.Species.SLIME,
+		"Squish"  # Optional: keep specific name or use "" for random
+	)
+	player_data.creatures.append(starter_2)
+	SignalBus.creature_added.emit(starter_2)
+
+	# Use SignalBus instead of local signals
+	SignalBus.player_data_initialized.emit()
+	SignalBus.gold_changed.emit(player_data.gold)
+
+	create_test_facility()
+```
+
+**Why:**
+- Replaces manual stat assignment with generated stats
+- Makes adding new creatures easier (one line instead of 6+)
+- Stats now follow species-appropriate curves
+
+---
+
+#### Step 3: Add Helper Function to GameManager (Optional but Recommended)
+
+**File:** `core/game_manager.gd`
+
+Add this function at the bottom of the file:
+
+```gdscript
+# Helper function to add a generated creature to player's collection
+func add_generated_creature(species: GlobalEnums.Species, creature_name: String = "") -> CreatureData:
+	var creature = CreatureGenerator.generate_creature(species, creature_name)
+	player_data.creatures.append(creature)
+	SignalBus.creature_added.emit(creature)
+	return creature
+```
+
+**Why:** Provides a convenient way for other systems (shops, breeding, rewards) to add creatures.
+
+---
+
+### Testing the System
+
+After implementation, test by:
+
+1. **Run the game** - Check output console for starter creature stats
+2. **Verify stat ranges** - Stats should vary but follow species patterns:
+   - Scuttleguard: Higher strength, lower agility
+   - Slime: Balanced stats around 8
+   - Wind Dancer: Higher agility/int, lower strength
+3. **Restart multiple times** - Stats should be different each time
+4. **Check creature stats popup** - Click creatures to see generated stats
+
+**Console commands for testing** (optional - add to debug menu later):
+```gdscript
+# Test generating 10 creatures of each type to see stat distribution
+for i in 10:
+    var creature = CreatureGenerator.generate_creature(GlobalEnums.Species.SCUTTLEGUARD)
+    print("%s: STR=%d AGI=%d INT=%d" % [creature.creature_name, creature.strength, creature.agility, creature.intelligence])
+```
+
+---
+
+### Future Enhancements
+
+Once basic generation works, consider:
+
+1. **Rarity Tiers:** Add stat multipliers (Common, Rare, Legendary)
+2. **Breeding:** Combine parent stats with mutation
+3. **Level System:** Stats increase over time/training
+4. **Trait System:** Special abilities based on stat thresholds
+5. **Name Generator:** More sophisticated procedural names
+6. **Stat Caps:** Per-species maximum stats
 
 ---
 

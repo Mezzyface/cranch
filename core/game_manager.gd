@@ -24,33 +24,34 @@ func initialize_new_game():
 	player_data = PlayerData.new()
 	player_data.gold = 100
 
-	# Create starter creature with proper species
-	var starter_creature = CreatureData.new()
-	starter_creature.creature_name = "Scuttle"
-	starter_creature.species = GlobalEnums.Species.SCUTTLEGUARD
-	starter_creature.strength = 10
-	starter_creature.agility = 8
-	starter_creature.intelligence = 6
-	
-	player_data.creatures.append(starter_creature)
-	SignalBus.creature_added.emit(starter_creature)
-	
-	starter_creature = CreatureData.new()
-	starter_creature.creature_name = "Squish"
-	starter_creature.species = GlobalEnums.Species.SLIME
-	starter_creature.strength = 10
-	starter_creature.agility = 8
-	starter_creature.intelligence = 6
-	
-	player_data.creatures.append(starter_creature)
+	# Generate starter creatures using CreatureGenerator
+	var starter_1 = CreatureGenerator.generate_creature(
+		GlobalEnums.Species.SCUTTLEGUARD,
+		"Scuttle"  # Optional: keep specific name or use "" for random
+	)
+	player_data.creatures.append(starter_1)
+	SignalBus.creature_added.emit(starter_1)
+
+	var starter_2 = CreatureGenerator.generate_creature(
+		GlobalEnums.Species.SLIME,
+		"Squish"  # Optional: keep specific name or use "" for random
+	)
+	player_data.creatures.append(starter_2)
+	SignalBus.creature_added.emit(starter_2)
 
 	# Use SignalBus instead of local signals
 	SignalBus.player_data_initialized.emit()
-	SignalBus.creature_added.emit(starter_creature)
 	SignalBus.gold_changed.emit(player_data.gold)
-	
+
 	create_test_facility()
 
+# Helper function to add a generated creature to player's collection
+func add_generated_creature(species: GlobalEnums.Species, creature_name: String = "") -> CreatureData:
+	var creature = CreatureGenerator.generate_creature(species, creature_name)
+	player_data.creatures.append(creature)
+	SignalBus.creature_added.emit(creature)
+	return creature
+	
 func advance_week():
 	current_week += 1
 	print("Advancing to week ", current_week)
