@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://3qcsomn5nrxg"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_5l8wy"]
+
+[resource]
+script = ExtResource("1_5l8wy")
+tag_id = "regenerative"
+tag_name = "Regenerative"
+description = "Natural healing and recovery abilities"
+categories = Array[int]([0])
+color = Color(0.3, 0.9, 0.3, 1)

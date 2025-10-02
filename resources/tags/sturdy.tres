@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://c1i78wlk0w3ji"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_8lce3"]
+
+[resource]
+script = ExtResource("1_8lce3")
+tag_id = "sturdy"
+tag_name = "Sturdy"
+description = "Robust constitution and resilience"
+categories = Array[int]([0])
+color = Color(0.6, 0.5, 0.4, 1)

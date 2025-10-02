@@ -16,6 +16,8 @@ signal gold_changed(new_amount: int)
 signal creature_added(creature: CreatureData)
 signal creature_removed(creature: CreatureData)
 signal creature_stats_changed(creature: CreatureData)
+signal creature_tag_added(creature: CreatureData, tag_id: String)
+signal creature_tag_removed(creature: CreatureData, tag_id: String)
 
 # UI Events
 signal show_debug_popup_requested

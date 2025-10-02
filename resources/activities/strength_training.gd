@@ -14,6 +14,9 @@ func run_activity(creature: CreatureData) -> void:
 	creature.strength += strength_gain
 	print(creature.creature_name, " gained ", strength_gain, " strength! (", old_strength, " -> ", creature.strength, ")")
 
+	# Auto-grant training tags if creature now qualifies
+	TagManager.auto_grant_training_tags(creature)
+
 	# Emit signal through SignalBus if needed
 	if SignalBus.has_signal("creature_stats_changed"):
 		SignalBus.creature_stats_changed.emit(creature)

@@ -71,17 +71,20 @@ func populate_creature_grid():
 
 func create_creature_button(creature: CreatureData) -> Button:
 	var button = Button.new()
-	button.custom_minimum_size = Vector2(180, 80)
+	button.custom_minimum_size = Vector2(180, 100)  # Taller to fit tags
 	button.toggle_mode = true
 
-	# Button text with creature info
+	# Button text with creature info and tags
 	var species_name = GlobalEnums.Species.keys()[creature.species]
-	button.text = "%s\n%s\nSTR:%d AGI:%d INT:%d" % [
+	var tags_display = creature.get_tags_display()
+
+	button.text = "%s\n%s\nSTR:%d AGI:%d INT:%d\n%s" % [
 		creature.creature_name,
 		species_name,
 		creature.strength,
 		creature.agility,
-		creature.intelligence
+		creature.intelligence,
+		tags_display
 	]
 
 	# All creatures shown already match, so make them all green

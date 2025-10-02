@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://qxhtat47w4l8"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_r054e"]
+
+[resource]
+script = ExtResource("1_r054e")
+tag_id = "disciplined"
+tag_name = "Disciplined"
+description = "Well-rounded training across all areas"
+categories = Array[int]([1])
+color = Color(0.6, 0.6, 0.6, 1)
+training_requirement = {
+"threshold": 12,
+"type": "all_stats_threshold"
+}

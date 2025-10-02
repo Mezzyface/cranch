@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://bgvb7cosy3am1"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_bsm7h"]
+
+[resource]
+script = ExtResource("1_bsm7h")
+tag_id = "swift"
+tag_name = "Swift"
+description = "Exceptional speed and agility"
+categories = Array[int]([0, 1])
+color = Color(0.9, 0.9, 0.3, 1)
+training_requirement = {
+"stat": "agility",
+"threshold": 20,
+"type": "stat_threshold"
+}

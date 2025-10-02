@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://f82ylouiw2sd"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_hid0i"]
+
+[resource]
+script = ExtResource("1_hid0i")
+tag_id = "battle_hardened"
+tag_name = "Battle-Hardened"
+description = "Experienced in combat and challenges"
+categories = Array[int]([1])
+color = Color(0.9, 0.3, 0.3, 1)
+training_requirement = {
+"stat": "strength",
+"threshold": 18,
+"type": "stat_threshold"
+}

@@ -54,6 +54,10 @@ text = "Agility: [value]"
 layout_mode = 2
 text = "Intelligence: [value]"
 
+[node name="TagsLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Tags: None"
+
 [node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Close"

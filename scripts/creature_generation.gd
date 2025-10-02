@@ -44,6 +44,11 @@ static func generate_creature(species: GlobalEnums.Species, creature_name: Strin
 		creature.agility = 10
 		creature.intelligence = 10
 
+	# Assign species-specific tags
+	var species_tags = TagManager.get_species_tags(species)
+	for tag in species_tags:
+		TagManager.add_tag(creature, tag, true)  # silent=true during creation
+
 	return creature
 
 # Generate a stat value using normal distribution

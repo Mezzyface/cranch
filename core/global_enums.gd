@@ -65,6 +65,15 @@ enum ShopEntryType {
 	SERVICE       # Purchase triggers an immediate action
 }
 
+# Tag categories (tags can belong to multiple)
+enum TagCategory {
+	SPECIES,   # Innate tags from species
+	TRAINING,  # Earned through activities
+	BREEDING,  # Inherited from parents
+	SPECIAL,   # Event/quest rewards
+	NEGATIVE   # Debuffs/challenges
+}
+
 func get_animation_name(direction: FacingDirection) -> String:
 	return FACING_ANIMATION_NAMES.get(direction, "idle")
 	

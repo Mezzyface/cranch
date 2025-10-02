@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TagResource" load_steps=2 format=3 uid="uid://bo4i28iarjn5b"]
+
+[ext_resource type="Script" uid="uid://faooyd5qr2fg" path="res://resources/tag_resource.gd" id="1_mp70p"]
+
+[resource]
+script = ExtResource("1_mp70p")
+tag_id = "agile_expert"
+tag_name = "Agile Expert"
+description = "Master of speed and dexterity"
+categories = Array[int]([1])
+color = Color(0.9, 0.7, 0.2, 1)
+training_requirement = {
+"stat": "agility",
+"threshold": 18,
+"type": "stat_threshold"
+}
