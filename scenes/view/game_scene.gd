@@ -12,6 +12,11 @@ const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_sel
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
 
+# Preload facility resources
+const STRENGTH_FACILITY = preload("res://resources/facilities/strength_training.tres")
+const AGILITY_FACILITY = preload("res://resources/facilities/agility_training.tres")
+const INTELLIGENCE_FACILITY = preload("res://resources/facilities/intelligence_training.tres")
+
 # Test shop - will be created manually in Godot Editor
 var test_shop: ShopResource
 
@@ -319,28 +324,32 @@ func _create_facility_slots():
 	_place_test_facility_in_slot()
 
 func _place_test_facility_in_slot():
-	# Get first slot from scene tree
-	var first_slot = $FacilitySlot1
-	if first_slot:
+	# Load the three training facilities into slots
+	var card_scene = preload("res://scenes/card/facility_card.tscn")
 
-		# Create test facility card
-		var training_facility = FacilityResource.new()
-		training_facility.facility_name = "Training Grounds"
-		training_facility.description = "Train your creatures"
-		training_facility.max_creatures = 2
+	# Slot 1: Strength Training
+	var slot1 = $FacilitySlot1
+	if slot1:
+		var card1 = card_scene.instantiate()
+		card1.facility_resource = STRENGTH_FACILITY
+		card1.add_to_group("facility_cards")
+		slot1.place_facility(card1)
 
-		# Add a strength training activity
-		var strength_activity = STRENGTH_TRAINING.new()
-		strength_activity.strength_gain = 5 
-		training_facility.activities.append(strength_activity)
+	# Slot 2: Agility Training
+	var slot2 = $FacilitySlot2
+	if slot2:
+		var card2 = card_scene.instantiate()
+		card2.facility_resource = AGILITY_FACILITY
+		card2.add_to_group("facility_cards")
+		slot2.place_facility(card2)
 
-		# Create and place card
-		var card_scene = preload("res://scenes/card/facility_card.tscn")
-		var card = card_scene.instantiate()
-		card.facility_resource = training_facility
-		card.add_to_group("facility_cards")
-
-		first_slot.place_facility(card)
+	# Slot 3: Intelligence Training
+	var slot3 = $FacilitySlot3
+	if slot3:
+		var card3 = card_scene.instantiate()
+		card3.facility_resource = INTELLIGENCE_FACILITY
+		card3.add_to_group("facility_cards")
+		slot3.place_facility(card3)
 
 func _on_facility_placed(facility_card: FacilityCard, slot: FacilitySlot):
 	print("Facility placed: ", facility_card.facility_resource.facility_name, " in slot ", slot.slot_index)
