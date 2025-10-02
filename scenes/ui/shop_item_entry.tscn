@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3 uid="uid://c3lr4w5x6y708"]
+
+[ext_resource type="Script" uid="uid://bb25ydt6cr721" path="res://scenes/ui/shop_item_entry.gd" id="1_shop_item_entry"]
+
+[node name="ShopItemEntry" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 80)
+theme_type_variation = &"DefaultPanelContainer"
+script = ExtResource("1_shop_item_entry")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="IconRect" type="TextureRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemNameLabel" type="Label" parent="HBoxContainer/InfoVBox"]
+layout_mode = 2
+text = "Item Name"
+
+[node name="DescriptionLabel" type="Label" parent="HBoxContainer/InfoVBox"]
+modulate = Color(0.7, 0.7, 0.7, 1)
+layout_mode = 2
+text = "Description"
+
+[node name="StockLabel" type="Label" parent="HBoxContainer/InfoVBox"]
+layout_mode = 2
+text = "Stock: Unlimited"
+
+[node name="BuyButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Buy (50g)"

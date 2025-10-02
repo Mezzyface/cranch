@@ -15,7 +15,10 @@
         "--registry=/mcp/registry.yaml",
         "--tools-config=/mcp/tools.yaml",
         "--transport=stdio"
-      ]
+      ],
+      "env": {
+        "OBSIDIAN_HOST": "http://127.0.0.1:27123/"
+      }
     }
   }
 }

@@ -59,6 +59,12 @@ enum Emote {
 	ANGRY
 }
 
+enum ShopEntryType {
+	CREATURE,     # Purchase generates a creature directly
+	ITEM,         # Purchase gives an item to inventory
+	SERVICE       # Purchase triggers an immediate action
+}
+
 func get_animation_name(direction: FacingDirection) -> String:
 	return FACING_ANIMATION_NAMES.get(direction, "idle")
 	

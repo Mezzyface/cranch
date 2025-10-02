@@ -18,6 +18,7 @@ func _create_managers():
 
 func _connect_signals():
 	SignalBus.game_started.connect(initialize_new_game)
+	SignalBus.gold_change_requested.connect(_on_gold_change_requested)
 	
 func initialize_new_game():
 	# Create player data container
@@ -84,12 +85,26 @@ func create_test_facility() -> void:
 	training_facility.activities.append(strength_activity)
 	training_facility.activities.append(transform_activity)
 
-	# Test on first creature
-	if player_data and player_data.creatures.size() > 0:
-		print("Testing facility on ", player_data.creatures[0].creature_name)
-		training_facility.run_all_activities(player_data.creatures[0])
-		
 func get_active_creature() -> CreatureData:
 	if player_data and player_data.creatures.size() > 0:
 		return player_data.creatures[0]
 	return null
+
+func _on_gold_change_requested(amount: int):
+	if not player_data:
+		push_error("Cannot change gold: no player_data")
+		return
+
+	player_data.gold += amount
+
+	# Prevent negative gold
+	if player_data.gold < 0:
+		player_data.gold = 0
+
+	# Emit update signal for UI
+	SignalBus.gold_changed.emit(player_data.gold)
+
+	if amount > 0:
+		print("Gained %d gold (Total: %d)" % [amount, player_data.gold])
+	else:
+		print("Spent %d gold (Total: %d)" % [-amount, player_data.gold])

@@ -81,15 +81,15 @@ godot --headless --export-release "Windows Desktop" build/game.exe
 - Two test creatures (Scuttle the Scuttleguard, Squish the Slime)
 
 **Last Task Completed:**
-- Refactored save/load from GameManager to dedicated SaveManager singleton
+- Creature generation system with species-based stat curves
+- Resource-based shop system (in DEVELOPMENT_GUIDE.md)
 
 **Ready for Next Features:**
-- Week advancement system
-- Creature training/facilities
-- Resource management (gold spending)
-- Activity system
-- Battle system
+- Shop system implementation (planned in DEVELOPMENT_GUIDE.md)
 - UI/HUD improvements
+- Battle system
+- Breeding/genetics system
+- More facilities and activities
 
 ## Working with This Project - IMPORTANT
 
@@ -133,7 +133,7 @@ This project uses a **guided development approach** with a living documentation 
 ### Current Architecture Summary
 
 #### Autoload Order (Important!)
-1. **GlobalEnums**: Game-wide enumerations (Species, CreatureState, FacingDirection, Emote)
+1. **GlobalEnums**: Game-wide enumerations (Species, CreatureState, FacingDirection, Emote, ShopEntryType)
 2. **SignalBus**: Central signal hub - all inter-system communication
 3. **GameManager**: Game state, player data, week progression
 4. **SaveManager**: Handles all save/load operations
@@ -146,6 +146,9 @@ This project uses a **guided development approach** with a living documentation 
 - State machine (IDLE/WALKING)
 - Directional animations (walk-up/down/left/right)
 - Random emote bubbles (15 types)
+- Click detection for stats popup
+- Drag/drop system via DragDropComponent
+- Species-based procedural generation with stat curves
 
 **Save/Load System:**
 - SaveManager singleton handles persistence
@@ -153,10 +156,21 @@ This project uses a **guided development approach** with a living documentation 
 - F5 to save, F9 to load
 - Main menu continue button integration
 
+**Facility System:**
+- Drag/drop creatures into facility slots
+- Multi-slot facilities with capacity limits
+- Activity execution on week advancement
+- FacilityManager tracks assignments
+- Facility slot unlocking (costs gold)
+- FacilityCard scene for UI display
+
 **Data Architecture:**
 - PlayerData: Resource containing gold and creatures array
 - CreatureData: Resource with name, species, stats
 - SaveGame: Resource for serializing game state
+- FacilityResource: Defines facility behavior and activities
+- ActivityResource: Base class for stat modifications and transformations
+- CreatureGenerator: Static utility for procedural creature generation
 
 #### Key Patterns
 
@@ -180,8 +194,13 @@ This project uses a **guided development approach** with a living documentation 
 - Signal definitions: `core/signal_bus.gd`
 - Game state: `core/game_manager.gd`
 - Save operations: `core/save_manager.gd`
+- Facility assignments: `core/managers/facility_manager.gd`
+- Shop logic: `scripts/shop_manager.gd` (non-autoload utility)
 - Data structures: `resources/` directory
+- Creature generation: `scripts/creature_generation.gd`
+- Drag/drop system: `scripts/drag_drop_component.gd`
 - Creature logic: `scenes/entities/creature_display.gd`
+- Facility UI: `scenes/card/facility_card.gd`, `scenes/card/facility_slot.gd`
 - Main game scene: `scenes/view/game_scene.gd`
 
 ### Current Game Flow
@@ -216,4 +235,16 @@ This project uses a **guided development approach** with a living documentation 
 2. Emit from source system
 3. Connect in receiving systems
 4. Document in DEVELOPMENT_GUIDE
+
+**Generate a new creature:**
+1. Use `CreatureGenerator.generate_creature(species, optional_name)`
+2. Or use `GameManager.add_generated_creature(species, optional_name)` to add directly to player data
+3. Species stat curves defined in `scripts/creature_generation.gd`
+
+**Add drag/drop to new UI element:**
+1. Create DragDropComponent instance
+2. Configure drag_type, can_drag, can_accept_drops
+3. Set proper z_index (100 for drop zones, 101+ for drag sources)
+4. Connect signals: drag_started, drag_ended, drop_received
+5. See DEVELOPMENT_GUIDE.md for detailed patterns
 

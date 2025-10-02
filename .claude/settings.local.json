@@ -3,7 +3,10 @@
     "allow": [
       "mcp__mcp-toolkit-gateway__get_godot_context",
       "mcp__mcp-toolkit-gateway__search_documentation",
-      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" status --short)"
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" status --short)",
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" add DEVELOPMENT_GUIDE.md)",
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" commit -m \"$(cat <<''EOF''\nUpdate DEVELOPMENT_GUIDE with completed work\n\n- Documented FacilitySlot scene conversion\n- Documented drop zone bug fix (queue_free vs free)\n- Cleared implementation steps section\n- Moved completed work to history\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" push)"
     ]
   },
   "enableAllProjectMcpServers": true,
