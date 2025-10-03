@@ -6,6 +6,10 @@ class_name FacilityManager
 var facility_assignments: Dictionary = {}  # {facility: [creatures]}
 var active_facilities: Array[FacilityResource] = []
 
+func _ready():
+	# Listen for creature removal to auto-unassign from facilities
+	SignalBus.creature_removed.connect(_on_creature_removed)
+
 func register_assignment(creature: CreatureData, facility: FacilityResource):
 	# Store the assignment but don't run activities yet
 	if not facility_assignments.has(facility):
@@ -52,3 +56,12 @@ func get_facility_for_creature(creature: CreatureData) -> FacilityResource:
 func clear_all_assignments():
 	facility_assignments.clear()
 	active_facilities.clear()
+
+func _on_creature_removed(creature: CreatureData):
+	# Automatically unassign creature from any facilities when removed
+	for facility in facility_assignments.keys():
+		if creature in facility_assignments[facility]:
+			unregister_assignment(creature, facility)
+			# Emit signal so FacilityCard can update its visual display
+			SignalBus.facility_unassigned.emit(creature, facility)
+			print("Auto-unassigned removed creature from facility: ", facility.facility_name)
