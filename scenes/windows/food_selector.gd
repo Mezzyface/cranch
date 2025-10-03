@@ -2,9 +2,9 @@ extends Panel
 
 var target_creature: CreatureData
 
-@onready var title_label = $VBoxContainer/Label
-@onready var food_list = $VBoxContainer/ScrollContainer/VBoxContainer
-@onready var cancel_button = $VBoxContainer/CancelButton
+@onready var title_label = $MarginContainer/VBoxContainer/Label
+@onready var food_list = $MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer
+@onready var cancel_button = $MarginContainer/VBoxContainer/CancelButton
 
 func _ready():
 	cancel_button.pressed.connect(_on_cancel)
