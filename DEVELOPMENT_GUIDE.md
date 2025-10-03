@@ -169,6 +169,47 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Implementation Steps Section
 
+**Current Status**: All planned features implemented and working! Ready for next feature.
+
+---
+
+## Completed Implementation History
+
+### ✅ Food/Inventory System (Completed 2025-01-03)
+
+**What Was Implemented:**
+- Complete item/inventory system with ItemResource and InventoryManager
+- Food requirement: creatures must have food assigned before week advancement
+- Food assignment UI: clickable buttons below facility cards
+- Food selector popup: shows available food from inventory
+- Food consumption: removes food when training executes
+- Save/load persistence for inventory
+- Shop integration for purchasing food items
+
+**Key Architecture Decisions:**
+1. **Food buttons rendered outside card hierarchy**: To avoid z-index/mouse-filter conflicts with drag components
+2. **InventoryManager as instance (not autoload)**: Initialized in GameManager with player_data reference
+3. **Dynamic food button positioning**: Uses `_process()` to follow facility cards
+4. **Same-facility drag optimization**: Calls `update_slots()` instead of add/remove to prevent sprite disappearance
+
+**Bug Fixes During Implementation:**
+- Fixed food buttons blocked by drag components → moved outside card hierarchy
+- Fixed sprite disappearing when dragging between slots → detect same-facility and use update_slots()
+- Fixed button visibility → use `show()` instead of `visible = true`
+
+**Files Created:**
+- `core/managers/inventory_manager.gd` (98 lines)
+- `scenes/windows/food_selector.gd` + `.tscn`
+- `resources/items/food_basic.tres` and `food_premium.tres`
+
+**Signals Added:**
+- `item_added`, `item_removed`, `inventory_updated`
+- `creature_food_assigned`, `creature_food_unassigned`
+- `food_selection_requested`
+- `week_advancement_blocked`
+
+---
+
 ### 🐛 Bug Fix: Food Slot Not Appearing After Creature Assignment
 
 **Issue**: When dropping a creature into a facility slot, the food slot button remains invisible.
