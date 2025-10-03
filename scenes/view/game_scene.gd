@@ -63,8 +63,9 @@ func _connect_signals():
 	SignalBus.quest_turn_in_started.connect(_on_quest_turn_in_started)
 
 func _on_player_data_ready():
-	# Show debug popup with player data
-	show_debug_popup()
+	# Debug popup disabled for now
+	# show_debug_popup()
+	pass
 
 func _on_creature_added(creature: CreatureData):
 	print("_on_creature_added")
