@@ -175,6 +175,43 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Completed Implementations
 
+### ✅ Recent Bug Fixes & UI Improvements
+
+**Quest Creature Turn-In Bug Fix:**
+- Fixed creatures not being removed from facilities when turned in for quests
+- FacilityManager now listens to `creature_removed` signal
+- FacilityCard listens to `facility_unassigned` signal for visual updates
+- Signal-driven architecture ensures proper cleanup
+
+**Auto-Place Facility on Unlock:**
+- Created BalancedTrainingActivity (+3 to all stats per week)
+- Added `unlock_facility` export variable to FacilitySlot
+- Slot 4 auto-places "Balanced Training Dojo" when unlocked
+- EditorScript updated to generate 4 facility types
+
+**Quest Creature Selector UI:**
+- Enabled text wrapping (AUTOWRAP_WORD_SMART) for long tag lists
+- Increased button size to 220x140 for better readability
+- Reduced grid columns from 4 to 3 for more space
+- Tags now display properly without extending off screen
+
+**Debug Popup Disabled:**
+- Removed automatic debug popup on game start
+- Can be re-enabled by uncommenting in game_scene.gd
+
+**Files Modified:**
+- `core/managers/facility_manager.gd` - Auto-unassign on creature removal
+- `scenes/card/facility_card.gd` - Listen to facility_unassigned signal
+- `scenes/card/facility_slot.gd` - Auto-place facility on unlock
+- `scenes/windows/quest_creature_selector.gd/.tscn` - Text wrapping and layout
+- `scenes/view/game_scene.gd` - Disabled debug popup, loaded 3 facilities into slots
+
+**Files Created:**
+- `resources/activities/balanced_training.gd` - Balanced training activity
+- `resources/facilities/balanced_training.tres` - 4th facility resource
+
+---
+
 ### ✅ Additional Training Facilities (Agility & Intelligence)
 **Implemented new training facilities for all stat types:**
 
