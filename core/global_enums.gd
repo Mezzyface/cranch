@@ -74,6 +74,14 @@ enum TagCategory {
 	NEGATIVE   # Debuffs/challenges
 }
 
+enum ItemType {
+	FOOD,
+	EQUIPMENT,
+	CONSUMABLE,
+	MATERIAL,
+	SPECIAL
+}
+
 func get_animation_name(direction: FacingDirection) -> String:
 	return FACING_ANIMATION_NAMES.get(direction, "idle")
 	

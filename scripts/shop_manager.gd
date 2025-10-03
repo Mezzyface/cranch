@@ -47,11 +47,12 @@ static func _purchase_creature(entry: ShopEntry):
 	print("Purchased creature: %s (%s)" % [creature.creature_name, entry.entry_name])
 
 static func _purchase_item(entry: ShopEntry):
-	# TODO: Add to player inventory when item system exists
-	if entry.item:
-		print("Purchased item: %s" % entry.item.item_name)
-	else:
-		push_error("ShopEntry has ITEM type but no ItemResource assigned!")
+	# Add item to inventory
+	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
+		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
+		return
+
+	print("Purchased item: ", entry.item_id)
 
 static func _purchase_service(entry: ShopEntry):
 	# TODO: Trigger service action (healing, training boost, etc)

@@ -4,6 +4,7 @@ class_name SaveGame
 @export var gold: int = 0
 @export var current_week: int = 1
 @export var creatures: Array[CreatureData] = []
+@export var inventory: Dictionary = {}
 
 # Quest progress
 @export var active_quest_ids: Array[String] = []

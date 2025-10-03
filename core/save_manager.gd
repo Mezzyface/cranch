@@ -8,6 +8,7 @@ func save_game() -> bool:
 	save_data.gold = GameManager.player_data.gold
 	save_data.current_week = GameManager.current_week
 	save_data.creatures = GameManager.player_data.creatures.duplicate()
+	save_data.inventory = GameManager.player_data.inventory.duplicate(true)
 	save_data.active_quest_ids = GameManager.quest_manager.active_quests.duplicate()
 	save_data.completed_quest_ids = GameManager.quest_manager.completed_quests.duplicate()
 	save_data.save_date = Time.get_datetime_string_from_system()
@@ -38,10 +39,16 @@ func load_game() -> bool:
 	GameManager.player_data = PlayerData.new()
 	GameManager.player_data.gold = save_data.gold
 	GameManager.player_data.creatures = save_data.creatures.duplicate()
+	GameManager.player_data.inventory = save_data.inventory.duplicate(true)
+
+	# Reinitialize inventory manager after load
+	GameManager.inventory_manager = InventoryManager.new(GameManager.player_data)
 
 	# Restore quest progress
 	GameManager.quest_manager.active_quests = save_data.active_quest_ids.duplicate()
 	GameManager.quest_manager.completed_quests = save_data.completed_quest_ids.duplicate()
+
+	SignalBus.inventory_updated.emit()
 
 	print("Game loaded from: ", save_data.save_date)
 	SignalBus.game_loaded.emit()

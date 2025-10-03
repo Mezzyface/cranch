@@ -8,6 +8,7 @@ const CREATURE_STATS_POPUP:PackedScene = preload("res://scenes/windows/creature_
 const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
 const QUEST_WINDOW = preload("res://scenes/windows/quest_window.tscn")
 const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_selector.tscn")
+const FOOD_SELECTOR = preload("res://scenes/windows/food_selector.tscn")
 
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
@@ -61,6 +62,8 @@ func _connect_signals():
 	SignalBus.creature_removed.connect(_on_creature_removed)
 	SignalBus.creature_clicked.connect(_on_creature_clicked)
 	SignalBus.quest_turn_in_started.connect(_on_quest_turn_in_started)
+	SignalBus.food_selection_requested.connect(_on_food_selection_requested)
+	SignalBus.week_advancement_blocked.connect(_on_week_advancement_blocked)
 
 func _on_player_data_ready():
 	# Debug popup disabled for now
@@ -449,3 +452,17 @@ func _on_quest_turn_in_started(quest: QuestResource):
 	selector.name = "QuestCreatureSelector"
 	add_child(selector)
 	selector.setup(quest)
+
+func _on_food_selection_requested(creature: CreatureData):
+	var selector = FOOD_SELECTOR.instantiate()
+	add_child(selector)
+	selector.setup(creature)
+
+func _on_week_advancement_blocked(reason: String, creatures: Array):
+	print("⚠️ Cannot advance week: %s" % reason)
+	for creature in creatures:
+		if creature is CreatureData:
+			print("  - %s needs food" % creature.creature_name)
+
+	# TODO: Show popup with creature list and message
+	# For now, visual feedback: flash the facility cards with red tint

@@ -11,6 +11,7 @@ class_name FacilityCard
 var current_slot: FacilitySlot = null
 var assigned_creatures: Array[CreatureData] = []
 var is_hover: bool = false
+var food_slot_buttons: Array[Button] = []
 
 const DragDropComponent = preload("res://scripts/drag_drop_component.gd")
 
@@ -27,6 +28,10 @@ func _ready():
 
 	# Listen for creatures being unassigned from facilities
 	SignalBus.facility_unassigned.connect(_on_facility_unassigned)
+
+	# Listen for food assignment changes
+	SignalBus.creature_food_assigned.connect(_on_food_assigned)
+	SignalBus.creature_food_unassigned.connect(_on_food_unassigned)
 
 	_setup_facility_card_dragging()  # Enable facility card dragging (must be before slots are populated)
 
@@ -62,6 +67,44 @@ func setup_facility(facility: FacilityResource):
 		slot_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block mouse events
 		slot_container.add_child(slot_bg)
 		slot_bg.show_behind_parent = true
+
+	# Create food button row OUTSIDE the card hierarchy (as sibling to card)
+	# This ensures it's not affected by card's mouse filtering or drag components
+	var food_button_container = HBoxContainer.new()
+	food_button_container.name = "FoodButtonRow_" + facility.facility_name
+	food_button_container.mouse_filter = Control.MOUSE_FILTER_PASS  # Let buttons handle clicks
+
+	# Add as sibling to this card (add to card's parent)
+	var card_parent = get_parent()
+	if card_parent:
+		card_parent.add_child(food_button_container)
+		food_button_container.z_index = 300  # Above everything
+	else:
+		# Fallback: add to scene root
+		get_tree().root.add_child(food_button_container)
+		food_button_container.z_index = 300
+
+	for i in range(facility.max_creatures):
+		var food_button = Button.new()
+		food_button.name = "FoodSlotButton_" + str(i)
+		food_button.custom_minimum_size = Vector2(60, 25)
+		food_button.text = "+"
+		food_button.modulate = Color.RED
+		food_button.visible = false  # Initially hidden
+		food_button_container.add_child(food_button)
+		food_slot_buttons.append(food_button)
+
+	# Store reference to container for positioning
+	set_meta("food_button_container", food_button_container)
+
+func _process(_delta):
+	# Update food button container position to stay below the card
+	if has_meta("food_button_container"):
+		var food_container = get_meta("food_button_container")
+		if food_container and is_instance_valid(food_container):
+			# Position below the card's bottom edge
+			var card_bottom = global_position + Vector2(0, size.y)
+			food_container.global_position = card_bottom + Vector2(20, 5)  # Offset: 20px right, 5px down
 
 func _on_mouse_entered():
 	is_hover = true
@@ -126,6 +169,18 @@ func assign_creature(creature: CreatureData, source_node: Node = null):
 
 func assign_creature_from_drag(creature: CreatureData, drag_data: Dictionary):
 	"""Assign a creature from drag data, handling removal from source facility if needed"""
+	# Check if dragging within the same facility
+	var source_node = drag_data.get("source_node")
+	var old_facility = drag_data.get("facility_card")
+	var is_same_facility = (old_facility == self)
+
+	if is_same_facility and source_node is AnimatedSprite2D:
+		# Moving within same facility - just refresh display
+		# The creature is already in assigned_creatures, no need to add/remove
+		update_slots()
+		return true
+
+	# Different facility or from world
 	if can_accept_creature(creature):
 		assigned_creatures.append(creature)
 
@@ -137,17 +192,13 @@ func assign_creature_from_drag(creature: CreatureData, drag_data: Dictionary):
 			GameManager.facility_manager.register_assignment(creature, facility_resource)
 
 		# Handle removing from source
-		var source_node = drag_data.get("source_node")
 		if source_node:
 			if source_node is CreatureDisplay:
 				# From world - free the creature display
 				source_node.queue_free()
-			elif source_node is AnimatedSprite2D:
-				# From facility (same or different) - use the facility_card reference in drag data
-				var old_facility = drag_data.get("facility_card")
-				if old_facility and old_facility is FacilityCard:
-					# Remove from source facility (works for same facility too)
-					old_facility.remove_creature_by_sprite(source_node)
+			elif source_node is AnimatedSprite2D and old_facility and old_facility is FacilityCard:
+				# Remove from different facility
+				old_facility.remove_creature_by_sprite(source_node)
 
 		# Emit signal
 		SignalBus.facility_assigned.emit(creature, facility_resource)
@@ -223,6 +274,20 @@ func _add_creature_sprite(creature: CreatureData, slot_index: int):
 	# Add as sibling to FacilityDrag (as child of card, not slot)
 	add_child(drag_component)
 
+	# Show food button for this slot
+	if slot_index < food_slot_buttons.size():
+		var food_button = food_slot_buttons[slot_index]
+		food_button.show()
+		food_button.text = "+"
+		food_button.modulate = Color.RED
+
+		# Disconnect previous connections
+		for connection in food_button.pressed.get_connections():
+			food_button.pressed.disconnect(connection.callable)
+
+		# Connect to creature
+		food_button.pressed.connect(_on_food_slot_pressed.bind(creature))
+
 func update_slots():
 	# First, remove all creature drag components from card level
 	# Use free() instead of queue_free() to remove immediately and avoid input conflicts
@@ -249,7 +314,32 @@ func update_slots():
 
 			# Add fresh sprite and drag component
 			_add_creature_sprite(assigned_creatures[i], i)
+
+			# Update food slot button
+			if i < food_slot_buttons.size():
+				var food_button = food_slot_buttons[i]
+				food_button.show()
+
+				# Check if creature has food assigned
+				var assigned_food = GameManager.facility_manager.get_assigned_food(assigned_creatures[i])
+				if assigned_food.is_empty():
+					food_button.text = "+"
+					food_button.modulate = Color.RED
+				else:
+					food_button.text = "🍖"
+					food_button.modulate = Color.WHITE
+
+				# Disconnect previous connections to avoid duplicates
+				for connection in food_button.pressed.get_connections():
+					food_button.pressed.disconnect(connection.callable)
+
+				# Connect button press with creature binding
+				food_button.pressed.connect(_on_food_slot_pressed.bind(assigned_creatures[i]))
 		else:
+			# Hide food button for empty slots
+			if i < food_slot_buttons.size():
+				food_slot_buttons[i].hide()
+
 			# Show empty label
 			for child in slot_container.get_children():
 				if child is Label:
@@ -313,3 +403,12 @@ func _on_facility_unassigned(creature: CreatureData, facility: FacilityResource)
 
 	# Update visual slots
 	update_slots()
+
+func _on_food_slot_pressed(creature: CreatureData):
+	SignalBus.food_selection_requested.emit(creature)
+
+func _on_food_assigned(_creature: CreatureData, _item_id: String):
+	update_slots()  # Refresh display
+
+func _on_food_unassigned(_creature: CreatureData):
+	update_slots()  # Refresh display

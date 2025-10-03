@@ -5,6 +5,7 @@ var current_week: int = 1
 var player_data: PlayerData
 var facility_manager: FacilityManager
 var quest_manager: QuestManager
+var inventory_manager: InventoryManager
 
 const SAVE_PATH = "user://savegame.tres"
 
@@ -29,6 +30,12 @@ func initialize_new_game():
 	# Create player data container
 	player_data = PlayerData.new()
 	player_data.gold = 100
+
+	# Initialize inventory manager
+	inventory_manager = InventoryManager.new(player_data)
+
+	# Give starter food
+	inventory_manager.add_item("food_basic", 20)
 
 	# Generate starter creatures using CreatureGenerator
 	var starter_1 = CreatureGenerator.generate_creature(
@@ -69,6 +76,13 @@ func remove_creature(creature: CreatureData):
 		print("Removed creature: ", creature.creature_name)
 	
 func advance_week():
+	# Check if all creatures have food assigned
+	if not facility_manager.all_creatures_have_food():
+		var missing = facility_manager.get_creatures_missing_food()
+		SignalBus.week_advancement_blocked.emit("Some creatures need food!", missing)
+		print("Cannot advance week: %d creatures need food" % missing.size())
+		return
+
 	current_week += 1
 	print("Advancing to week ", current_week)
 

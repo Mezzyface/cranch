@@ -169,7 +169,1049 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Implementation Steps Section
 
-*This section is cleared after each implementation is complete. Completed work is documented in the "Completed Implementations" section below.*
+### 🐛 Bug Fix: Food Slot Not Appearing After Creature Assignment
+
+**Issue**: When dropping a creature into a facility slot, the food slot button remains invisible.
+
+**Root Cause**: The `assign_creature()` and `assign_creature_from_drag()` functions call `_add_creature_sprite()` directly, which doesn't update the food button visibility. Food buttons are only shown/hidden in `update_slots()`.
+
+**File**: `scenes/card/facility_card.gd`
+
+**Fix 1 - In `assign_creature()` function** (around line 121):
+
+**Current code** (lines 125-126):
+```gdscript
+		# Add the creature sprite to the card
+		_add_creature_sprite(creature, assigned_creatures.size() - 1)
+```
+
+**Replace with**:
+```gdscript
+		# Update all slots to show creature and food button
+		update_slots()
+```
+
+**Fix 2 - In `assign_creature_from_drag()` function** (around line 142):
+
+**Current code** (lines 147-148):
+```gdscript
+		# Add the creature sprite to the card
+		_add_creature_sprite(creature, assigned_creatures.size() - 1)
+```
+
+**Replace with**:
+```gdscript
+		# Update all slots to show creature and food button
+		update_slots()
+```
+
+**Why**: `update_slots()` is the single source of truth for slot display. It handles:
+- Creating creature sprites via `_add_creature_sprite()`
+- Showing/hiding food buttons based on slot occupancy
+- Setting food button text and color based on assignment status
+- Connecting food button signals
+
+By calling `update_slots()` instead of `_add_creature_sprite()` directly, we ensure food buttons appear correctly when creatures are assigned.
+
+**Additional Fix - Sprite Positioning Issue**
+
+**Issue**: After the above fix, the creature sprite appears on top of the food button instead of above it.
+
+**Root Cause**: The `VBoxContainer` slot structure has children in order: Label → FoodButton → Background. When the sprite is added via `add_child()`, it becomes the last child, appearing below the food button in the vertical layout.
+
+**File**: `scenes/card/facility_card.gd`
+
+**Fix in `_add_creature_sprite()` function** (around line 200):
+
+**Current code**:
+```gdscript
+	# Position the sprite in the slot container
+	var slot_container = creature_slots.get_child(slot_index)
+	slot_container.add_child(sprite)
+	sprite.position = Vector2(30, 30)  # Center in the 60x60 slot
+```
+
+**Replace with**:
+```gdscript
+	# Position the sprite in the slot container
+	var slot_container = creature_slots.get_child(slot_index)
+
+	# Find the food button index to insert sprite before it
+	var food_button_index = -1
+	for i in range(slot_container.get_child_count()):
+		if slot_container.get_child(i).name == "FoodSlotButton":
+			food_button_index = i
+			break
+
+	# Add sprite at the correct position (before food button if found)
+	if food_button_index >= 0:
+		slot_container.add_child(sprite)
+		slot_container.move_child(sprite, food_button_index)
+	else:
+		slot_container.add_child(sprite)
+
+	sprite.position = Vector2(30, 30)  # Center in the 60x60 slot
+```
+
+**Why**: In a `VBoxContainer`, child order determines vertical layout. By finding the food button's index and using `move_child()` to reorder the sprite before it, the layout becomes: Label → Sprite → FoodButton → Background. This ensures the food button appears below the creature sprite.
+
+**Third Fix - Food Button Not Clickable & Invisible**
+
+**Issue**: After the above fixes, the food button cannot be clicked and remains invisible even though visibility is set to true.
+
+**Root Cause 1**: The drag component covers the entire slot (60x80) including the food button area, blocking mouse input to the button.
+
+**Root Cause 2**: Using `visible = true` doesn't work reliably in Godot when the button was initially hidden. Need to use `show()` instead.
+
+**File**: `scenes/card/facility_card.gd`
+
+**Fix 1 - In `_add_creature_sprite()` function** (around line 233):
+
+**Current code**:
+```gdscript
+	drag_component.size = slot_container.size
+```
+
+**Replace with**:
+```gdscript
+	drag_component.size = Vector2(60, 60)  # Only cover sprite area, not food button below
+```
+
+**Fix 2 - In `update_slots()` function** (around line 288):
+
+**Current code**:
+```gdscript
+	food_button.visible = true
+```
+
+**Replace with**:
+```gdscript
+	food_button.show()  # Use show() instead of visible = true
+```
+
+**Why**:
+1. The slot is 60x80 (width x height) with the sprite occupying the top 60x60 area and the food button in the bottom 20px. By limiting the drag component to 60x60, it only covers the sprite area, allowing the food button below to receive mouse clicks.
+2. In Godot, `show()` properly makes a hidden node visible and processes all visibility inheritance, while `visible = true` can fail when nodes have complex visibility states. Always use `show()`/`hide()` for runtime visibility changes.
+
+---
+
+### 🔨 Item System with Food Requirements for Training Facilities
+
+**Goal**: Implement an item/inventory system where each creature in a facility has a food slot. Players click the slot to select food from inventory. Week progression is blocked until all creatures have food assigned. Food is consumed when training runs.
+
+**Design Philosophy**:
+- Each creature slot in a facility has a food slot
+- Click food slot → Opens food selection UI from inventory
+- Assigned food stored per-creature in FacilityManager
+- Week advancement validates all creatures have food
+- Future: Different foods provide stat boost multipliers
+
+---
+
+#### Step 1: Add ItemType enum to GlobalEnums
+
+**File**: `core/global_enums.gd`
+
+**At the end of the file, add**:
+```gdscript
+enum ItemType {
+	FOOD,
+	EQUIPMENT,
+	CONSUMABLE,
+	MATERIAL,
+	SPECIAL
+}
+```
+
+**Why**: We need a way to categorize items. Food items will be consumed during training, while other types (equipment, consumables) can be used for future systems.
+
+---
+
+#### Step 2: Update ItemResource with type and consumable properties
+
+**File**: `resources/item_resource.gd`
+
+**Current structure** (lines 1-9):
+```gdscript
+extends Resource
+class_name ItemResource
+
+@export var item_name: String = ""
+@export_multiline var description: String = ""
+@export var icon_path: String = ""
+@export var is_stackable: bool = true
+@export var max_stack_size: int = 99
+```
+
+**Add after line 9**:
+```gdscript
+@export var item_type: GlobalEnums.ItemType = GlobalEnums.ItemType.MATERIAL
+@export var stat_boost_multiplier: float = 1.0  # Training boost (1.0 = normal, 1.5 = 50% bonus, etc.)
+```
+
+**Why**: We need to distinguish food items from other items. `stat_boost_multiplier` enables future feature where premium foods provide training bonuses (e.g., premium food = 1.5x stats gained). For now, all foods use 1.0 (normal training).
+
+---
+
+#### Step 3: Add inventory to PlayerData
+
+**File**: `resources/player_data.gd`
+
+**Current exports** (lines 4-5):
+```gdscript
+@export var gold: int = 0
+@export var creatures: Array[CreatureData] = []
+```
+
+**Add after line 5**:
+```gdscript
+@export var inventory: Dictionary = {}  # {item_id: quantity}
+```
+
+**Why**: Player needs persistent storage for items. Using Dictionary with item_id keys allows efficient lookups and stacking. Format: `{"food_basic": 10, "food_premium": 3}`.
+
+---
+
+#### Step 4: Create InventoryManager class
+
+**Create new file**: `core/managers/inventory_manager.gd`
+
+```gdscript
+class_name InventoryManager
+
+# Reference to player data
+var player_data: PlayerData
+
+# Item database - loaded from resources/items/
+var _item_database: Dictionary = {}  # {item_id: ItemResource}
+
+func _init(p_player_data: PlayerData):
+	player_data = p_player_data
+	_load_item_database()
+
+# Load all item resources from resources/items/ folder
+func _load_item_database():
+	var items_path = "res://resources/items/"
+	var dir = DirAccess.open(items_path)
+
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+
+		while file_name != "":
+			if file_name.ends_with(".tres"):
+				var item_path = items_path + file_name
+				var item: ItemResource = load(item_path)
+				if item:
+					var item_id = file_name.replace(".tres", "")
+					_item_database[item_id] = item
+					print("Loaded item: ", item_id)
+			file_name = dir.get_next()
+
+		dir.list_dir_end()
+	else:
+		push_error("Failed to open items directory: " + items_path)
+
+# Add item to inventory
+func add_item(item_id: String, quantity: int = 1) -> bool:
+	if not _item_database.has(item_id):
+		push_error("Item not found in database: " + item_id)
+		return false
+
+	var item: ItemResource = _item_database[item_id]
+
+	if not item.is_stackable and player_data.inventory.has(item_id):
+		push_error("Cannot add non-stackable item that already exists")
+		return false
+
+	# Add to inventory
+	if player_data.inventory.has(item_id):
+		var new_quantity = player_data.inventory[item_id] + quantity
+		if item.is_stackable and new_quantity > item.max_stack_size:
+			push_error("Cannot exceed max stack size")
+			return false
+		player_data.inventory[item_id] = new_quantity
+	else:
+		player_data.inventory[item_id] = quantity
+
+	SignalBus.item_added.emit(item_id, quantity)
+	return true
+
+# Remove item from inventory
+func remove_item(item_id: String, quantity: int = 1) -> bool:
+	if not player_data.inventory.has(item_id):
+		return false
+
+	if player_data.inventory[item_id] < quantity:
+		return false
+
+	player_data.inventory[item_id] -= quantity
+
+	# Remove from dict if quantity reaches 0
+	if player_data.inventory[item_id] <= 0:
+		player_data.inventory.erase(item_id)
+
+	SignalBus.item_removed.emit(item_id, quantity)
+	return true
+
+# Check if player has enough of an item
+func has_item(item_id: String, quantity: int = 1) -> bool:
+	return player_data.inventory.get(item_id, 0) >= quantity
+
+# Get item quantity
+func get_item_quantity(item_id: String) -> int:
+	return player_data.inventory.get(item_id, 0)
+
+# Get item resource from database
+func get_item_resource(item_id: String) -> ItemResource:
+	return _item_database.get(item_id)
+
+# Get all items of a specific type
+func get_items_by_type(item_type: GlobalEnums.ItemType) -> Array[String]:
+	var result: Array[String] = []
+	for item_id in _item_database.keys():
+		var item: ItemResource = _item_database[item_id]
+		if item.item_type == item_type:
+			result.append(item_id)
+	return result
+```
+
+**Why**:
+- Centralizes all inventory operations
+- Loads item database automatically on initialization
+- Validates stack limits and item existence
+- Emits signals for UI updates
+- Provides helper functions for checking/getting items
+- Separates inventory logic from GameManager
+- Instance-based (not autoload) - follows FacilityManager/QuestManager pattern
+
+---
+
+#### Step 5: Add inventory signals to SignalBus
+
+**File**: `core/signal_bus.gd`
+
+**In the appropriate section, add**:
+```gdscript
+# Inventory System
+signal item_added(item_id: String, quantity: int)
+signal item_removed(item_id: String, quantity: int)
+signal inventory_updated()
+
+# Training System
+signal training_failed_insufficient_food(facility: FacilityResource, creature: CreatureData)
+```
+
+**Why**:
+- `item_added/removed` - UI can react to inventory changes
+- `inventory_updated` - Broad signal for full inventory refreshes
+- `training_failed_insufficient_food` - Notify player when training can't happen
+
+---
+
+#### Step 6: Update FacilityManager to track food assignments
+
+**File**: `core/managers/facility_manager.gd`
+
+**Add new data structure** (after `_creature_assignments` declaration):
+```gdscript
+# Track food assigned to each creature in facilities
+# Format: {creature: item_id} or {creature: null} if no food assigned
+var _creature_food_assignments: Dictionary = {}
+```
+
+**Add new functions**:
+```gdscript
+# Assign food to a creature in a facility
+func assign_food_to_creature(creature: CreatureData, item_id: String):
+	_creature_food_assignments[creature] = item_id
+	SignalBus.creature_food_assigned.emit(creature, item_id)
+	print("Assigned food '%s' to creature '%s'" % [item_id, creature.name])
+
+# Remove food assignment from creature
+func unassign_food_from_creature(creature: CreatureData):
+	if _creature_food_assignments.has(creature):
+		_creature_food_assignments.erase(creature)
+		SignalBus.creature_food_unassigned.emit(creature)
+
+# Check if creature has food assigned
+func has_food_assigned(creature: CreatureData) -> bool:
+	return _creature_food_assignments.has(creature) and _creature_food_assignments[creature] != null
+
+# Get food assigned to creature
+func get_assigned_food(creature: CreatureData) -> String:
+	return _creature_food_assignments.get(creature, "")
+
+# Check if all creatures in facilities have food assigned
+func all_creatures_have_food() -> bool:
+	for facility in _creature_assignments.keys():
+		var creatures = _creature_assignments[facility]
+		for creature in creatures:
+			if not has_food_assigned(creature):
+				return false
+	return true
+
+# Get list of creatures missing food
+func get_creatures_missing_food() -> Array[CreatureData]:
+	var missing: Array[CreatureData] = []
+	for facility in _creature_assignments.keys():
+		var creatures = _creature_assignments[facility]
+		for creature in creatures:
+			if not has_food_assigned(creature):
+				missing.append(creature)
+	return missing
+```
+
+**Update `unregister_creature()` function** to clean up food assignments:
+```gdscript
+func unregister_creature(creature: CreatureData, facility: FacilityResource):
+	if _creature_assignments.has(facility):
+		_creature_assignments[facility].erase(creature)
+
+		# Clean up empty facility entries
+		if _creature_assignments[facility].is_empty():
+			_creature_assignments.erase(facility)
+
+		# Clean up food assignment
+		unassign_food_from_creature(creature)  # Add this line
+
+		SignalBus.facility_unassigned.emit(creature, facility)
+```
+
+**Why**: FacilityManager needs to track which food is assigned to each creature. This allows validation before week advancement and provides data for UI display. Food assignments are cleaned up when creatures are removed from facilities.
+
+---
+
+#### Step 7: Update FacilityManager to consume assigned food
+
+**File**: `core/managers/facility_manager.gd`
+
+**Find the `process_all_activities()` function** (around line 40):
+
+**Current code**:
+```gdscript
+func process_all_activities():
+	for facility in _creature_assignments.keys():
+		var creatures = _creature_assignments[facility]
+
+		for creature in creatures:
+			for activity in facility.activities:
+				activity.run_activity(creature)
+				SignalBus.activity_completed.emit(creature, activity)
+```
+
+**Replace with**:
+```gdscript
+func process_all_activities():
+	# This should only be called after validation ensures all creatures have food
+	for facility in _creature_assignments.keys():
+		var creatures = _creature_assignments[facility]
+
+		for creature in creatures:
+			# Get and consume assigned food
+			var food_item_id = get_assigned_food(creature)
+			if food_item_id.is_empty():
+				push_error("Creature %s has no food assigned - this should be prevented!" % creature.name)
+				continue
+
+			# Remove food from inventory
+			if not GameManager.inventory_manager.remove_item(food_item_id, 1):
+				push_error("Failed to remove food %s from inventory" % food_item_id)
+				continue
+
+			# Get stat boost multiplier from food (for future enhancement)
+			var food_resource = GameManager.inventory_manager.get_item_resource(food_item_id)
+			var stat_multiplier = 1.0
+			if food_resource:
+				stat_multiplier = food_resource.stat_boost_multiplier
+
+			# Process activities (in future, pass stat_multiplier to activities)
+			for activity in facility.activities:
+				activity.run_activity(creature)
+				SignalBus.activity_completed.emit(creature, activity)
+
+			# Clear food assignment after consumption
+			unassign_food_from_creature(creature)
+```
+
+**Why**:
+- Consumes the specific food assigned to each creature
+- Validates food assignment (defensive programming)
+- Removes food from inventory one at a time per creature
+- Retrieves stat_multiplier from food (ready for future boost system)
+- Clears food assignment after use (forces player to reassign for next week)
+- Only runs after validation ensures all creatures have food
+
+---
+
+#### Step 8: Create InventoryManager instance in GameManager
+
+**File**: `core/game_manager.gd`
+
+**After the `facility_manager` and `quest_manager` declarations** (around line 10):
+```gdscript
+var inventory_manager: InventoryManager
+```
+
+**In `initialize_new_game()` function, after creating player_data**:
+```gdscript
+# Initialize inventory manager
+inventory_manager = InventoryManager.new(player_data)
+```
+
+**In the signal connection for `game_loaded`** (if it exists):
+```gdscript
+# Reinitialize inventory manager after load
+inventory_manager = InventoryManager.new(player_data)
+```
+
+**Why**: GameManager creates and owns the InventoryManager instance. It's initialized with player_data during game start and must be recreated after loading a save to ensure proper references. Follows the same pattern as FacilityManager and QuestManager.
+
+---
+
+#### Step 9: Add week advancement validation in GameManager
+
+**File**: `core/game_manager.gd`
+
+**Find `advance_week()` function** (the one called when player clicks to progress):
+
+**Add validation at the beginning**:
+```gdscript
+func advance_week():
+	# Check if all creatures have food assigned
+	if not facility_manager.all_creatures_have_food():
+		var missing = facility_manager.get_creatures_missing_food()
+		SignalBus.week_advancement_blocked.emit("Some creatures need food!", missing)
+		print("Cannot advance week: %d creatures need food" % missing.size())
+		return
+
+	# Existing week advancement code...
+	current_week += 1
+	SignalBus.week_advanced.emit(current_week)
+```
+
+**Why**: Prevents week advancement until all creatures in facilities have food assigned. Emits signal with list of creatures missing food so UI can show helpful feedback. This enforces the requirement that players must assign food before progressing.
+
+---
+
+#### Step 10: Update SaveManager to include inventory
+
+**File**: `core/save_manager.gd`
+
+**Find `save_game()` function**, locate where PlayerData is saved:
+
+**Add after copying creatures array**:
+```gdscript
+# Save inventory
+save_data.inventory = GameManager.player_data.inventory.duplicate(true)
+```
+
+**Find `load_game()` function**, locate where PlayerData is restored:
+
+**Add after restoring creatures**:
+```gdscript
+# Restore inventory
+GameManager.player_data.inventory = save_data.inventory.duplicate(true)
+SignalBus.inventory_updated.emit()
+```
+
+**Why**: Inventory needs to persist across save/load. We duplicate to avoid reference issues.
+
+---
+
+#### Step 11: Update SaveGame resource to store inventory
+
+**File**: `resources/save_game.gd`
+
+**Add export property**:
+```gdscript
+@export var inventory: Dictionary = {}
+```
+
+**Why**: SaveGame resource needs to serialize the inventory dictionary.
+
+---
+
+#### Step 12: Create basic food item resources
+
+**Create folder**: `resources/items/` (if it doesn't exist)
+
+**Create file**: `resources/items/food_basic.tres`
+
+**In Godot Editor**:
+1. Create new ItemResource
+2. Set properties:
+   - `item_name`: "Basic Food"
+   - `description`: "Simple creature food. One meal for one training session."
+   - `item_type`: FOOD
+   - `stat_boost_multiplier`: 1.0
+   - `is_stackable`: true
+   - `max_stack_size`: 99
+3. Save as `food_basic.tres`
+
+**Create file**: `resources/items/food_premium.tres`
+
+**In Godot Editor**:
+1. Create new ItemResource
+2. Set properties:
+   - `item_name`: "Premium Food"
+   - `description`: "High-quality creature food. Provides +50% training bonus!"
+   - `item_type`: FOOD
+   - `stat_boost_multiplier`: 1.5
+   - `is_stackable`: true
+   - `max_stack_size`: 99
+3. Save as `food_premium.tres`
+
+**Why**: We need actual item resources for the system to work. Basic food for standard training (1.0x stats), premium food provides 50% bonus (1.5x stats) - future feature ready.
+
+---
+
+
+#### Step 13: Update SignalBus with new signals
+
+**File**: `core/signal_bus.gd`
+
+**Add to inventory section**:
+```gdscript
+# Food Assignment
+signal creature_food_assigned(creature: CreatureData, item_id: String)
+signal creature_food_unassigned(creature: CreatureData)
+signal food_selection_requested(creature: CreatureData)  # Opens food picker UI
+
+# Week Advancement
+signal week_advancement_blocked(reason: String, creatures: Array)  # Prevents week progress
+```
+
+**Why**: New signals for food assignment flow. `food_selection_requested` will open UI to pick food from inventory. `week_advancement_blocked` alerts player when they can't progress the week.
+
+---
+
+#### Step 14: Give player starter food in GameManager
+
+**File**: `core/game_manager.gd`
+
+**Find `initialize_new_game()` function**, after creature generation:
+
+**Add**:
+```gdscript
+# Give starter food
+inventory_manager.add_item("food_basic", 20)
+```
+
+**Why**: Players need food to start training. 20 basic food = 20 creature-weeks of training, enough to get started.
+
+---
+
+#### Step 15: Add food slot UI to FacilityCard
+
+**File**: `scenes/card/facility_card.tscn`
+
+**For each creature slot in the UI, add a food slot button**:
+```
+CreatureSlot_0
+├── CreatureSprite (existing)
+└── FoodSlotButton (new Button node)
+    ├── Position: Below creature sprite
+    ├── Size: 40x40
+    ├── Text: "🍖" or "+" (when no food assigned)
+```
+
+**File**: `scenes/card/facility_card.gd`
+
+**Add @onready references for food slot buttons**:
+```gdscript
+@onready var food_slot_buttons = [
+	$CreatureSlot_0/FoodSlotButton,
+	$CreatureSlot_1/FoodSlotButton,
+	$CreatureSlot_2/FoodSlotButton
+]
+```
+
+**In `update_slots()` function, after creating creature sprites**:
+```gdscript
+# Update food slot buttons
+for i in range(food_slot_buttons.size()):
+	var food_button = food_slot_buttons[i]
+
+	if i < assigned_creatures.size():
+		var creature = assigned_creatures[i]
+		food_button.visible = true
+
+		# Check if creature has food assigned
+		var assigned_food = GameManager.facility_manager.get_assigned_food(creature)
+		if assigned_food.is_empty():
+			food_button.text = "+"
+			food_button.modulate = Color.RED  # Visual cue that food is needed
+		else:
+			var food_item = GameManager.inventory_manager.get_item_resource(assigned_food)
+			if food_item:
+				food_button.text = "🍖"  # Or use food_item.icon_path
+				food_button.modulate = Color.WHITE
+
+		# Connect button press
+		if not food_button.pressed.is_connected(_on_food_slot_pressed):
+			food_button.pressed.connect(_on_food_slot_pressed.bind(creature))
+	else:
+		food_button.visible = false
+```
+
+**Add handler function**:
+```gdscript
+func _on_food_slot_pressed(creature: CreatureData):
+	SignalBus.food_selection_requested.emit(creature)
+```
+
+**Connect to food assignment signals in `_ready()`**:
+```gdscript
+SignalBus.creature_food_assigned.connect(_on_food_assigned)
+SignalBus.creature_food_unassigned.connect(_on_food_unassigned)
+
+func _on_food_assigned(creature: CreatureData, item_id: String):
+	update_slots()  # Refresh display
+
+func _on_food_unassigned(creature: CreatureData):
+	update_slots()  # Refresh display
+```
+
+**Why**: Each creature slot now has a clickable food slot. Shows "+" when empty (red tint for urgency), shows food icon when assigned. Clicking opens food selection UI. Updates automatically via signals.
+
+---
+
+#### Step 16: Create food selection popup UI
+
+**Create file**: `scenes/windows/food_selector.tscn`
+
+**Scene structure**:
+```
+Panel (FoodSelector)
+├── VBoxContainer
+│   ├── Label ("Select Food for [Creature Name]")
+│   ├── ScrollContainer
+│   │   └── VBoxContainer (FoodList)
+│   └── Button (CancelButton)
+```
+
+**Create file**: `scenes/windows/food_selector.gd`
+
+```gdscript
+extends Panel
+
+var target_creature: CreatureData
+
+@onready var title_label = $VBoxContainer/Label
+@onready var food_list = $VBoxContainer/ScrollContainer/VBoxContainer
+@onready var cancel_button = $VBoxContainer/CancelButton
+
+func _ready():
+	cancel_button.pressed.connect(_on_cancel)
+	populate_food_list()
+
+	# Center on screen
+	position = (get_viewport_rect().size - size) / 2
+
+func setup(creature: CreatureData):
+	target_creature = creature
+	if title_label:
+		title_label.text = "Select Food for %s" % creature.name
+
+func populate_food_list():
+	# Clear existing
+	for child in food_list.get_children():
+		child.queue_free()
+
+	var inventory_manager = GameManager.inventory_manager
+	var player_inv = GameManager.player_data.inventory
+
+	# Get all food items in inventory
+	var food_items = inventory_manager.get_items_by_type(GlobalEnums.ItemType.FOOD)
+
+	var has_food = false
+	for item_id in food_items:
+		if player_inv.has(item_id) and player_inv[item_id] > 0:
+			has_food = true
+			_create_food_button(item_id, player_inv[item_id])
+
+	if not has_food:
+		var label = Label.new()
+		label.text = "No food in inventory!\nBuy food from shop (F6)"
+		food_list.add_child(label)
+
+func _create_food_button(item_id: String, quantity: int):
+	var item = GameManager.inventory_manager.get_item_resource(item_id)
+	if not item:
+		return
+
+	var hbox = HBoxContainer.new()
+
+	var button = Button.new()
+	button.text = "%s (x%d)" % [item.item_name, quantity]
+	button.custom_minimum_size.x = 300
+	button.pressed.connect(_on_food_selected.bind(item_id))
+	hbox.add_child(button)
+
+	# Show stat multiplier if not 1.0
+	if item.stat_boost_multiplier != 1.0:
+		var boost_label = Label.new()
+		boost_label.text = "+%d%% bonus" % int((item.stat_boost_multiplier - 1.0) * 100)
+		boost_label.modulate = Color.GREEN
+		hbox.add_child(boost_label)
+
+	food_list.add_child(hbox)
+
+func _on_food_selected(item_id: String):
+	# Assign food to creature
+	GameManager.facility_manager.assign_food_to_creature(target_creature, item_id)
+	queue_free()
+
+func _on_cancel():
+	queue_free()
+```
+
+**Connect in game_scene.gd**:
+```gdscript
+# In _ready()
+SignalBus.food_selection_requested.connect(_on_food_selection_requested)
+
+func _on_food_selection_requested(creature: CreatureData):
+	var selector_scene = preload("res://scenes/windows/food_selector.tscn")
+	var selector = selector_scene.instantiate()
+	add_child(selector)
+	selector.setup(creature)
+```
+
+**Why**: Popup shows all food items in inventory with quantities. Clicking a food assigns it to the creature. Shows stat boost for premium foods (future feature). Closes after selection.
+
+---
+
+#### Step 17: Create simple inventory UI (optional but recommended)
+
+**Create file**: `scenes/windows/inventory_window.tscn`
+
+**Scene structure**:
+```
+Panel (InventoryWindow)
+├── VBoxContainer
+│   ├── Label ("Inventory")
+│   ├── ScrollContainer
+│   │   └── VBoxContainer (ItemList)
+│   └── Button (CloseButton)
+```
+
+**Create file**: `scenes/windows/inventory_window.gd`
+
+```gdscript
+extends Panel
+
+@onready var item_list = $VBoxContainer/ScrollContainer/VBoxContainer
+@onready var close_button = $VBoxContainer/CloseButton
+
+func _ready():
+	close_button.pressed.connect(_on_close_pressed)
+	SignalBus.item_added.connect(_on_inventory_changed)
+	SignalBus.item_removed.connect(_on_inventory_changed)
+
+	refresh_inventory()
+
+	# Center on screen
+	position = (get_viewport_rect().size - size) / 2
+
+func _on_close_pressed():
+	queue_free()
+
+func _on_inventory_changed(_item_id: String = "", _quantity: int = 0):
+	refresh_inventory()
+
+func refresh_inventory():
+	# Clear existing items
+	for child in item_list.get_children():
+		child.queue_free()
+
+	var inventory_manager = GameManager.inventory_manager
+	var player_inv = GameManager.player_data.inventory
+
+	if player_inv.is_empty():
+		var label = Label.new()
+		label.text = "No items"
+		item_list.add_child(label)
+		return
+
+	# Display each item
+	for item_id in player_inv.keys():
+		var quantity = player_inv[item_id]
+		var item_resource = inventory_manager.get_item_resource(item_id)
+
+		if item_resource:
+			var hbox = HBoxContainer.new()
+
+			var name_label = Label.new()
+			name_label.text = item_resource.item_name
+			name_label.custom_minimum_size.x = 200
+			hbox.add_child(name_label)
+
+			var qty_label = Label.new()
+			qty_label.text = "x" + str(quantity)
+			hbox.add_child(qty_label)
+
+			item_list.add_child(hbox)
+```
+
+**Add to game_scene.gd** (hotkey to open):
+
+```gdscript
+func _input(event):
+	if event.is_action_pressed("ui_text_backspace"):  # I key
+		_open_inventory()
+
+func _open_inventory():
+	var inv_scene = preload("res://scenes/windows/inventory_window.tscn")
+	var inv_window = inv_scene.instantiate()
+	add_child(inv_window)
+```
+
+**Why**: Players need to see what items they have. Simple scrollable list shows item name and quantity. I key opens inventory.
+
+---
+
+
+#### Step 18: Add week advancement blocked notification
+
+**File**: `scenes/view/game_scene.gd`
+
+**In `_ready()`, add signal connection**:
+```gdscript
+SignalBus.week_advancement_blocked.connect(_on_week_advancement_blocked)
+```
+
+**Add function**:
+```gdscript
+func _on_week_advancement_blocked(reason: String, creatures: Array):
+	print("⚠️ Cannot advance week: %s" % reason)
+	for creature in creatures:
+		if creature is CreatureData:
+			print("  - %s needs food" % creature.name)
+
+	# TODO: Show popup with creature list and message
+	# For now, visual feedback: flash the facility cards with red tint
+```
+
+**Why**: Player gets immediate feedback when trying to advance week without assigning food. Console shows which creatures need food. Future: popup with creature names and button to dismiss.
+
+---
+
+#### Step 19: Update shop to sell food
+
+**Update existing shop .tres or create new ShopEntry**:
+
+**In your ShopResource** (e.g., `resources/shops/general_shop.tres`):
+1. Add ShopEntry:
+   - `entry_type`: ITEM
+   - `item_id`: "food_basic"
+   - `price`: 10
+   - `stock`: -1 (unlimited)
+2. Add ShopEntry:
+   - `entry_type`: ITEM
+   - `item_id`: "food_premium"
+   - `price`: 25
+   - `stock`: -1 (unlimited)
+
+**Update `scripts/shop_manager.gd`**:
+
+**Find the `ITEM` case in `purchase()` function**:
+
+**Replace**:
+```gdscript
+ShopEntry.ShopEntryType.ITEM:
+	print("Item purchase not yet implemented")
+	SignalBus.shop_purchase_failed.emit("Item system not implemented")
+	return false
+```
+
+**With**:
+```gdscript
+ShopEntry.ShopEntryType.ITEM:
+	# Add item to inventory
+	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
+		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
+		return false
+
+	print("Purchased item: ", entry.item_id)
+	return true
+```
+
+**Why**: Players need a way to acquire food. Shop integration provides renewable food source. Basic food for everyday use, premium food for bulk efficiency.
+
+---
+
+### Summary
+
+**New Systems**:
+1. **Item System**: Generic item framework with types, stacking, and stat boost multipliers
+2. **Inventory System**: Player storage with add/remove/check operations
+3. **Food Assignment**: Each creature in a facility needs food assigned via UI
+4. **Food Slots**: Clickable slots in FacilityCard to select food from inventory
+5. **Food Selection UI**: Popup showing available foods with quantities
+6. **Week Validation**: Week advancement blocked until all creatures have food
+7. **Food Consumption**: Assigned food consumed when training runs
+8. **Stat Boosts**: Food items support multipliers for future training bonuses
+
+**Key Files Created**:
+- `core/managers/inventory_manager.gd` (instance in GameManager)
+- `resources/items/food_basic.tres` (1.0x multiplier)
+- `resources/items/food_premium.tres` (1.5x multiplier - 50% bonus)
+- `scenes/windows/food_selector.tscn/gd` (food picker UI)
+- `scenes/windows/inventory_window.tscn/gd` (optional general inventory)
+
+**Key Files Modified**:
+- `core/global_enums.gd` - ItemType enum
+- `resources/item_resource.gd` - stat_boost_multiplier property
+- `resources/player_data.gd` - inventory dictionary
+- `core/managers/facility_manager.gd` - food assignment tracking and consumption
+- `core/game_manager.gd` - InventoryManager instance and week validation
+- `core/signal_bus.gd` - food assignment and week blocking signals
+- `core/save_manager.gd` - inventory persistence
+- `resources/save_game.gd` - inventory storage
+- `scripts/shop_manager.gd` - item purchasing
+- `scenes/card/facility_card.tscn` - food slot buttons added
+- `scenes/card/facility_card.gd` - food slot UI logic and signal connections
+- `scenes/view/game_scene.gd` - week blocked notification handler
+
+**Gameplay Flow**:
+1. Player drags creature to facility
+2. Food slot button appears below creature (shows "+" in red)
+3. Player clicks food slot → Food selector popup opens
+4. Food selector shows all food in inventory with quantities
+5. Player selects food → Food assigned to creature (button shows 🍖)
+6. Player tries to advance week
+7. GameManager validates: all creatures have food assigned?
+   - **Yes**: Week advances, food consumed, training runs, assignments cleared
+   - **No**: Week blocked, console shows which creatures need food
+8. Player buys more food from shop as needed
+9. Repeat for next week
+10. Inventory and assignments persist through save/load
+
+**Future Extensions Ready to Implement**:
+1. **Stat Boost System**: Activities read `stat_boost_multiplier` from consumed food
+   - Modify activity `run_activity()` to accept multiplier parameter
+   - Apply multiplier to stat gains (e.g., +5 STR becomes +7 STR with 1.5x food)
+2. **Food Variety**: More food types with different multipliers
+   - Basic Food: 1.0x (normal)
+   - Premium Food: 1.5x (+50% bonus) - already created
+   - Luxury Food: 2.0x (+100% bonus)
+   - Specialized Foods: Boost specific stats (STR food, AGI food, INT food)
+3. **Bulk Assignment**: Right-click food slot to "Fill All with [Food Type]"
+4. **Food Preferences**: Creatures prefer certain foods (species-based)
+5. **Food Production**: Facility that generates food over time
+6. **Food Spoilage**: Food expires after X weeks if not used
+7. **Auto-Feed**: Toggle to automatically assign same food each week
+
+**Why This Design Works**:
+- ✅ Per-creature food control (not per-facility bulk)
+- ✅ UI-driven selection (click slot, pick food)
+- ✅ Week blocked until all fed (validates before progression)
+- ✅ Food consumed on training (removed from inventory)
+- ✅ Stat boost ready (multiplier in ItemResource)
+- ✅ Assignments cleared after use (forces weekly management)
+- ✅ Extensible for future features (preferences, spoilage, etc.)
 
 ---
 

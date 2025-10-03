@@ -49,3 +49,16 @@ signal quest_turn_in_failed(quest: QuestResource, missing_requirements: Array)
 signal quest_turn_in_started(quest: QuestResource)
 signal quest_log_opened()
 signal quest_log_closed()
+
+# Inventory System
+signal item_added(item_id: String, quantity: int)
+signal item_removed(item_id: String, quantity: int)
+signal inventory_updated()
+
+# Food Assignment
+signal creature_food_assigned(creature: CreatureData, item_id: String)
+signal creature_food_unassigned(creature: CreatureData)
+signal food_selection_requested(creature: CreatureData)  # Opens food picker UI
+
+# Week Advancement
+signal week_advancement_blocked(reason: String, creatures: Array)  # Prevents week progress

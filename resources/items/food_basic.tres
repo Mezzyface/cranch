@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://c8e6dkq82ge4b"]
+
+[ext_resource type="Script" uid="uid://cpr4fq4a3bs8e" path="res://resources/item_resource.gd" id="1_pbknh"]
+
+[resource]
+script = ExtResource("1_pbknh")
+item_name = "Basic Food"
+description = "Simple creature food. One meal for one training session."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_potato_49.png"
+item_type = 0
+metadata/_custom_type_script = "uid://cpr4fq4a3bs8e"

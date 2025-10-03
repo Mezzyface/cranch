@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://ch15711qom6kh"]
+
+[ext_resource type="Script" uid="uid://cpr4fq4a3bs8e" path="res://resources/item_resource.gd" id="1_g6wx3"]
+
+[resource]
+script = ExtResource("1_g6wx3")
+item_name = "Premium Food"
+description = "High-quality creature food. Provides +50% training bonus!"
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_leg_of_meat_73.png"
+item_type = 0
+stat_boost_multiplier = 1.5
+metadata/_custom_type_script = "uid://cpr4fq4a3bs8e"
