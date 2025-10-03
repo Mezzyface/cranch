@@ -11,7 +11,7 @@ class_name FacilityCard
 var current_slot: FacilitySlot = null
 var assigned_creatures: Array[CreatureData] = []
 var is_hover: bool = false
-var food_slot_buttons: Array[Button] = []
+var food_slot_buttons: Array[TextureButton] = []
 
 const DragDropComponent = preload("res://scripts/drag_drop_component.gd")
 
@@ -34,6 +34,9 @@ func _ready():
 	SignalBus.creature_food_unassigned.connect(_on_food_unassigned)
 
 	_setup_facility_card_dragging()  # Enable facility card dragging (must be before slots are populated)
+
+	# Create food panel after everything is set up and card is in tree
+	call_deferred("_create_food_panel")
 
 func setup_facility(facility: FacilityResource):
 	facility_resource = facility
@@ -68,43 +71,72 @@ func setup_facility(facility: FacilityResource):
 		slot_container.add_child(slot_bg)
 		slot_bg.show_behind_parent = true
 
-	# Create food button row OUTSIDE the card hierarchy (as sibling to card)
-	# This ensures it's not affected by card's mouse filtering or drag components
-	var food_button_container = HBoxContainer.new()
-	food_button_container.name = "FoodButtonRow_" + facility.facility_name
-	food_button_container.mouse_filter = Control.MOUSE_FILTER_PASS  # Let buttons handle clicks
+func _create_food_panel():
+	if not facility_resource:
+		return
 
-	# Add as sibling to this card (add to card's parent)
-	var card_parent = get_parent()
-	if card_parent:
-		card_parent.add_child(food_button_container)
-		food_button_container.z_index = 300  # Above everything
-	else:
-		# Fallback: add to scene root
-		get_tree().root.add_child(food_button_container)
-		food_button_container.z_index = 300
+	# Load the inventory slot texture for the panel background
+	var inventory_slot_texture = load("res://ui/inventory_slot.custom/inventory_slot_0.png")
 
-	for i in range(facility.max_creatures):
-		var food_button = Button.new()
+	# Create individual food panel for each creature slot
+	for i in range(facility_resource.max_creatures):
+		var food_panel = PanelContainer.new()
+		food_panel.name = "FoodPanel_" + str(i)
+		food_panel.show_behind_parent = true  # Show behind parent
+		food_panel.scale = Vector2(0.8, 0.8)
+		food_panel.mouse_filter = Control.MOUSE_FILTER_PASS  # Pass clicks through to button
+
+		# Create StyleBoxTexture matching your example
+		var style_box = StyleBoxTexture.new()
+		style_box.texture = inventory_slot_texture
+		style_box.texture_margin_left = 24.0
+		style_box.texture_margin_top = 21.0
+		style_box.texture_margin_right = 24.0
+		style_box.texture_margin_bottom = 24.313305
+		style_box.region_rect = Rect2(0, 0, 84, 84)
+		food_panel.add_theme_stylebox_override("panel", style_box)
+
+		# Position at bottom of card, offset by slot index
+		# Calculate position based on creature slot position
+		var x_offset = 15 + (i * 75)  # Adjusted spacing for 0.8 scale
+		food_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		food_panel.anchor_top = 1.0
+		food_panel.anchor_bottom = 1.0
+		food_panel.grow_vertical = 0
+		food_panel.offset_left = x_offset
+		food_panel.offset_top = -25.0
+		food_panel.offset_right = x_offset + 93.0
+		food_panel.offset_bottom = 65.31329
+
+		# Create TextureButton inside
+		var food_button = TextureButton.new()
 		food_button.name = "FoodSlotButton_" + str(i)
-		food_button.custom_minimum_size = Vector2(60, 25)
-		food_button.text = "+"
-		food_button.modulate = Color.RED
-		food_button.visible = false  # Initially hidden
-		food_button_container.add_child(food_button)
+		food_button.custom_minimum_size = Vector2(45, 45)
+		food_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		food_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		food_button.ignore_texture_size = true
+		food_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		food_button.mouse_filter = Control.MOUSE_FILTER_STOP  # Ensure button catches clicks
+		food_button.visible = false  # Hidden until creature assigned
+
+		# Set default empty bottle texture
+		var empty_bottle_texture = load("res://assets/sprites/items/food/rpg_item_icon_empty_bottle_150.png")
+		food_button.texture_normal = empty_bottle_texture
+
+		# Connect the button immediately with the slot index
+		# We'll pass the creature when the button is pressed by looking up assigned_creatures[i]
+		var slot_idx = i  # Capture for closure
+		food_button.pressed.connect(func():
+			if slot_idx < assigned_creatures.size():
+				var creature = assigned_creatures[slot_idx]
+				SignalBus.food_selection_requested.emit(creature)
+		)
+
+		food_panel.add_child(food_button)
 		food_slot_buttons.append(food_button)
 
-	# Store reference to container for positioning
-	set_meta("food_button_container", food_button_container)
-
-func _process(_delta):
-	# Update food button container position to stay below the card
-	if has_meta("food_button_container"):
-		var food_container = get_meta("food_button_container")
-		if food_container and is_instance_valid(food_container):
-			# Position below the card's bottom edge
-			var card_bottom = global_position + Vector2(0, size.y)
-			food_container.global_position = card_bottom + Vector2(20, 5)  # Offset: 20px right, 5px down
+		# Add panel as child of this card
+		add_child(food_panel)
 
 func _on_mouse_entered():
 	is_hover = true
@@ -274,19 +306,21 @@ func _add_creature_sprite(creature: CreatureData, slot_index: int):
 	# Add as sibling to FacilityDrag (as child of card, not slot)
 	add_child(drag_component)
 
-	# Show food button for this slot
+	# Update food button for this slot
 	if slot_index < food_slot_buttons.size():
 		var food_button = food_slot_buttons[slot_index]
 		food_button.show()
-		food_button.text = "+"
-		food_button.modulate = Color.RED
 
-		# Disconnect previous connections
-		for connection in food_button.pressed.get_connections():
-			food_button.pressed.disconnect(connection.callable)
-
-		# Connect to creature
-		food_button.pressed.connect(_on_food_slot_pressed.bind(creature))
+		# Check if creature has food assigned and update texture
+		var assigned_food_id = GameManager.facility_manager.get_assigned_food(creature)
+		if assigned_food_id.is_empty():
+			# No food assigned - show empty bottle
+			food_button.texture_normal = load("res://assets/sprites/items/food/rpg_item_icon_empty_bottle_150.png")
+		else:
+			# Food assigned - show food icon
+			var food_item = GameManager.inventory_manager.get_item_resource(assigned_food_id)
+			if food_item and not food_item.icon_path.is_empty():
+				food_button.texture_normal = load(food_item.icon_path)
 
 func update_slots():
 	# First, remove all creature drag components from card level
@@ -315,26 +349,21 @@ func update_slots():
 			# Add fresh sprite and drag component
 			_add_creature_sprite(assigned_creatures[i], i)
 
-			# Update food slot button
+			# Update food slot button texture
 			if i < food_slot_buttons.size():
 				var food_button = food_slot_buttons[i]
 				food_button.show()
 
 				# Check if creature has food assigned
-				var assigned_food = GameManager.facility_manager.get_assigned_food(assigned_creatures[i])
-				if assigned_food.is_empty():
-					food_button.text = "+"
-					food_button.modulate = Color.RED
+				var assigned_food_id = GameManager.facility_manager.get_assigned_food(assigned_creatures[i])
+				if assigned_food_id.is_empty():
+					# No food - show empty bottle
+					food_button.texture_normal = load("res://assets/sprites/items/food/rpg_item_icon_empty_bottle_150.png")
 				else:
-					food_button.text = "🍖"
-					food_button.modulate = Color.WHITE
-
-				# Disconnect previous connections to avoid duplicates
-				for connection in food_button.pressed.get_connections():
-					food_button.pressed.disconnect(connection.callable)
-
-				# Connect button press with creature binding
-				food_button.pressed.connect(_on_food_slot_pressed.bind(assigned_creatures[i]))
+					# Has food - show icon
+					var food_item = GameManager.inventory_manager.get_item_resource(assigned_food_id)
+					if food_item and not food_item.icon_path.is_empty():
+						food_button.texture_normal = load(food_item.icon_path)
 		else:
 			# Hide food button for empty slots
 			if i < food_slot_buttons.size():
@@ -368,9 +397,9 @@ func _setup_facility_card_dragging():
 	facility_drag.hide_on_drag = false
 	facility_drag.z_index = 100  # On top of all visual elements
 
-	# Fill the entire card
+	# Fill the card but leave space at bottom for food panels (they extend below card)
 	facility_drag.set_anchors_preset(Control.PRESET_FULL_RECT)
-	facility_drag.set_offsets_preset(Control.PRESET_FULL_RECT)
+	facility_drag.offset_bottom = -30  # Don't cover bottom 30px where food panels extend
 
 	# Custom drop validation for creatures
 	facility_drag.custom_can_drop_callback = func(data: Dictionary) -> bool:
@@ -408,7 +437,11 @@ func _on_food_slot_pressed(creature: CreatureData):
 	SignalBus.food_selection_requested.emit(creature)
 
 func _on_food_assigned(_creature: CreatureData, _item_id: String):
-	update_slots()  # Refresh display
+	# Only update if this creature is in our facility
+	if _creature in assigned_creatures:
+		update_slots()  # Refresh display
 
 func _on_food_unassigned(_creature: CreatureData):
-	update_slots()  # Refresh display
+	# Only update if this creature is in our facility
+	if _creature in assigned_creatures:
+		update_slots()  # Refresh display

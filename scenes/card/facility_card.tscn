@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://cr73exyfersa4"]
+[gd_scene load_steps=8 format=3 uid="uid://cr73exyfersa4"]
 
 [ext_resource type="Script" uid="uid://du4m82ouowcxb" path="res://scenes/card/facility_card.gd" id="1_fn147"]
 [ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="2_3h7io"]
 [ext_resource type="Texture2D" uid="uid://kqbjbu7gse11" path="res://assets/House.png" id="3_ycwrp"]
+[ext_resource type="Texture2D" uid="uid://ddyk1servoyag" path="res://ui/inventory_slot.custom/inventory_slot_0.png" id="4_3us0u"]
+[ext_resource type="Texture2D" uid="uid://dtb4n0uno0ppi" path="res://assets/sprites/items/food/rpg_item_icon_potato_49.png" id="5_v7fv8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ycwrp"]
 font = ExtResource("2_3h7io")
@@ -12,6 +14,14 @@ outline_size = 4
 outline_color = Color(1, 0.9254902, 0.8392157, 1)
 shadow_size = 0
 shadow_color = Color(0.1254902, 0.23529412, 0.3372549, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_it6qk"]
+texture = ExtResource("4_3us0u")
+texture_margin_left = 24.0
+texture_margin_top = 21.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.313305
+region_rect = Rect2(0, 0, 84, 84)
 
 [node name="FacilityCard" type="Panel"]
 custom_minimum_size = Vector2(320, 420)
@@ -91,3 +101,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
+
+[node name="FoodPanel" type="PanelContainer" parent="."]
+visible = false
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 15.0
+offset_top = -25.0
+offset_right = 108.0
+offset_bottom = 65.31329
+grow_vertical = 0
+theme_type_variation = &"InventorySlot"
+theme_override_styles/panel = SubResource("StyleBoxTexture_it6qk")
+
+[node name="TextureButton" type="TextureButton" parent="FoodPanel"]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_v7fv8")
+ignore_texture_size = true
+stretch_mode = 5
