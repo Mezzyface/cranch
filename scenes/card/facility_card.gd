@@ -25,6 +25,9 @@ func _ready():
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
+	# Listen for creatures being unassigned from facilities
+	SignalBus.facility_unassigned.connect(_on_facility_unassigned)
+
 	_setup_facility_card_dragging()  # Enable facility card dragging (must be before slots are populated)
 
 func setup_facility(facility: FacilityResource):
@@ -296,3 +299,17 @@ func _on_creature_dropped(data: Dictionary):
 		var creature = data.get("creature")
 		if can_accept_creature(creature):
 			assign_creature_from_drag(creature, data)
+
+func _on_facility_unassigned(creature: CreatureData, facility: FacilityResource):
+	# Only handle if this is OUR facility
+	if facility != facility_resource:
+		return
+
+	print("FacilityCard: Creature unassigned from this facility: ", creature.creature_name)
+
+	# Remove creature from our assigned list
+	if creature in assigned_creatures:
+		assigned_creatures.erase(creature)
+
+	# Update visual slots
+	update_slots()
