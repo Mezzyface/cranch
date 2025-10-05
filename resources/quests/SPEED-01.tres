@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://b1nbnoi66qqv"]
+
+[ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_8c1et"]
+[ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_2twi8"]
+[ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_kkq23"]
+
+[sub_resource type="Resource" id="Resource_njw4g"]
+script = ExtResource("1_8c1et")
+species_filter = 4
+min_agility = 550
+
+[sub_resource type="Resource" id="Resource_mb2xh"]
+script = ExtResource("2_2twi8")
+gold = 600
+
+[resource]
+script = ExtResource("3_kkq23")
+quest_id = "SPEED-01"
+quest_title = "Lightning Fast"
+quest_giver = "The Racer"
+description = "Looking for the fastest creature around!"
+dialogue = "I'm organizing a race and need creatures with incredible speed. Bring me a Neon Bat or Delinquent Chick with amazing agility!"
+requirements = Array[ExtResource("1_8c1et")]([SubResource("Resource_njw4g")])
+reward = SubResource("Resource_mb2xh")

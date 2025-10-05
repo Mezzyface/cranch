@@ -1,11 +1,12 @@
 # scenes/windows/shop_window.gd
-extends Panel
+extends CanvasLayer
 
-@onready var shop_name_label = $Panel/ShopNameLabel
-@onready var greeting_label = $MarginContainer/VBoxContainer/GreetingLabel
-@onready var item_list_container = $MarginContainer/VBoxContainer/ItemList/VBoxContainer
-@onready var gold_label = $PanelContainer/Footer/GoldLabel
-@onready var close_button = $CloseButton
+@onready var panel = $Panel
+@onready var shop_name_label = $Panel/Banner/ShopNameLabel
+@onready var greeting_label = $Panel/MarginContainer/VBoxContainer/GreetingLabel
+@onready var item_list_container = $Panel/MarginContainer/VBoxContainer/ItemList/VBoxContainer
+@onready var gold_label = $Panel/PanelContainer/Footer/GoldLabel
+@onready var close_button = $Panel/CloseButton
 
 var current_shop: ShopResource
 
@@ -21,7 +22,7 @@ func _ready():
 	SignalBus.shop_purchase_failed.connect(_on_purchase_failed)
 
 	# Start hidden
-	hide()
+	panel.hide()
 
 func setup(shop: ShopResource):
 	current_shop = shop
@@ -37,7 +38,7 @@ func setup(shop: ShopResource):
 	_update_gold_display(GameManager.player_data.gold if GameManager.player_data else 0)
 
 	# Show the shop
-	show()
+	panel.show()
 
 	# Emit signal
 	SignalBus.shop_opened.emit(shop)
@@ -72,6 +73,6 @@ func _update_gold_display(gold_amount: int):
 
 func _on_close_pressed():
 	SignalBus.shop_closed.emit()
-	hide()
+	panel.hide()
 	# Optional: queue_free() if you want to destroy it completely
 	# For now just hiding so it can be reused

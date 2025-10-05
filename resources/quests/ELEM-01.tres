@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://xv8tnqbv21i3"]
+
+[ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_pq60u"]
+[ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_3ommh"]
+[ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_pusfi"]
+
+[sub_resource type="Resource" id="Resource_kiyms"]
+script = ExtResource("1_pq60u")
+species_filter = 1
+min_strength = 600
+
+[sub_resource type="Resource" id="Resource_iw64u"]
+script = ExtResource("2_3ommh")
+gold = 700
+
+[resource]
+script = ExtResource("3_pusfi")
+quest_id = "ELEM-01"
+quest_title = "Fire and Stone"
+quest_giver = "The Alchemist"
+description = "Elemental creatures are needed for my experiments."
+dialogue = "I'm researching elemental properties. Bring me a Fire Pyrope with exceptional strength for my fire experiments!"
+requirements = Array[ExtResource("1_pq60u")]([SubResource("Resource_kiyms")])
+reward = SubResource("Resource_iw64u")

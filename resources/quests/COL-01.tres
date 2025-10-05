@@ -7,19 +7,18 @@
 [sub_resource type="Resource" id="Resource_blfdm"]
 script = ExtResource("1_2m04m")
 species_filter = 0
-min_strength = 15
-requirement_description = "Scuttleguard with STR ≥ 15"
+min_strength = 750
 
 [sub_resource type="Resource" id="Resource_7rrgs"]
 script = ExtResource("2_jutvl")
-gold = 300
+gold = 500
 
 [resource]
 script = ExtResource("3_jq450")
 quest_id = "COL-01"
-quest_title = "First Guardian"
+quest_title = "Mechanical Guardian"
 quest_giver = "The Collector"
 description = "The Collector needs a strong guardian."
-dialogue = "I need a strong guardian to protect my treasures. A Scuttleguard would be perfect—something with real strength!"
+dialogue = "I need a strong guardian to protect my treasures. A Guard Robot would be perfect—something with real strength!"
 requirements = Array[ExtResource("1_2m04m")]([SubResource("Resource_blfdm")])
 reward = SubResource("Resource_7rrgs")

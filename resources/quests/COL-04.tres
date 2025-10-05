@@ -6,23 +6,21 @@
 
 [sub_resource type="Resource" id="Resource_kdrfb"]
 script = ExtResource("1_y377w")
-quantity = 2
-min_strength = 12
-min_agility = 12
-min_intelligence = 12
-requirement_description = "Well-rounded creature (all stats ≥ 12)"
+min_strength = 600
+min_agility = 600
+min_intelligence = 600
 
 [sub_resource type="Resource" id="Resource_gewht"]
 script = ExtResource("2_t7cal")
-gold = 800
+gold = 1500
 
 [resource]
 script = ExtResource("3_74pfm")
 quest_id = "COL-04"
-quest_title = "Elite Squad"
+quest_title = "The Ultimate Specimen"
 quest_giver = "The Collector"
-description = "The Collector needs two elite creatures."
-dialogue = "You've proven yourself! I'm expanding my operations and need an elite squad—two well-rounded creatures."
+description = "The Collector's final request."
+dialogue = "I need the ultimate creature - balanced power across all attributes. At least 600 in each stat!"
 prerequisite_quest_ids = Array[String](["COL-03"])
 requirements = Array[ExtResource("1_y377w")]([SubResource("Resource_kdrfb")])
 reward = SubResource("Resource_gewht")

@@ -35,12 +35,9 @@ func update_display():
 	dialog_text = info
 
 func _get_species_name(species: GlobalEnums.Species) -> String:
-	match species:
-		GlobalEnums.Species.SCUTTLEGUARD:
-			return "Scuttleguard"
-		GlobalEnums.Species.SLIME:
-			return "Slime"
-		GlobalEnums.Species.WIND_DANCER:
-			return "Wind Dancer"
-		_:
-			return "Unknown"
+	# Use GlobalEnums.Species.keys() to get the enum name
+	var species_keys = GlobalEnums.Species.keys()
+	if species >= 0 and species < species_keys.size():
+		# Convert enum name to readable format (e.g., GUARD_ROBOT -> Guard Robot)
+		return species_keys[species].replace("_", " ").capitalize()
+	return "Unknown"

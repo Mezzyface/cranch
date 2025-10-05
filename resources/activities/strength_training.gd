@@ -2,11 +2,11 @@
 extends ActivityResource
 class_name StrengthTrainingActivity
 
-@export var strength_gain: int = 5
+@export var strength_gain: int = 50
 
 func _init():
 	activity_name = "Strength Training"
-	description = "Increases creature's strength"
+	description = "Increases creature's strength by 50"
 	duration_weeks = 1
 
 func run_activity(creature: CreatureData) -> void:

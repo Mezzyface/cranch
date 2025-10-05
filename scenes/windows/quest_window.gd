@@ -1,14 +1,15 @@
 # scenes/windows/quest_window.gd
-extends Panel
+extends CanvasLayer
 
-@onready var quest_list_container = $MarginContainer/MarginContainer/HSplitContainer/QuestList/QuestListScroll/QuestListContainer
-@onready var selected_quest_title = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/SelectedQuestTitle
-@onready var quest_giver = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/QuestGiver
-@onready var quest_dialogue = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/QuestDialog
-@onready var requirements_text = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/RequirementsText
-@onready var rewards_text = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/RewardsText
-@onready var turn_in_button = $MarginContainer/MarginContainer/HSplitContainer/QuestDetails/ActionButtons/TurninButton
-@onready var close_button = $Button
+@onready var panel = $Panel
+@onready var quest_list_container = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestList/QuestListScroll/QuestListContainer
+@onready var selected_quest_title = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/SelectedQuestTitle
+@onready var quest_giver = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/QuestGiver
+@onready var quest_dialogue = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/QuestDialog
+@onready var requirements_text = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/RequirementsText
+@onready var rewards_text = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/RewardsText
+@onready var turn_in_button = $Panel/MarginContainer/MarginContainer/HSplitContainer/QuestDetails/ActionButtons/TurninButton
+@onready var close_button = $Panel/Button
 
 var selected_quest: QuestResource = null
 
@@ -25,12 +26,6 @@ func _ready():
 
 	SignalBus.quest_accepted.connect(_on_quest_accepted)
 	SignalBus.quest_completed.connect(_on_quest_completed)
-
-	# Center on screen
-	position = Vector2(
-		(get_viewport_rect().size.x - size.x) / 2,
-		(get_viewport_rect().size.y - size.y) / 2
-	)
 
 	refresh_quest_list()
 

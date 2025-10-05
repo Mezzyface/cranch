@@ -1,15 +1,43 @@
 extends Node
 
 enum Species {
-	SCUTTLEGUARD,
-	SLIME,
-	WIND_DANCER
+	GUARD_ROBOT,
+	FIRE_PYROPE,
+	ILLUSIONARY_RACCOON,
+	ORE_MUNCHER,
+	NEON_BAT,
+	TOY_TROJAN,
+	ROBO,
+	FROSCOLA,
+	GRIZZLY,
+	BLAZIN_SPARKINSTONE_BUGS,
+	STOPLIGHT_GHOST,
+	HAUNTED_RIVER_ROCK,
+	HEDGEHOG,
+	DELINQUENT_CHICK,
+	OOZE_WASTE,
+	KRIP,
+	GRAVE_ROBBER_HUNTING_DOG
 }
 
 const SPECIES_SPRITE_FRAMES = {
-	Species.SCUTTLEGUARD: "res://assets/sprites/creatures/scuttleguard/scutleguard.tres",
-	Species.SLIME: "res://assets/sprites/creatures/slime/slime.tres",
-	Species.WIND_DANCER: "res://assets/sprites/creatures/wind_dancer/wind_dancer.tres"
+	Species.GUARD_ROBOT: "res://assets/sprites/creatures/guard_robot/guard_robot.tres",
+	Species.FIRE_PYROPE: "res://assets/sprites/creatures/fire_pyrope/fire_pyrope.tres",
+	Species.ILLUSIONARY_RACCOON: "res://assets/sprites/creatures/illusionary_raccoon/illusionary_raccoon.tres",
+	Species.ORE_MUNCHER: "res://assets/sprites/creatures/ore_muncher/ore_muncher.tres",
+	Species.NEON_BAT: "res://assets/sprites/creatures/neon_bat/neon_bat.tres",
+	Species.TOY_TROJAN: "res://assets/sprites/creatures/toy_trojan/toy_trojan.tres",
+	Species.ROBO: "res://assets/sprites/creatures/robo/robo.tres",
+	Species.FROSCOLA: "res://assets/sprites/creatures/froscola/froscola.tres",
+	Species.GRIZZLY: "res://assets/sprites/creatures/grizzly/grizzly.tres",
+	Species.BLAZIN_SPARKINSTONE_BUGS: "res://assets/sprites/creatures/blazin_sparkinstone_bugs/blazin_sparkinstone_bugs.tres",
+	Species.STOPLIGHT_GHOST: "res://assets/sprites/creatures/stoplight_ghost/stoplight_ghost.tres",
+	Species.HAUNTED_RIVER_ROCK: "res://assets/sprites/creatures/haunted_river_rock/haunted_river_rock.tres",
+	Species.HEDGEHOG: "res://assets/sprites/creatures/hedgehog/hedgehog.tres",
+	Species.DELINQUENT_CHICK: "res://assets/sprites/creatures/delinquent_chick/delinquent_chick.tres",
+	Species.OOZE_WASTE: "res://assets/sprites/creatures/ooze_waste/ooze_waste.tres",
+	Species.KRIP: "res://assets/sprites/creatures/krip/krip.tres",
+	Species.GRAVE_ROBBER_HUNTING_DOG: "res://assets/sprites/creatures/grave_robber_hunting_dog/grave_robber_hunting_dog.tres"
 }
 
 enum CreatureState {

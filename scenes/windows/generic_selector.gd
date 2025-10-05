@@ -1,4 +1,4 @@
-extends PanelContainer
+extends CanvasLayer
 class_name GenericSelector
 
 # Configuration
@@ -19,9 +19,10 @@ var on_item_selected: Callable
 var open_signal: Signal
 var close_signal: Signal
 
-@onready var title_label = $MarginContainer/VBoxContainer/TitleLabel
-@onready var item_list = $MarginContainer/VBoxContainer/ScrollContainer/ItemList
-@onready var close_button = $MarginContainer/VBoxContainer/CloseButton
+@onready var panel_container = $PanelContainer
+@onready var title_label = $PanelContainer/MarginContainer/VBoxContainer/TitleLabel
+@onready var item_list = $PanelContainer/MarginContainer/VBoxContainer/ScrollContainer/ItemList
+@onready var close_button = $PanelContainer/MarginContainer/VBoxContainer/CloseButton
 
 func _ready():
 	close_button.pressed.connect(_on_close_pressed)
@@ -31,9 +32,6 @@ func _ready():
 
 	# Populate items
 	_populate_list()
-
-	# Center on screen
-	position = (get_viewport_rect().size - size) / 2
 
 	# Emit open signal if provided
 	if open_signal:

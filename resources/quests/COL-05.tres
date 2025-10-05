@@ -1,28 +1,35 @@
-[gd_resource type="Resource" script_class="QuestResource" load_steps=6 format=3 uid="uid://bncge67knuvjs"]
+[gd_resource type="Resource" script_class="QuestResource" load_steps=8 format=3 uid="uid://bncge67knuvjs"]
 
 [ext_resource type="Script" uid="uid://chfwemuq313vk" path="res://resources/quest_requirement.gd" id="1_44kow"]
 [ext_resource type="Script" uid="uid://bbi8r45hqukqr" path="res://resources/quest_reward.gd" id="2_efka7"]
 [ext_resource type="Script" uid="uid://dcevndwjng5a" path="res://resources/quest_resource.gd" id="3_4f616"]
 
-[sub_resource type="Resource" id="Resource_dwcm1"]
+[sub_resource type="Resource" id="Resource_44kow"]
 script = ExtResource("1_44kow")
-min_strength = 18
-min_agility = 18
-min_intelligence = 18
-requirement_description = "Champion (all stats ≥ 18)"
+species_filter = 0
+min_strength = 600
 
-[sub_resource type="Resource" id="Resource_hpanb"]
+[sub_resource type="Resource" id="Resource_efka7"]
+script = ExtResource("1_44kow")
+species_filter = 4
+min_agility = 600
+
+[sub_resource type="Resource" id="Resource_4f616"]
+script = ExtResource("1_44kow")
+species_filter = 10
+min_intelligence = 600
+
+[sub_resource type="Resource" id="Resource_dwcm1"]
 script = ExtResource("2_efka7")
 gold = 2000
-unlock_message = "Unlocked: Master Collector Title"
 
 [resource]
 script = ExtResource("3_4f616")
 quest_id = "COL-05"
-quest_title = "Ultimate Champion"
+quest_title = "The Collection Complete"
 quest_giver = "The Collector"
-description = "The Collector seeks the ultimate champion."
-dialogue = "This is it—the final test. I need a true champion, a creature with exceptional abilities across the board. Can you deliver?"
+description = "The Collector wants variety."
+dialogue = "My collection needs diversity! Bring me three different powerful creatures!"
 prerequisite_quest_ids = Array[String](["COL-04"])
-requirements = Array[ExtResource("1_44kow")]([SubResource("Resource_dwcm1")])
-reward = SubResource("Resource_hpanb")
+requirements = Array[ExtResource("1_44kow")]([SubResource("Resource_44kow"), SubResource("Resource_efka7"), SubResource("Resource_4f616")])
+reward = SubResource("Resource_dwcm1")

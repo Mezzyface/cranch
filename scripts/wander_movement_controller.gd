@@ -15,6 +15,7 @@ var direction: int = 1  # 1 = right, -1 = left
 var state: String = "idle"
 var state_timer: float = 0.0
 var current_state_duration: float = 0.0
+var just_turned_around: bool = false  # Prevent rapid direction changes
 
 # References (set by parent)
 var character_body: CharacterBody2D
@@ -64,9 +65,16 @@ func process_movement(delta: float):
 	# Apply movement
 	character_body.move_and_slide()
 
-	# Check platform bounds
-	if character_body.position.x <= platform_bounds.x or character_body.position.x >= platform_bounds.y:
+	# Check platform bounds (with buffer to prevent vibration)
+	var at_left_edge = character_body.position.x <= platform_bounds.x + 5
+	var at_right_edge = character_body.position.x >= platform_bounds.y - 5
+
+	if (at_left_edge or at_right_edge) and not just_turned_around:
 		_turn_around()
+		just_turned_around = true
+	elif not at_left_edge and not at_right_edge:
+		# Reset the flag when we're away from edges
+		just_turned_around = false
 
 func _handle_idle(_delta: float):
 	character_body.velocity.x = 0
@@ -77,10 +85,9 @@ func _handle_walking(_delta: float):
 	_update_sprite_direction()
 	_play_animation("walk")
 
-	# Check if about to walk off platform edge
-	if character_body.is_on_floor():
-		# Use raycasting to detect platform edge ahead
-		_check_platform_edge()
+	# Platform edge detection disabled - using platform_bounds instead
+	# if character_body.is_on_floor():
+	# 	_check_platform_edge()
 
 func _play_animation(anim_name: String):
 	if animated_sprite and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(anim_name):

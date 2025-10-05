@@ -9,9 +9,23 @@ static var training_tags: Array[TagResource] = []
 
 # Species to tag mapping [Species -> Array of tag_id strings]
 static var species_tag_map: Dictionary = {
-	GlobalEnums.Species.SCUTTLEGUARD: ["armored", "defensive", "sturdy"],
-	GlobalEnums.Species.SLIME: ["adaptable", "amorphous", "regenerative"],
-	GlobalEnums.Species.WIND_DANCER: ["swift", "magical", "aerial"]
+	GlobalEnums.Species.GUARD_ROBOT: ["mechanical", "defensive", "sturdy"],
+	GlobalEnums.Species.FIRE_PYROPE: ["elemental", "fire", "powerful"],
+	GlobalEnums.Species.ILLUSIONARY_RACCOON: ["magical", "trickster", "intelligent"],
+	GlobalEnums.Species.ORE_MUNCHER: ["sturdy", "powerful", "slow"],
+	GlobalEnums.Species.NEON_BAT: ["swift", "aerial", "glowing"],
+	GlobalEnums.Species.TOY_TROJAN: ["mechanical", "tactical"],
+	GlobalEnums.Species.ROBO: ["mechanical", "intelligent", "precise"],
+	GlobalEnums.Species.FROSCOLA: ["adaptable", "balanced"],
+	GlobalEnums.Species.GRIZZLY: ["beast", "powerful", "wild"],
+	GlobalEnums.Species.BLAZIN_SPARKINSTONE_BUGS: ["elemental", "swarm", "fire"],
+	GlobalEnums.Species.STOPLIGHT_GHOST: ["spectral", "magical", "intelligent"],
+	GlobalEnums.Species.HAUNTED_RIVER_ROCK: ["spectral", "sturdy", "mysterious"],
+	GlobalEnums.Species.HEDGEHOG: ["defensive", "swift", "spiky"],
+	GlobalEnums.Species.DELINQUENT_CHICK: ["scrappy", "swift", "rebellious"],
+	GlobalEnums.Species.OOZE_WASTE: ["toxic", "adaptable", "intelligent"],
+	GlobalEnums.Species.KRIP: ["balanced", "mysterious", "adaptable"],
+	GlobalEnums.Species.GRAVE_ROBBER_HUNTING_DOG: ["spectral", "hunter", "swift"]
 }
 
 # ===== TAG LOADING & LOOKUP =====

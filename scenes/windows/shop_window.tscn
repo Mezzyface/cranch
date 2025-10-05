@@ -20,7 +20,10 @@ outline_size = 6
 outline_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
 shadow_size = 0
 
-[node name="ShopWindow" type="Panel"]
+[node name="ShopWindow" type="CanvasLayer"]
+script = ExtResource("1_shop_window")
+
+[node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(1200, 800)
 anchors_preset = 8
 anchor_left = 0.5
@@ -34,9 +37,8 @@ offset_bottom = 400.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_type_variation = &"DefaultPanelContainer"
-script = ExtResource("1_shop_window")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Banner" type="Panel" parent="Panel"]
 custom_minimum_size = Vector2(500, 100)
 layout_mode = 1
 anchors_preset = 5
@@ -48,7 +50,7 @@ offset_bottom = 32.0
 grow_horizontal = 2
 theme_type_variation = &"Banner"
 
-[node name="ShopNameLabel" type="Label" parent="Panel"]
+[node name="ShopNameLabel" type="Label" parent="Panel/Banner"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -66,7 +68,7 @@ text = "Shop Name"
 label_settings = SubResource("LabelSettings_vo00h")
 horizontal_alignment = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -78,22 +80,22 @@ theme_override_constants/margin_top = 100
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
 layout_mode = 2
 
-[node name="GreetingLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="GreetingLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Welcome!"
 
-[node name="ItemList" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+[node name="ItemList" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ItemList"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ItemList"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CloseButton" type="Button" parent="."]
+[node name="CloseButton" type="Button" parent="Panel"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -105,7 +107,7 @@ theme_type_variation = &"XButton"
 theme_override_fonts/font = ExtResource("2_472kc")
 theme_override_font_sizes/font_size = 16
 
-[node name="Label" type="Label" parent="CloseButton"]
+[node name="Label" type="Label" parent="Panel/CloseButton"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -123,7 +125,7 @@ label_settings = SubResource("LabelSettings_85n3y")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
+[node name="PanelContainer" type="PanelContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.025
@@ -137,16 +139,16 @@ size_flags_horizontal = 0
 theme_type_variation = &"DefaultPanelContainer"
 metadata/_edit_use_anchors_ = true
 
-[node name="Footer" type="HBoxContainer" parent="PanelContainer"]
+[node name="Footer" type="HBoxContainer" parent="Panel/PanelContainer"]
 layout_mode = 2
 
-[node name="TextureRect" type="TextureRect" parent="PanelContainer/Footer"]
+[node name="TextureRect" type="TextureRect" parent="Panel/PanelContainer/Footer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
 texture = ExtResource("3_85n3y")
 expand_mode = 1
 
-[node name="GoldLabel" type="Label" parent="PanelContainer/Footer"]
+[node name="GoldLabel" type="Label" parent="Panel/PanelContainer/Footer"]
 layout_mode = 2
 text = "1000"
 vertical_alignment = 2

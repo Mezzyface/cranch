@@ -6,20 +6,19 @@
 
 [sub_resource type="Resource" id="Resource_ji0ef"]
 script = ExtResource("1_y8g2x")
-min_intelligence = 12
-requirement_description = "Any creature with INT ≥ 12"
+species_filter = 2
+min_intelligence = 550
 
 [sub_resource type="Resource" id="Resource_rjp6f"]
 script = ExtResource("2_2vdlw")
-gold = 500
+gold = 700
 
 [resource]
 script = ExtResource("3_lnqqc")
 quest_id = "COL-03"
-quest_title = "Clever Companion"
+quest_title = "The Mind Master"
 quest_giver = "The Collector"
-description = "The Collector needs an intelligent assistant."
-dialogue = "Impressive! Now I need a clever creature to help me catalog my collection. Intelligence is what matters here."
-prerequisite_quest_ids = Array[String](["COL-02"])
+description = "The Collector wants an intelligent creature."
+dialogue = "Intelligence is what I seek. An Illusionary Raccoon with sharp wit would be ideal!"
 requirements = Array[ExtResource("1_y8g2x")]([SubResource("Resource_ji0ef")])
 reward = SubResource("Resource_rjp6f")

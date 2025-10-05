@@ -29,8 +29,8 @@ func _ready():
 	
 	# _setup_container_drop_handling()  # Commented out - creature container removed
 	_create_week_display()
-	_create_facility_slots()
-	_spawn_tinos()
+	# _create_facility_slots()  # Disabled - using scene-based slots instead
+	_setup_center_drop_zone()
 
 func _input(event):
 	# Quick save with F5
@@ -61,6 +61,8 @@ func _connect_signals():
 	SignalBus.quest_turn_in_started.connect(_on_quest_turn_in_started)
 	SignalBus.food_selection_requested.connect(_on_food_selection_requested)
 	SignalBus.week_advancement_blocked.connect(_on_week_advancement_blocked)
+	SignalBus.gold_changed.connect(_on_gold_changed)
+	SignalBus.week_advanced.connect(_on_week_advanced)
 
 func _on_player_data_ready():
 	# Debug popup disabled for now
@@ -68,10 +70,12 @@ func _on_player_data_ready():
 	pass
 
 func _on_creature_added(creature: CreatureData):
-	print("_on_creature_added")
-	# Spawn individual creature when added
-	# _spawn_creature(creature)  # Disabled for tileset rework
-	pass
+	print("_on_creature_added: %s" % creature.creature_name)
+	# Spawn creature at random position within drop zone
+	# Drop zone is 750px wide, centered at screen (960, 540)
+	# At 2x zoom: screen 585-1335 = world 585-1335 (same because centered on camera)
+	var random_x = randf_range(585, 1335)
+	spawn_tino_at_position(creature, Vector2(random_x, 400))
 
 func _on_creature_removed(creature: CreatureData):
 	print("_on_creature_removed: ", creature.creature_name)
@@ -243,44 +247,69 @@ func _create_week_display():
 	add_child(week_display)
 #
 func _create_facility_slots():
-	# Slots now exist in the scene tree as direct children
-	# Just connect their signals
-	for child in get_children():
-		if child is FacilitySlot:
-			# Connect signals
-			child.facility_placed.connect(_on_facility_placed)
-			child.facility_removed.connect(_on_facility_removed)
+	# Create 5 facility slots positioned over the blue boxes on the tilemap
+	var slot_scene = preload("res://scenes/card/facility_slot.tscn")
 
-	# Place test facility in first slot
-	_place_test_facility_in_slot()
+	# Based on image: 5 boxes at bottom with blue indicators below
+	# Approximate positions for slots (adjust based on actual tile positions)
+	var slot_positions = [
+		Vector2(150, 850),   # Slot 1 - left
+		Vector2(550, 850),   # Slot 2
+		Vector2(950, 850),   # Slot 3 - center
+		Vector2(1350, 850),  # Slot 4
+		Vector2(1750, 850)   # Slot 5 - right
+	]
+
+	for i in range(5):
+		var slot = slot_scene.instantiate()
+		slot.slot_index = i
+		slot.position = slot_positions[i]
+
+		# Connect signals
+		slot.facility_placed.connect(_on_facility_placed)
+		slot.facility_removed.connect(_on_facility_removed)
+
+		# Add to UILayer so it stays fixed with camera
+		$UILayer.add_child(slot)
+
+		print("Created facility slot %d at position %s" % [i, slot_positions[i]])
+
+	# Slots created, ready for custom facilities
+	# _place_test_facility_in_slot()  # Disabled - making new facilities
 
 func _place_test_facility_in_slot():
-	# Load the three training facilities into slots
+	# Load training facilities into the new dynamically created slots
 	var card_scene = preload("res://scenes/card/facility_card.tscn")
 
-	# Slot 1: Strength Training
-	var slot1 = $FacilitySlot1
-	if slot1:
+	# Get all facility slots from UILayer
+	var slots = []
+	for child in $UILayer.get_children():
+		if child is FacilitySlot:
+			slots.append(child)
+
+	# Sort by slot_index to ensure correct order
+	slots.sort_custom(func(a, b): return a.slot_index < b.slot_index)
+
+	# Slot 0: Strength Training
+	if slots.size() > 0:
 		var card1 = card_scene.instantiate()
 		card1.facility_resource = STRENGTH_FACILITY
 		card1.add_to_group("facility_cards")
-		slot1.place_facility(card1)
+		slots[0].place_facility(card1)
 
-	# Slot 2: Agility Training
-	var slot2 = $FacilitySlot2
-	if slot2:
+	# Slot 1: Agility Training
+	if slots.size() > 1:
 		var card2 = card_scene.instantiate()
 		card2.facility_resource = AGILITY_FACILITY
 		card2.add_to_group("facility_cards")
-		slot2.place_facility(card2)
+		slots[1].place_facility(card2)
 
-	# Slot 3: Intelligence Training
-	var slot3 = $FacilitySlot3
-	if slot3:
+	# Slot 2: Intelligence Training
+	if slots.size() > 2:
 		var card3 = card_scene.instantiate()
 		card3.facility_resource = INTELLIGENCE_FACILITY
 		card3.add_to_group("facility_cards")
-		slot3.place_facility(card3)
+		slots[2].place_facility(card3)
 
 func _on_facility_placed(facility_card: FacilityCard, slot: FacilitySlot):
 	print("Facility placed: ", facility_card.facility_resource.facility_name, " in slot ", slot.slot_index)
@@ -327,19 +356,87 @@ func _on_week_advancement_blocked(reason: String, creatures: Array):
 	# TODO: Show popup with creature list and message
 	# For now, visual feedback: flash the facility cards with red tint
 
-func _spawn_tinos():
-	# Spawn 2 Tinos on the platform
-	for i in range(2):
-		var tino = TINO_CREATURE.instantiate()
-		add_child(tino)
+func _on_gold_changed(gold_amount: int):
+	var gold_label = get_node_or_null("UILayer/GoldBox/Gold")
+	if gold_label:
+		gold_label.text = str(gold_amount)
 
-		# Position on center platform with random X position
-		var random_x = randf_range(500, 1420)
-		tino.position = Vector2(random_x, 400)
+func _on_week_advanced(week_number: int):
+	var week_label = get_node_or_null("UILayer/WeekBox/Label")
+	if week_label:
+		week_label.text = "Week %d" % week_number
 
-		# Set platform bounds on the movement controller
-		var movement_controller = tino.get_node_or_null("WanderMovementController")
-		if movement_controller:
-			movement_controller.platform_bounds = Vector2(400, 1520)
 
-		print("Tino %d spawned at: %s" % [i + 1, tino.position])
+func _setup_center_drop_zone():
+	# Use the DragDropComponent you added to the scene
+	var drop_zone = get_node_or_null("Dropzone/DragDropComponent")
+	if not drop_zone:
+		return
+
+	# Configure the drop zone properties
+	drop_zone.can_accept_drops = true
+	drop_zone.can_drag = false
+	drop_zone.drag_type = DragDropComponent.DragType.CREATURE
+	drop_zone.mouse_filter = Control.MOUSE_FILTER_PASS
+	drop_zone.z_index = 100  # Make sure it's on top
+
+	# Make it fill the parent Dropzone control
+	drop_zone.anchors_preset = Control.PRESET_FULL_RECT
+	drop_zone.anchor_left = 0
+	drop_zone.anchor_top = 0
+	drop_zone.anchor_right = 1
+	drop_zone.anchor_bottom = 1
+	drop_zone.offset_left = 0
+	drop_zone.offset_top = 0
+	drop_zone.offset_right = 0
+	drop_zone.offset_bottom = 0
+
+	# Set up drop validation
+	drop_zone.custom_can_drop_callback = func(data: Dictionary) -> bool:
+		return data.has("creature")
+
+	# Handle creature drops
+	drop_zone.drop_received.connect(_on_center_drop_received)
+
+func _on_center_drop_received(data: Dictionary):
+	if not data.has("creature"):
+		return
+
+	var creature = data.get("creature") as CreatureData
+	var source_node = data.get("source_node")
+	var source_facility = data.get("source_facility")
+
+	# Get the drop position - convert from screen to world coordinates
+	var camera = get_node_or_null("Camera2D")
+	var screen_position = get_viewport().get_mouse_position()
+	var world_position = screen_position
+
+	if camera:
+		# Account for camera offset and zoom
+		var camera_offset = camera.position - get_viewport_rect().size / 2.0 / camera.zoom
+		world_position = screen_position / camera.zoom + camera_offset
+
+	# Clamp to platform bounds (X: 400-1520, Y: 400 for ground level)
+	var clamped_x = clamp(world_position.x, 400, 1520)
+	var position = Vector2(clamped_x, 400)
+
+	# Check if creature is from the world or from a facility
+	if source_node and is_instance_valid(source_node) and not source_facility:
+		# Creature is from the world - just reposition it
+		source_node.position = position
+	else:
+		# Creature is from a facility or new - spawn a new one
+		spawn_tino_at_position(creature, position)
+
+func spawn_tino_at_position(creature: CreatureData, position: Vector2):
+	"""Helper method to spawn a Tino creature at a specific position"""
+	var tino = TINO_CREATURE.instantiate()
+	add_child(tino)
+
+	tino.creature_data = creature
+	tino.position = position
+
+	# Set platform bounds
+	var movement_controller = tino.get_node_or_null("WanderMovementController")
+	if movement_controller:
+		movement_controller.platform_bounds = Vector2(400, 1520)

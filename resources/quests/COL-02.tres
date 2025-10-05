@@ -6,21 +6,21 @@
 
 [sub_resource type="Resource" id="Resource_05a8x"]
 script = ExtResource("1_cq20t")
-species_filter = 2
-min_agility = 15
-requirement_description = "Wind Dancer with AGI ≥ 15"
+species_filter = 15
+min_strength = 450
+min_agility = 450
+min_intelligence = 450
 
 [sub_resource type="Resource" id="Resource_si5kw"]
 script = ExtResource("2_cruf4")
-gold = 400
+gold = 600
 
 [resource]
 script = ExtResource("3_nav1b")
 quest_id = "COL-02"
-quest_title = "Swift Scout"
+quest_title = "The Balanced One"
 quest_giver = "The Collector"
-description = "The Collector needs a swift scout."
-dialogue = "Excellent work! Now I need something fast to scout the perimeter. A Wind Dancer with great agility would be ideal."
-prerequisite_quest_ids = Array[String](["COL-01"])
+description = "The Collector seeks a balanced creature."
+dialogue = "I need a creature with balanced abilities. Krip are known for their perfect equilibrium!"
 requirements = Array[ExtResource("1_cq20t")]([SubResource("Resource_05a8x")])
 reward = SubResource("Resource_si5kw")

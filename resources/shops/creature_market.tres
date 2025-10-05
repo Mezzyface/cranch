@@ -5,27 +5,49 @@
 
 [sub_resource type="Resource" id="Resource_k4c13"]
 script = ExtResource("1_cnlth")
-entry_name = "Scuttleguard"
-description = "A sturdy tank creature with high defense."
+entry_name = "Guard Robot"
+description = "A mechanical guardian with high strength."
 cost = 150
 creature_species = 0
 
 [sub_resource type="Resource" id="Resource_u4e23"]
 script = ExtResource("1_cnlth")
-entry_name = "Slime"
-description = "A balanced creature that adapts to any situation."
-cost = 100
+entry_name = "Fire Pyrope"
+description = "A fiery elemental creature."
+cost = 120
+creature_species = 1
 
 [sub_resource type="Resource" id="Resource_vimm0"]
 script = ExtResource("1_cnlth")
-entry_name = "Wind Dancer"
-description = "A swift and intelligent aerial creature."
+entry_name = "Neon Bat"
+description = "A swift aerial creature with electric abilities."
+cost = 180
+creature_species = 4
+
+[sub_resource type="Resource" id="Resource_new1"]
+script = ExtResource("1_cnlth")
+entry_name = "Grizzly"
+description = "A powerful bear-like creature."
 cost = 200
-creature_species = 2
+creature_species = 8
+
+[sub_resource type="Resource" id="Resource_new2"]
+script = ExtResource("1_cnlth")
+entry_name = "Hedgehog"
+description = "A spiky defensive creature."
+cost = 100
+creature_species = 12
+
+[sub_resource type="Resource" id="Resource_new3"]
+script = ExtResource("1_cnlth")
+entry_name = "Krip"
+description = "A mysterious balanced creature."
+cost = 140
+creature_species = 15
 
 [resource]
 script = ExtResource("2_ejjrt")
 shop_name = "Creature Market"
 vendor_name = "Breeder Bob"
 greeting = "Quality creatures for discerning trainers!"
-entries = Array[ExtResource("1_cnlth")]([SubResource("Resource_k4c13"), SubResource("Resource_u4e23"), SubResource("Resource_vimm0")])
+entries = Array[ExtResource("1_cnlth")]([SubResource("Resource_k4c13"), SubResource("Resource_u4e23"), SubResource("Resource_vimm0"), SubResource("Resource_new1"), SubResource("Resource_new2"), SubResource("Resource_new3")])

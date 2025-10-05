@@ -2,7 +2,7 @@
 extends ActivityResource
 class_name SpeciesChangeActivity
 
-@export var target_species: GlobalEnums.Species = GlobalEnums.Species.SLIME
+@export var target_species: GlobalEnums.Species = GlobalEnums.Species.KRIP
 
 func _init():
 	activity_name = "Magical Transformation"

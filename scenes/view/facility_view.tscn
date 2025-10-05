@@ -1,0 +1,114 @@
+[gd_scene load_steps=10 format=3 uid="uid://br6d711bl84my"]
+
+[ext_resource type="Texture2D" uid="uid://df64ie5qbk6ms" path="res://assets/backgrounds/study.png" id="1_3bwb2"]
+[ext_resource type="Script" uid="uid://dt3yunbl6cynh" path="res://scenes/view/facility_view.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://1r4qgndqla8e" path="res://scripts/drag_drop_component.gd" id="2_drag"]
+[ext_resource type="Texture2D" uid="uid://cxucgvjcd7cc4" path="res://ui/inventory_slot.custom/inventory_slot_1.png" id="2_esbav"]
+[ext_resource type="Texture2D" uid="uid://iflrqf6hrh3k" path="res://assets/Red_X.svg.png" id="3_ybn7d"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="4_esbav"]
+
+[sub_resource type="Theme" id="Theme_tj564"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7kwm1"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ybn7d"]
+font = ExtResource("4_esbav")
+font_size = 32
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 5
+outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
+shadow_size = 0
+
+[node name="FacilityView" type="Control"]
+custom_minimum_size = Vector2(128, 160)
+layout_mode = 0
+offset_right = 128.0
+offset_bottom = 160.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("1_script")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+clip_contents = true
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 0
+offset_right = 128.0
+offset_bottom = 128.0
+theme_type_variation = &"facility"
+
+[node name="Locationbackground" type="TextureRect" parent="PanelContainer"]
+layout_mode = 2
+texture = ExtResource("1_3bwb2")
+expand_mode = 1
+
+[node name="FoodContainer" type="PanelContainer" parent="."]
+show_behind_parent = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 0
+offset_left = 96.0
+offset_top = 138.0
+offset_right = 128.0
+offset_bottom = 170.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme = SubResource("Theme_tj564")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_7kwm1")
+
+[node name="Background" type="TextureRect" parent="FoodContainer"]
+layout_mode = 2
+texture = ExtResource("2_esbav")
+expand_mode = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="FoodContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="FoodButton" type="TextureButton" parent="FoodContainer/MarginContainer"]
+layout_mode = 2
+texture_normal = ExtResource("3_ybn7d")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Lockscreen" type="Control" parent="."]
+custom_minimum_size = Vector2(128, 128)
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ColorRect" type="ColorRect" parent="Lockscreen"]
+modulate = Color(0.32915837, 0.3291584, 0.3291584, 1)
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 0
+offset_right = 128.0
+offset_bottom = 128.0
+
+[node name="Label" type="Label" parent="Lockscreen"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -8.0
+offset_right = 20.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Locked
+100g"
+label_settings = SubResource("LabelSettings_ybn7d")
+horizontal_alignment = 1
+
+[node name="DropZone" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 128.0
+offset_bottom = 128.0
+script = ExtResource("2_drag")
+drag_type = 1
+can_accept_drops = true
+can_drag = false

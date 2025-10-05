@@ -2,11 +2,11 @@
 extends ActivityResource
 class_name BalancedTrainingActivity
 
-@export var stat_gain: int = 3
+@export var stat_gain: int = 30
 
 func _init():
 	activity_name = "Balanced Training"
-	description = "Increases all stats evenly"
+	description = "Increases all stats by 30"
 	duration_weeks = 1
 
 func run_activity(creature: CreatureData) -> void:

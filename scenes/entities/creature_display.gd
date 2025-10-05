@@ -9,6 +9,7 @@ class_name CreatureDisplay
 @export var min_emote_interval: float = 5.0
 @export var max_emote_interval: float = 15.0
 @export var emote_duration: float = 2.5
+@export var hitbox_scale: float = 0.7  # Scale hitbox to 70% of sprite size
 
 var creature_data: CreatureData
 var wander_target: Vector2
@@ -30,9 +31,10 @@ func _ready():
 func set_creature_data(data: CreatureData):
 	creature_data = data
 	_update_sprite()
+	_update_hitbox()
 	# Note: Drag handling is now managed at container level
 
-			
+
 func _update_sprite():
 	if not creature_data:
 		return
@@ -41,6 +43,36 @@ func _update_sprite():
 	var sprite_frames = GlobalEnums.get_sprite_frames_for_species(creature_data.species)
 	if sprite_frames and $AnimatedSprite2D:
 		$AnimatedSprite2D.sprite_frames = sprite_frames
+
+func _update_hitbox():
+	if not creature_data or not $AnimatedSprite2D or not $CollisionShape2D:
+		return
+
+	# Wait for sprite frames to be loaded
+	await get_tree().process_frame
+
+	var sprite_frames = $AnimatedSprite2D.sprite_frames
+	if not sprite_frames:
+		return
+
+	# Get the first frame from idle animation
+	var current_texture = sprite_frames.get_frame_texture("idle", 0)
+
+	if current_texture:
+		var sprite_size = current_texture.get_size()
+
+		# Create or update the rectangle shape
+		var rect_shape = RectangleShape2D.new()
+		rect_shape.size = sprite_size * hitbox_scale
+
+		$CollisionShape2D.shape = rect_shape
+
+		# Position collision shape so bottom aligns with sprite bottom
+		# Sprite is centered by default, so offset down by half the hitbox height
+		var offset_y = (sprite_size.y - rect_shape.size.y) / 2.0
+		$CollisionShape2D.position = Vector2(0, offset_y)
+
+		print("Updated hitbox for %s: %v at offset %v (sprite: %v)" % [creature_data.creature_name, rect_shape.size, $CollisionShape2D.position, sprite_size])
 
 func set_container_bounds(bounds: Rect2):
 	# Store the container bounds with padding

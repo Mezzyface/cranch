@@ -10,6 +10,6 @@ class_name ShopEntry
 @export var icon_texture: Texture2D = null
 
 # Type-specific data
-@export var creature_species: GlobalEnums.Species = GlobalEnums.Species.SLIME  # For CREATURE type
+@export var creature_species: GlobalEnums.Species = GlobalEnums.Species.KRIP  # For CREATURE type
 @export var item_id: String = ""  # For ITEM type - references inventory items by ID
 # For SERVICE type: no extra data needed (yet)

@@ -29,7 +29,7 @@ func _connect_signals():
 func initialize_new_game():
 	# Create player data container
 	player_data = PlayerData.new()
-	player_data.gold = 100
+	player_data.gold = 1000
 
 	# Initialize inventory manager
 	inventory_manager = InventoryManager.new(player_data)
@@ -39,15 +39,15 @@ func initialize_new_game():
 
 	# Generate starter creatures using CreatureGenerator
 	var starter_1 = CreatureGenerator.generate_creature(
-		GlobalEnums.Species.SCUTTLEGUARD,
-		"Scuttle"  # Optional: keep specific name or use "" for random
+		GlobalEnums.Species.GUARD_ROBOT,
+		"Steel"  # Guard Robot starter
 	)
 	player_data.creatures.append(starter_1)
 	SignalBus.creature_added.emit(starter_1)
 
 	var starter_2 = CreatureGenerator.generate_creature(
-		GlobalEnums.Species.SLIME,
-		"Squish"  # Optional: keep specific name or use "" for random
+		GlobalEnums.Species.KRIP,
+		"Mysty"  # Balanced Krip starter
 	)
 	player_data.creatures.append(starter_2)
 	SignalBus.creature_added.emit(starter_2)
@@ -105,11 +105,11 @@ func create_test_facility() -> void:
 
 	# Add strength training activity
 	var strength_activity = preload("res://resources/activities/strength_training.gd").new()
-	strength_activity.strength_gain = 10
+	strength_activity.strength_gain = 50
 
 	# Add species change activity
 	var transform_activity = preload("res://resources/activities/species_change.gd").new()
-	transform_activity.target_species = GlobalEnums.Species.WIND_DANCER
+	transform_activity.target_species = GlobalEnums.Species.ILLUSIONARY_RACCOON
 
 	training_facility.activities.append(strength_activity)
 	training_facility.activities.append(transform_activity)

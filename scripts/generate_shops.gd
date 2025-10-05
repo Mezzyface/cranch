@@ -62,37 +62,57 @@ func _generate_creature_market():
 	shop.vendor_name = "Breeder Bob"
 	shop.greeting = "Quality creatures for discerning trainers!"
 
-	# Scuttleguard entry
-	var scuttleguard = ShopEntry.new()
-	scuttleguard.entry_name = "Scuttleguard"
-	scuttleguard.description = "A sturdy tank creature with high defense."
-	scuttleguard.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	scuttleguard.creature_species = GlobalEnums.Species.SCUTTLEGUARD
-	scuttleguard.cost = 150
-	scuttleguard.stock = -1  # Unlimited
+	# Guard Robot entry
+	var guard_robot = ShopEntry.new()
+	guard_robot.entry_name = "Guard Robot"
+	guard_robot.description = "A sturdy mechanical guardian with high strength."
+	guard_robot.entry_type = GlobalEnums.ShopEntryType.CREATURE
+	guard_robot.creature_species = GlobalEnums.Species.GUARD_ROBOT
+	guard_robot.cost = 300
+	guard_robot.stock = -1  # Unlimited
 
-	# Slime entry
-	var slime = ShopEntry.new()
-	slime.entry_name = "Slime"
-	slime.description = "A balanced creature that adapts to any situation."
-	slime.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	slime.creature_species = GlobalEnums.Species.SLIME
-	slime.cost = 100
-	slime.stock = -1  # Unlimited
+	# Krip entry
+	var krip = ShopEntry.new()
+	krip.entry_name = "Krip"
+	krip.description = "A perfectly balanced creature with mysterious origins."
+	krip.entry_type = GlobalEnums.ShopEntryType.CREATURE
+	krip.creature_species = GlobalEnums.Species.KRIP
+	krip.cost = 250
+	krip.stock = -1  # Unlimited
 
-	# Wind Dancer entry
-	var wind_dancer = ShopEntry.new()
-	wind_dancer.entry_name = "Wind Dancer"
-	wind_dancer.description = "A swift and intelligent aerial creature."
-	wind_dancer.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	wind_dancer.creature_species = GlobalEnums.Species.WIND_DANCER
-	wind_dancer.cost = 200
-	wind_dancer.stock = -1  # Unlimited
+	# Neon Bat entry
+	var neon_bat = ShopEntry.new()
+	neon_bat.entry_name = "Neon Bat"
+	neon_bat.description = "A swift glowing bat with incredible agility."
+	neon_bat.entry_type = GlobalEnums.ShopEntryType.CREATURE
+	neon_bat.creature_species = GlobalEnums.Species.NEON_BAT
+	neon_bat.cost = 350
+	neon_bat.stock = -1  # Unlimited
+
+	# Fire Pyrope entry
+	var fire_pyrope = ShopEntry.new()
+	fire_pyrope.entry_name = "Fire Pyrope"
+	fire_pyrope.description = "A powerful elemental creature wreathed in flames."
+	fire_pyrope.entry_type = GlobalEnums.ShopEntryType.CREATURE
+	fire_pyrope.creature_species = GlobalEnums.Species.FIRE_PYROPE
+	fire_pyrope.cost = 400
+	fire_pyrope.stock = -1  # Unlimited
+
+	# Illusionary Raccoon entry
+	var illusion_raccoon = ShopEntry.new()
+	illusion_raccoon.entry_name = "Illusionary Raccoon"
+	illusion_raccoon.description = "A cunning trickster with high intelligence."
+	illusion_raccoon.entry_type = GlobalEnums.ShopEntryType.CREATURE
+	illusion_raccoon.creature_species = GlobalEnums.Species.ILLUSIONARY_RACCOON
+	illusion_raccoon.cost = 380
+	illusion_raccoon.stock = -1  # Unlimited
 
 	# Append to typed array (can't assign array directly)
-	shop.entries.append(scuttleguard)
-	shop.entries.append(slime)
-	shop.entries.append(wind_dancer)
+	shop.entries.append(guard_robot)
+	shop.entries.append(krip)
+	shop.entries.append(neon_bat)
+	shop.entries.append(fire_pyrope)
+	shop.entries.append(illusion_raccoon)
 
 	# Save resource
 	var save_path = "res://resources/shops/creature_market.tres"

@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=3 uid="uid://ccfav4gkpiy1l"]
+[gd_scene load_steps=16 format=3 uid="uid://ccfav4gkpiy1l"]
 
 [ext_resource type="Script" uid="uid://qx3ebuarrl7o" path="res://scenes/entities/tino_creature.gd" id="1_tino"]
 [ext_resource type="Script" path="res://scripts/wander_movement_controller.gd" id="2_wander"]
+[ext_resource type="Script" path="res://scripts/drag_drop_component.gd" id="3_drag"]
 [ext_resource type="Texture2D" uid="uid://ll8whb442msu" path="res://assets/sprites/creatures/tino/stand_0.png" id="2_8svpt"]
 [ext_resource type="Texture2D" uid="uid://8dg8xu70firo" path="res://assets/sprites/creatures/tino/stand_1.png" id="3_u6ivk"]
 [ext_resource type="Texture2D" uid="uid://dl1acva7leb6b" path="res://assets/sprites/creatures/tino/stand_2.png" id="4_jrbdp"]
@@ -76,3 +77,16 @@ shape = SubResource("RectangleShape2D_tino")
 
 [node name="WanderMovementController" type="Node" parent="."]
 script = ExtResource("2_wander")
+
+[node name="DragDropComponent" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -24.0
+offset_top = -24.0
+offset_right = 24.0
+offset_bottom = 24.0
+mouse_filter = 0
+script = ExtResource("3_drag")
+can_drag = true
+drag_type = 1
+z_index = 200

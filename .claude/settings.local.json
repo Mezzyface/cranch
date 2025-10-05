@@ -6,7 +6,20 @@
       "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" status --short)",
       "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" add DEVELOPMENT_GUIDE.md)",
       "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" commit -m \"$(cat <<''EOF''\nUpdate DEVELOPMENT_GUIDE with completed work\n\n- Documented FacilitySlot scene conversion\n- Documented drop zone bug fix (queue_free vs free)\n- Cleared implementation steps section\n- Moved completed work to history\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" push)"
+      "Bash(git -C \"C:\\Users\\purem\\OneDrive\\Documents\\new-game-project\" push)",
+      "Read(//c/Users/purem/mob_animations/**)",
+      "Bash(unzip:*)",
+      "Bash(magick identify:*)",
+      "Bash(for dir in guard_robot fire_pyrope krip neon_bat hedgehog)",
+      "Bash(do echo \"$dir:\")",
+      "Bash(done)",
+      "Bash(for dir in guard_robot fire_pyrope krip neon_bat hedgehog grizzly)",
+      "Bash(do if [ -f \"$dir/stand_0.png\" ])",
+      "Bash(then echo -n \"$dir: \")",
+      "Bash(fi)",
+      "Bash(while read f)",
+      "Bash(do echo \"$f:\")",
+      "Bash(cat:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

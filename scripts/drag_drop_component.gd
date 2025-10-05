@@ -43,6 +43,7 @@ var custom_drag_data: Dictionary = {}  # For CUSTOM type
 var _mouse_pressed: bool = false
 var _mouse_press_position: Vector2 = Vector2.ZERO
 var _drag_threshold: float = 10.0  # Pixels of movement to trigger drag vs click
+var _drop_was_successful: bool = false
 
 # Signals
 signal drag_started(data: Dictionary)
@@ -90,6 +91,9 @@ func _get_drag_data(_position: Vector2):
 	if data.is_empty():
 		return null
 
+	# Reset success flag at start of drag
+	_drop_was_successful = false
+
 	# Create preview
 	var preview = _create_drag_preview()
 	if preview:
@@ -120,6 +124,7 @@ func _build_creature_drag_data() -> Dictionary:
 			"creature": custom_drag_data.creature,
 			"source_node": custom_drag_data.get("sprite", drag_data_source),
 			"facility_card": custom_drag_data.get("facility_card"),  # Pass through facility reference
+			"source_facility": custom_drag_data.get("source_facility"),  # Pass through facility reference for drag-to-world
 			"component": self
 		}
 
@@ -132,18 +137,28 @@ func _build_creature_drag_data() -> Dictionary:
 	# Try to get creature data from different source types
 	if drag_data_source is CreatureDisplay:
 		creature_data = drag_data_source.creature_data
-	elif drag_data_source.has("creature_data"):
+	elif "creature_data" in drag_data_source:
 		creature_data = drag_data_source.creature_data
+	elif drag_data_source.has_method("get_drag_data"):
+		var custom_data = drag_data_source.get_drag_data()
+		if custom_data.has("creature"):
+			creature_data = custom_data.creature
 
 	if not creature_data:
 		return {}
 
-	return {
+	var data = {
 		"type": "creature",
 		"creature": creature_data,
 		"source_node": drag_data_source,
 		"component": self
 	}
+
+	# Merge in custom_drag_data if provided
+	if custom_drag_data:
+		data.merge(custom_drag_data, true)
+
+	return data
 
 func _build_facility_card_drag_data() -> Dictionary:
 	if not drag_data_source:
@@ -242,6 +257,14 @@ func _custom_can_drop(_data: Dictionary) -> bool:
 func _drop_data(_position: Vector2, data) -> void:
 	drop_received.emit(data)
 
+	# Notify the source component that drop was successful
+	if data.has("component") and data.component != self:
+		data.component._mark_drop_successful()
+
+func _mark_drop_successful():
+	"""Called by drop zone when drop is successful"""
+	_drop_was_successful = true
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		# Restore visibility if it was hidden
@@ -249,4 +272,5 @@ func _notification(what: int) -> void:
 			if not drag_data_source.is_queued_for_deletion():
 				drag_data_source.visible = true
 
-		drag_ended.emit(false)  # Assume unsuccessful unless overridden
+		drag_ended.emit(_drop_was_successful)
+		_drop_was_successful = false  # Reset for next drag

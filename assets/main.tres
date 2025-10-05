@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=60 format=3 uid="uid://de72pewi7lkny"]
+[gd_resource type="Theme" load_steps=62 format=3 uid="uid://de72pewi7lkny"]
 
 [ext_resource type="Texture2D" uid="uid://6q1pe22wd6" path="res://ui/button_square.custom/button_square_0.png" id="1"]
 [ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_7reej"]
@@ -266,6 +266,21 @@ texture_margin_top = 8.0
 texture_margin_right = 8.0
 texture_margin_bottom = 8.0
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_7reej"]
+texture = ExtResource("11")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+draw_center = false
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4nc12"]
+texture = ExtResource("10_peetm")
+texture_margin_left = 21.006655
+texture_margin_top = 21.1295
+texture_margin_right = 20.760962
+texture_margin_bottom = 20.760962
+
 [resource]
 default_font_size = 16
 AcceptDialog/colors/title_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
@@ -423,3 +438,7 @@ XButton/styles/disabled = SubResource("x_button_normal")
 XButton/styles/hover = SubResource("x_button_normal")
 XButton/styles/normal = SubResource("x_button_normal")
 XButton/styles/pressed = SubResource("x_button_pressed")
+facility/base_type = &"PanelContainer"
+facility/styles/panel = SubResource("StyleBoxTexture_7reej")
+food/base_type = &"PanelContainer"
+food/styles/panel = SubResource("StyleBoxTexture_4nc12")
