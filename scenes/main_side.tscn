@@ -1,23 +1,11 @@
-[gd_scene load_steps=8 format=4 uid="uid://c0fnlp8dyc1iw"]
+[gd_scene load_steps=4 format=4 uid="uid://c0fnlp8dyc1iw"]
 
 [ext_resource type="Texture2D" uid="uid://2i5nofi5pd6t" path="res://assets/Grid/Grid_16px.png" id="1_ar64v"]
+[ext_resource type="Script" uid="uid://bfcxxr0hykyjb" path="res://scenes/main_side.gd" id="1_main_side"]
 [ext_resource type="TileSet" uid="uid://cyke4okorrvbe" path="res://Tileset/v1/TileSet_16px.tres" id="2_inheq"]
-[ext_resource type="Texture2D" uid="uid://cgmj8yfknj83q" path="res://assets/Graybox/v1/Graybox_8px.png" id="3_10v3l"]
-[ext_resource type="Texture2D" uid="uid://do5p7ilf81lbx" path="res://assets/Graybox/v1/Graybox_16px.png" id="4_xda2p"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_2am5u"]
-atlas = ExtResource("3_10v3l")
-region = Rect2(48, 48, 32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_fagxi"]
-atlas = ExtResource("4_xda2p")
-region = Rect2(320, 48, 256, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_48k6h"]
-atlas = ExtResource("4_xda2p")
-region = Rect2(176, 176, 128, 128)
 
 [node name="Node" type="Node"]
+script = ExtResource("1_main_side")
 metadata/_edit_vertical_guides_ = [960.0]
 metadata/_edit_horizontal_guides_ = [540.0]
 
@@ -32,66 +20,3 @@ stretch_mode = 1
 texture_filter = 1
 tile_map_data = PackedByteArray("AABDACIABQAUAAMAAAAzACIABQAUAAMAAABTACIABQAUAAMAAAAzABUABQAUAAMAAAAtABMABQAGAAYAAAA9ABMABQAGAAYAAABNABMABQAGAAYAAAAnACsABQALAAsAAAAzACsABQALAAsAAAA/ACsABQALAAsAAABLACsABQALAAsAAABXACsABQALAAsAAAAnAC0ABQADAAMAAAAzAC0ABQADAAMAAAA/AC0ABQADAAMAAABLAC0ABQADAAMAAABXAC0ABQADAAMAAAA=")
 tile_set = ExtResource("2_inheq")
-
-[node name="4x4" type="TextureRect" parent="."]
-visible = false
-offset_right = 40.0
-offset_bottom = 40.0
-texture = SubResource("AtlasTexture_2am5u")
-
-[node name="16x2" type="TextureRect" parent="."]
-visible = false
-offset_right = 40.0
-offset_bottom = 40.0
-texture = SubResource("AtlasTexture_fagxi")
-
-[node name="8x8" type="TextureRect" parent="."]
-visible = false
-offset_right = 40.0
-offset_bottom = 40.0
-texture = SubResource("AtlasTexture_48k6h")
-
-[node name="MarginContainer" type="MarginContainer" parent="."]
-visible = false
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 24
-
-[node name="4x4" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
-layout_mode = 2
-texture = SubResource("AtlasTexture_2am5u")
-expand_mode = 3
-stretch_mode = 4
-
-[node name="4x5" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
-layout_mode = 2
-texture = SubResource("AtlasTexture_2am5u")
-expand_mode = 3
-
-[node name="4x6" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
-layout_mode = 2
-texture = SubResource("AtlasTexture_2am5u")
-expand_mode = 3
-
-[node name="Control" type="Control" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 4.0
-
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(960, 500)
-zoom = Vector2(2, 2)

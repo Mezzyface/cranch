@@ -1,0 +1,78 @@
+[gd_scene load_steps=15 format=3 uid="uid://ccfav4gkpiy1l"]
+
+[ext_resource type="Script" uid="uid://qx3ebuarrl7o" path="res://scenes/entities/tino_creature.gd" id="1_tino"]
+[ext_resource type="Script" path="res://scripts/wander_movement_controller.gd" id="2_wander"]
+[ext_resource type="Texture2D" uid="uid://ll8whb442msu" path="res://assets/sprites/creatures/tino/stand_0.png" id="2_8svpt"]
+[ext_resource type="Texture2D" uid="uid://8dg8xu70firo" path="res://assets/sprites/creatures/tino/stand_1.png" id="3_u6ivk"]
+[ext_resource type="Texture2D" uid="uid://dl1acva7leb6b" path="res://assets/sprites/creatures/tino/stand_2.png" id="4_jrbdp"]
+[ext_resource type="Texture2D" uid="uid://bsuql5mhskn57" path="res://assets/sprites/creatures/tino/stand_3.png" id="5_xlhul"]
+[ext_resource type="Texture2D" uid="uid://c8fknmsrc66ta" path="res://assets/sprites/creatures/tino/move_0.png" id="6_niwxd"]
+[ext_resource type="Texture2D" uid="uid://b52eofgnlrq43" path="res://assets/sprites/creatures/tino/move_1.png" id="7_8c1e6"]
+[ext_resource type="Texture2D" uid="uid://duga54r217kuj" path="res://assets/sprites/creatures/tino/move_2.png" id="8_rvit8"]
+[ext_resource type="Texture2D" uid="uid://2pj5wccoxpw0" path="res://assets/sprites/creatures/tino/move_3.png" id="9_43lps"]
+[ext_resource type="Texture2D" uid="uid://5pyqaxwjwn32" path="res://assets/sprites/creatures/tino/move_4.png" id="10_muvn7"]
+[ext_resource type="Texture2D" uid="uid://ddvl3oumwp7nx" path="res://assets/sprites/creatures/tino/move_5.png" id="11_3loul"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5abuj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_8svpt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_u6ivk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_jrbdp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_xlhul")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_niwxd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_8c1e6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_rvit8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_43lps")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_muvn7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_3loul")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 7.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tino"]
+size = Vector2(32, 32)
+
+[node name="TinoCreature" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_tino")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_5abuj")
+animation = &"walk"
+autoplay = "idle"
+frame_progress = 0.9554049
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_tino")
+
+[node name="WanderMovementController" type="Node" parent="."]
+script = ExtResource("2_wander")

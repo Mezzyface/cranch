@@ -1,15 +1,29 @@
-[gd_scene load_steps=9 format=3 uid="uid://bw2rpq8e545hs"]
+[gd_scene load_steps=11 format=4 uid="uid://bw2rpq8e545hs"]
 
 [ext_resource type="Script" uid="uid://d0lp8rta5wmar" path="res://scenes/view/game_scene.gd" id="1_dlcv3"]
-[ext_resource type="PackedScene" uid="uid://2i40l6ds35ry" path="res://scenes/background.tscn" id="2_v4xqf"]
+[ext_resource type="Texture2D" uid="uid://2i5nofi5pd6t" path="res://assets/Grid/Grid_16px.png" id="2_awu2i"]
+[ext_resource type="TileSet" uid="uid://cyke4okorrvbe" path="res://Tileset/v1/TileSet_16px.tres" id="3_20gb2"]
 [ext_resource type="PackedScene" uid="uid://bgvlgnlneqtaa" path="res://scenes/card/facility_slot.tscn" id="3_hega7"]
-[ext_resource type="Texture2D" uid="uid://chxfeo782kaj7" path="res://assets/backgrounds/origbig.png" id="3_x3lul"]
 [ext_resource type="Resource" uid="uid://c1j04b6pup2se" path="res://resources/facilities/intelligence_training.tres" id="4_u0bsg"]
 [ext_resource type="Resource" uid="uid://xvy1kjdrracx" path="res://resources/facilities/balanced_training.tres" id="5_v4xqf"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="7_awu2i"]
+[ext_resource type="Texture2D" uid="uid://bfsl8r5pdvf3j" path="res://assets/sprites/items/food/rpg_item_icon_coin_102.png" id="8_20gb2"]
 
-[sub_resource type="Theme" id="Theme_v4xqf"]
+[sub_resource type="LabelSettings" id="LabelSettings_20gb2"]
+font = ExtResource("7_awu2i")
+font_size = 32
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 6
+outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
+shadow_size = 0
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_awu2i"]
+[sub_resource type="LabelSettings" id="LabelSettings_x1e4x"]
+font = ExtResource("7_awu2i")
+font_size = 32
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+outline_size = 6
+outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
+shadow_size = 0
 
 [node name="GameScene" type="Control"]
 layout_mode = 3
@@ -21,49 +35,39 @@ grow_vertical = 2
 script = ExtResource("1_dlcv3")
 metadata/_edit_horizontal_guides_ = [539.0]
 
-[node name="Background" parent="." instance=ExtResource("2_v4xqf")]
-
-[node name="CreatureContainer" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(500, 500)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -577.0
-offset_top = -342.0
-offset_right = 563.0
-offset_bottom = 330.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = SubResource("Theme_v4xqf")
-theme_override_styles/panel = SubResource("StyleBoxEmpty_awu2i")
-
-[node name="Background" type="TextureRect" parent="CreatureContainer"]
-visible = false
-layout_mode = 2
-texture = ExtResource("3_x3lul")
-expand_mode = 3
-stretch_mode = 5
-
-[node name="FacilitySlot1" parent="." instance=ExtResource("3_hega7")]
+[node name="Background" type="TextureRect" parent="."]
+texture_filter = 1
 layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+texture = ExtResource("2_awu2i")
+stretch_mode = 1
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+texture_filter = 1
+position = Vector2(0, 32)
+tile_map_data = PackedByteArray("AABDACIABQAUAAMAAAAzACIABQAUAAMAAABTACIABQAUAAMAAAAzABUABQAUAAMAAAAtABMABQAGAAYAAAA9ABMABQAGAAYAAABNABMABQAGAAYAAAAnACsABQALAAsAAAAzACsABQALAAsAAAA/ACsABQALAAsAAABLACsABQALAAsAAABXACsABQALAAsAAAAnAC0ABQADAAMAAAAzAC0ABQADAAMAAAA/AC0ABQADAAMAAABLAC0ABQADAAMAAABXAC0ABQADAAMAAAA=")
+tile_set = ExtResource("3_20gb2")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="FacilitySlot1" parent="UILayer" instance=ExtResource("3_hega7")]
+visible = false
 offset_left = 47.0
 offset_top = 618.0
 offset_right = 367.0
 offset_bottom = 1038.0
 
-[node name="FacilitySlot2" parent="." instance=ExtResource("3_hega7")]
-layout_mode = 0
+[node name="FacilitySlot2" parent="UILayer" instance=ExtResource("3_hega7")]
+visible = false
 offset_left = 47.0
 offset_top = 120.0
 offset_right = 367.0
 offset_bottom = 540.0
 slot_index = 1
 
-[node name="FacilitySlot3" parent="." instance=ExtResource("3_hega7")]
-layout_mode = 0
+[node name="FacilitySlot3" parent="UILayer" instance=ExtResource("3_hega7")]
+visible = false
 offset_left = 1556.0
 offset_top = 618.0
 offset_right = 1876.0
@@ -72,8 +76,8 @@ slot_index = 2
 is_locked = true
 unlock_facility = ExtResource("4_u0bsg")
 
-[node name="FacilitySlot4" parent="." instance=ExtResource("3_hega7")]
-layout_mode = 0
+[node name="FacilitySlot4" parent="UILayer" instance=ExtResource("3_hega7")]
+visible = false
 offset_left = 1556.0
 offset_top = 120.0
 offset_right = 1876.0
@@ -81,3 +85,88 @@ offset_bottom = 540.0
 slot_index = 3
 is_locked = true
 unlock_facility = ExtResource("5_v4xqf")
+
+[node name="WeekBox" type="Panel" parent="UILayer"]
+custom_minimum_size = Vector2(200, 75)
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 20.0
+offset_bottom = 20.0
+
+[node name="Label" type="Label" parent="UILayer/WeekBox"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -8.0
+offset_right = 20.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Week 1"
+label_settings = SubResource("LabelSettings_20gb2")
+
+[node name="MarginContainer" type="MarginContainer" parent="UILayer/WeekBox"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -15.0
+offset_bottom = 37.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+
+[node name="NextWeekButton" type="Button" parent="UILayer/WeekBox/MarginContainer"]
+layout_mode = 2
+text = "Next Week"
+
+[node name="GoldBox" type="Panel" parent="UILayer"]
+custom_minimum_size = Vector2(200, 75)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 95.0
+grow_horizontal = 0
+
+[node name="TextureRect" type="TextureRect" parent="UILayer/GoldBox"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -20.0
+offset_right = 60.0
+offset_bottom = 20.0
+grow_vertical = 2
+texture = ExtResource("8_20gb2")
+expand_mode = 3
+
+[node name="Gold" type="Label" parent="UILayer/GoldBox"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -66.0
+offset_top = -16.0
+offset_right = -20.0
+offset_bottom = 16.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "100"
+label_settings = SubResource("LabelSettings_x1e4x")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+zoom = Vector2(2, 2)

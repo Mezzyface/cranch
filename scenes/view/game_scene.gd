@@ -8,6 +8,7 @@ const CREATURE_STATS_POPUP:PackedScene = preload("res://scenes/windows/creature_
 const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
 const QUEST_WINDOW = preload("res://scenes/windows/quest_window.tscn")
 const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_selector.tscn")
+const TINO_CREATURE = preload("res://scenes/entities/tino_creature.tscn")
 
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
@@ -17,7 +18,7 @@ const STRENGTH_FACILITY = preload("res://resources/facilities/strength_training.
 const AGILITY_FACILITY = preload("res://resources/facilities/agility_training.tres")
 const INTELLIGENCE_FACILITY = preload("res://resources/facilities/intelligence_training.tres")
 
-@onready var creature_container: PanelContainer = $CreatureContainer
+# @onready var creature_container: PanelContainer = $UILayer/CreatureContainer  # Removed for tileset rework
 
 func _ready():
 	# Connect to know when data is ready
@@ -26,9 +27,10 @@ func _ready():
 	# Initialize the game when scene loads
 	SignalBus.game_started.emit()
 	
-	_setup_container_drop_handling()
+	# _setup_container_drop_handling()  # Commented out - creature container removed
 	_create_week_display()
 	_create_facility_slots()
+	_spawn_tinos()
 
 func _input(event):
 	# Quick save with F5
@@ -68,61 +70,67 @@ func _on_player_data_ready():
 func _on_creature_added(creature: CreatureData):
 	print("_on_creature_added")
 	# Spawn individual creature when added
-	_spawn_creature(creature)
+	# _spawn_creature(creature)  # Disabled for tileset rework
+	pass
 
 func _on_creature_removed(creature: CreatureData):
 	print("_on_creature_removed: ", creature.creature_name)
-	# Find and remove the CreatureDisplay node for this creature
-	for child in creature_container.get_children():
-		if child is CreatureDisplay and child.creature_data == creature:
-			print("Removing CreatureDisplay for: ", creature.creature_name)
-			child.queue_free()
-			break
+	# Disabled for tileset rework
+	pass
+	# # Find and remove the CreatureDisplay node for this creature
+	# for child in creature_container.get_children():
+	# 	if child is CreatureDisplay and child.creature_data == creature:
+	# 		print("Removing CreatureDisplay for: ", creature.creature_name)
+	# 		child.queue_free()
+	# 		break
 
-	# Clean up the associated drag component
-	for child in get_children():
-		if child is DragDropComponent and child.name == "CreatureDrag_" + creature.creature_name:
-			print("Removing drag component for: ", creature.creature_name)
-			child.queue_free()
-			break
+	# # Clean up the associated drag component
+	# for child in get_children():
+	# 	if child is DragDropComponent and child.name == "CreatureDrag_" + creature.creature_name:
+	# 		print("Removing drag component for: ", creature.creature_name)
+	# 		child.queue_free()
+	# 		break
 	
 func _spawn_player_creatures():
-	print("_spawn_player_creatures")
-	if not GameManager.player_data:
-		return
+	print("_spawn_player_creatures - disabled for tileset rework")
+	return  # Disabled for tileset rework
+	# if not GameManager.player_data:
+	# 	return
 
-	# Clear existing creatures
-	for child in creature_container.get_children():
-		if child is CreatureDisplay:
-			child.queue_free()
+	# # Clear existing creatures
+	# for child in creature_container.get_children():
+	# 	if child is CreatureDisplay:
+	# 		child.queue_free()
 
-	# Spawn each creature
-	for creature in GameManager.player_data.creatures:
-		_spawn_creature(creature)
+	# # Spawn each creature
+	# for creature in GameManager.player_data.creatures:
+	# 	_spawn_creature(creature)
 
 
 func _spawn_creature(creature_data: CreatureData):
-	var creature_instance = CREATURE_DISPLAY.instantiate()
-	creature_container.add_child(creature_instance)
+	print("_spawn_creature - disabled for tileset rework")
+	return  # Disabled for tileset rework
+	# var creature_instance = CREATURE_DISPLAY.instantiate()
+	# creature_container.add_child(creature_instance)
 
-	# Set creature data
-	creature_instance.set_creature_data(creature_data)
+	# # Set creature data
+	# creature_instance.set_creature_data(creature_data)
 
-	# Get container bounds and pass to creature
-	var container_size = creature_container.get_rect().size
-	var container_bounds = Rect2(Vector2.ZERO, container_size)
-	creature_instance.set_container_bounds(container_bounds)
+	# # Get container bounds and pass to creature
+	# var container_size = creature_container.get_rect().size
+	# var container_bounds = Rect2(Vector2.ZERO, container_size)
+	# creature_instance.set_container_bounds(container_bounds)
 
-	# Position randomly within container
-	var padding = 20.0
-	var random_pos = Vector2(
-		randf_range(padding, container_size.x - padding),
-		randf_range(padding, container_size.y - padding)
-	)
-	creature_instance.position = random_pos
+	# # Position randomly within container
+	# var padding = 20.0
+	# var random_pos = Vector2(
+	# 	randf_range(padding, container_size.x - padding),
+	# 	randf_range(padding, container_size.y - padding)
+	# )
+	# creature_instance.position = random_pos
 
-	# Create drag component for this creature - layer 2 (on top of drop zone)
-	_create_creature_drag_component(creature_instance, creature_data)
+	# # Create drag component for this creature - layer 2 (on top of drop zone)
+	# _create_creature_drag_component(creature_instance, creature_data)
 
 func _create_creature_drag_component(creature_instance: CreatureDisplay, creature_data: CreatureData):
 	# Create drag component positioned over the creature
@@ -202,109 +210,33 @@ func _show_load_notification():
 	# Could add a popup or UI notification here
 
 func _refresh_display():
-	# Clear creatures from container
-	for child in creature_container.get_children():
-		if child is CreatureDisplay:
-			child.queue_free()
+	print("_refresh_display - disabled for tileset rework")
+	return  # Disabled for tileset rework
+	# # Clear creatures from container
+	# for child in creature_container.get_children():
+	# 	if child is CreatureDisplay:
+	# 		child.queue_free()
 
-	# Clear creature drag components from game scene
-	for child in get_children():
-		if child is DragDropComponent and child.name.begins_with("CreatureDrag_"):
-			child.queue_free()
+	# # Clear creature drag components from game scene
+	# for child in get_children():
+	# 	if child is DragDropComponent and child.name.begins_with("CreatureDrag_"):
+	# 		child.queue_free()
 
-	# Respawn creatures from loaded data
-	for creature in GameManager.player_data.creatures:
-		_spawn_creature(creature)
+	# # Respawn creatures from loaded data
+	# for creature in GameManager.player_data.creatures:
+	# 	_spawn_creature(creature)
 
 func _setup_container_drop_handling():
-	if creature_container:
-		# Create drop zone component for the container - layer 1 (base drop layer)
-		var drop_zone = DragDropComponent.new()
-		drop_zone.name = "ContainerDropZone"
-		drop_zone.drag_type = DragDropComponent.DragType.CREATURE
-		drop_zone.can_accept_drops = true
-		drop_zone.can_drag = false  # Drop-only zone
-		drop_zone.mouse_filter_mode = Control.MOUSE_FILTER_STOP
-		drop_zone.z_index = 100
-
-		# Fill the entire container
-		drop_zone.set_anchors_preset(Control.PRESET_FULL_RECT)
-		drop_zone.set_offsets_preset(Control.PRESET_FULL_RECT)
-
-		# Custom validation
-		drop_zone.custom_can_drop_callback = func(data: Dictionary) -> bool:
-			return data.has("creature")
-
-		# Connect drop signal
-		drop_zone.drop_received.connect(_on_container_drop_received)
-
-		# Add to container
-		creature_container.add_child(drop_zone)
-
-		print("Container drop handling enabled")
+	print("_setup_container_drop_handling - disabled for tileset rework")
+	return  # Disabled for tileset rework
 
 func _on_container_drop_received(data: Dictionary):
-	if not data.has("creature"):
-		return
-
-	var creature_data = data.get("creature")
-	var source_node = data.get("source_node")
-
-	# Check if dropping from world (source is CreatureDisplay) or facility (source is sprite)
-	if source_node and is_instance_valid(source_node) and source_node is CreatureDisplay:
-		# Dropping from world - just reposition
-		source_node.visible = true
-
-		# Get global mouse position (where the drop occurred)
-		var drop_pos = creature_container.get_global_mouse_position()
-
-		# Convert global position to container local position
-		var local_pos = creature_container.get_global_transform().affine_inverse() * drop_pos
-
-		# Apply position with padding constraints
-		var padding = 20.0
-		var container_size = creature_container.get_rect().size
-		source_node.position = Vector2(
-			clamp(local_pos.x, padding, container_size.x - padding),
-			clamp(local_pos.y, padding, container_size.y - padding)
-		)
-	else:
-		# Dropping from facility - spawn new CreatureDisplay
-		# Get global mouse position
-		var drop_pos = creature_container.get_global_mouse_position()
-		_spawn_creature_at_position(creature_data, drop_pos)
-
-		# Remove from facility if applicable
-		var facility_card = data.get("facility_card")
-		if facility_card and facility_card is FacilityCard:
-			# Remove the sprite from the facility
-			if source_node and is_instance_valid(source_node) and source_node is AnimatedSprite2D:
-				facility_card.remove_creature_by_sprite(source_node)
+	print("_on_container_drop_received - disabled for tileset rework")
+	return  # Disabled for tileset rework
 
 func _spawn_creature_at_position(creature_data: CreatureData, global_pos: Vector2):
-	var creature_instance = CREATURE_DISPLAY.instantiate()
-	creature_container.add_child(creature_instance)
-
-	# Set creature data
-	creature_instance.set_creature_data(creature_data)
-
-	# Get container bounds and pass to creature
-	var container_size = creature_container.get_rect().size
-	var container_bounds = Rect2(Vector2.ZERO, container_size)
-	creature_instance.set_container_bounds(container_bounds)
-
-	# Convert global position to container local position
-	var local_pos = creature_container.get_global_transform().affine_inverse() * global_pos
-
-	# Apply position with padding constraints
-	var padding = 20.0
-	creature_instance.position = Vector2(
-		clamp(local_pos.x, padding, container_size.x - padding),
-		clamp(local_pos.y, padding, container_size.y - padding)
-	)
-
-	# Create drag component for this creature
-	_create_creature_drag_component(creature_instance, creature_data)
+	print("_spawn_creature_at_position - disabled for tileset rework")
+	return  # Disabled for tileset rework
 
 func _create_week_display():
 	var week_display = WEEK_DISPLAY.instantiate()
@@ -394,3 +326,20 @@ func _on_week_advancement_blocked(reason: String, creatures: Array):
 
 	# TODO: Show popup with creature list and message
 	# For now, visual feedback: flash the facility cards with red tint
+
+func _spawn_tinos():
+	# Spawn 2 Tinos on the platform
+	for i in range(2):
+		var tino = TINO_CREATURE.instantiate()
+		add_child(tino)
+
+		# Position on center platform with random X position
+		var random_x = randf_range(500, 1420)
+		tino.position = Vector2(random_x, 400)
+
+		# Set platform bounds on the movement controller
+		var movement_controller = tino.get_node_or_null("WanderMovementController")
+		if movement_controller:
+			movement_controller.platform_bounds = Vector2(400, 1520)
+
+		print("Tino %d spawned at: %s" % [i + 1, tino.position])
