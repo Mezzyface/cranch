@@ -71,7 +71,14 @@ enum TagCategory {
 	TRAINING,  # Earned through activities
 	BREEDING,  # Inherited from parents
 	SPECIAL,   # Event/quest rewards
-	NEGATIVE   # Debuffs/challenges
+	NEGATIVE,   # Debuffs/challenges
+	TRAIT
+}
+
+enum CreatureProperties {
+	TRAIT,
+	GROWTH,
+	PERSONALITY
 }
 
 enum ItemType {

@@ -1,0 +1,60 @@
+[gd_scene load_steps=4 format=3 uid="uid://y5moefcgk75o"]
+
+[ext_resource type="Script" uid="uid://c4s08ahr2vyv1" path="res://scenes/windows/generic_selector.gd" id="1_a2b3c"]
+[ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_pdjkx"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_hmbwg"]
+font = ExtResource("1_pdjkx")
+font_size = 24
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+shadow_size = 0
+
+[node name="GenericSelector" type="PanelContainer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -236.0
+offset_top = -228.0
+offset_right = 236.0
+offset_bottom = 228.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_type_variation = &"DefaultPanelContainer"
+script = ExtResource("1_a2b3c")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "This is a title"
+label_settings = SubResource("LabelSettings_hmbwg")
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(400, 300)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="ItemList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+
+[node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Close"

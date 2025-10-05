@@ -36,6 +36,8 @@ signal facility_slot_unlocked(slot_index: int, cost: int)
 # Shop & Commerce
 signal shop_opened(shop: ShopResource)
 signal shop_closed()
+signal shop_selector_opened()
+signal shop_selector_closed()
 signal shop_purchase_completed(item_name: String, cost: int)
 signal shop_purchase_failed(reason: String)
 

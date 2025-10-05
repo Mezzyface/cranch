@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ShopResource" load_steps=5 format=3 uid="uid://ccwa8uobydj8t"]
+
+[ext_resource type="Script" uid="uid://dxwfe0cekjt8e" path="res://resources/shop_entry.gd" id="1_1uev5"]
+[ext_resource type="Script" uid="uid://bvxjbtyirmsiu" path="res://resources/shop_resource.gd" id="2_66bwt"]
+
+[sub_resource type="Resource" id="Resource_6x62k"]
+script = ExtResource("1_1uev5")
+entry_name = "Basic Food"
+description = "Standard creature nutrition. One meal per training session."
+entry_type = 1
+cost = 10
+item_id = "food_basic"
+
+[sub_resource type="Resource" id="Resource_y0ylg"]
+script = ExtResource("1_1uev5")
+entry_name = "Premium Food"
+description = "High-quality meal that provides +50% training bonus!"
+entry_type = 1
+cost = 25
+item_id = "food_premium"
+
+[resource]
+script = ExtResource("2_66bwt")
+shop_name = "Food Market"
+vendor_name = "Chef Gustav"
+greeting = "Fresh food for your creatures! Keep them fed and trained!"
+entries = Array[ExtResource("1_1uev5")]([SubResource("Resource_6x62k"), SubResource("Resource_y0ylg")])

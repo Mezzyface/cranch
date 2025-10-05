@@ -11,5 +11,5 @@ class_name ShopEntry
 
 # Type-specific data
 @export var creature_species: GlobalEnums.Species = GlobalEnums.Species.SLIME  # For CREATURE type
-@export var item: ItemResource = null  # For ITEM type
+@export var item_id: String = ""  # For ITEM type - references inventory items by ID
 # For SERVICE type: no extra data needed (yet)

@@ -47,6 +47,11 @@ static func _purchase_creature(entry: ShopEntry):
 	print("Purchased creature: %s (%s)" % [creature.creature_name, entry.entry_name])
 
 static func _purchase_item(entry: ShopEntry):
+	# Validate item_id is set
+	if entry.item_id.is_empty():
+		SignalBus.shop_purchase_failed.emit("Shop entry has no item_id set")
+		return
+
 	# Add item to inventory
 	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
 		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")

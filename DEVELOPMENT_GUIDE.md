@@ -169,7 +169,584 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Implementation Steps Section
 
-**Current Status**: All planned features implemented and working! Ready for next feature.
+### 🛒 Food Store & Store Selector System (Using Generic Selector)
+
+**Goal**: Add a dedicated food shop and a store selector UI to switch between different shops (food store, creature store, future shops).
+
+**Design**:
+- Create a new "Food Market" shop resource with food items
+- Add "Store Selector" button in game scene (F7 hotkey)
+- Store selector shows available shops in a list
+- Clicking a shop opens that shop window
+- Food shop sells food_basic and food_premium items
+- Future: Can add more shops (Equipment Store, Service Provider, etc.)
+
+---
+
+#### Step 1: Create Food Market shop resource
+
+**File**: Create `resources/shops/food_market.tres`
+
+**In Godot Editor**:
+1. Create new ShopResource
+2. Set properties:
+   - `shop_name`: "Food Market"
+   - `vendor_name`: "Chef Gustav"
+   - `greeting`: "Fresh food for your creatures! Keep them fed and trained!"
+3. Add first ShopEntry (Basic Food):
+   - `entry_name`: "Basic Food"
+   - `description`: "Standard creature nutrition. One meal per training session."
+   - `entry_type`: ITEM
+   - `cost`: 10
+   - `stock`: -1 (unlimited)
+   - `item_id`: "food_basic"
+4. Add second ShopEntry (Premium Food):
+   - `entry_name`: "Premium Food"
+   - `description`: "High-quality meal that provides +50% training bonus!"
+   - `entry_type`: ITEM
+   - `cost`: 25
+   - `stock`: -1 (unlimited)
+   - `item_id`: "food_premium"
+5. Save as `food_market.tres`
+
+**Why**: Food deserves its own shop. Separates food purchases from creature/service shops. Chef Gustav is more flavorful than generic shopkeeper.
+
+---
+
+#### Step 2: Replace ItemResource with item_id in ShopEntry
+
+**File**: `resources/shop_entry.gd`
+
+**Current item reference** (line 14):
+```gdscript
+@export var item: ItemResource = null  # For ITEM type
+```
+
+**Replace with**:
+```gdscript
+@export var item_id: String = ""  # For ITEM type - references inventory items by ID
+```
+
+**Why**: Using `item_id` string is cleaner and matches the inventory system's architecture. Items are stored in the inventory by ID (e.g., "food_basic"), so shops should reference them the same way. This eliminates the need for ItemResource references in shop entries.
+
+---
+
+#### Step 3: Update ShopManager to use item_id
+
+**File**: `scripts/shop_manager.gd`
+
+**Find the ITEM purchase case** (around line 50-60):
+
+**Current code**:
+```gdscript
+ShopEntry.ShopEntryType.ITEM:
+	# Add item to inventory
+	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
+		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
+		return false
+
+	print("Purchased item: ", entry.item_id)
+	return true
+```
+
+**Replace with**:
+```gdscript
+ShopEntry.ShopEntryType.ITEM:
+	# Validate item_id is set
+	if entry.item_id.is_empty():
+		SignalBus.shop_purchase_failed.emit("Shop entry has no item_id set")
+		return false
+
+	# Add item to inventory
+	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
+		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
+		return false
+
+	print("Purchased item: ", entry.item_id)
+	return true
+```
+
+**Why**: Simple validation that `item_id` is set. All shop entries now use the `item_id` system consistently. No need for complex fallback logic.
+
+---
+
+#### Step 4: Add shop_selector_opened signal to SignalBus
+
+**File**: `core/signal_bus.gd`
+
+**Add in Shop & Commerce section** (after line 40):
+```gdscript
+signal shop_selector_opened()
+signal shop_selector_closed()
+```
+
+**Why**: Allows UI to react when store selector opens/closes. Consistent with existing shop_opened/shop_closed pattern.
+
+---
+
+#### Step 5: Attach Generic Selector Script
+
+**Create file**: `scenes/windows/generic_selector.gd`
+
+**Attach to**: `res://scenes/windows/generic_selector.tscn` (existing scene)
+
+**Note**: The .tscn file already exists. You just need to create and attach the script.
+
+```gdscript
+extends PanelContainer
+class_name GenericSelector
+
+# Configuration
+var title: String = "Select an Option"
+var empty_message: String = "No options available"
+
+# Item data structure: Array[Dictionary]
+# Each dictionary should have:
+#   - "name": String (button text)
+#   - "description": String (optional, subtitle text)
+#   - "data": Variant (passed to callback when selected)
+var items: Array[Dictionary] = []
+
+# Callback when item selected: func(data: Variant)
+var on_item_selected: Callable
+
+# Optional signal to emit when opened
+var open_signal: Signal
+var close_signal: Signal
+
+@onready var title_label = $MarginContainer/VBoxContainer/TitleLabel
+@onready var item_list = $MarginContainer/VBoxContainer/ScrollContainer/ItemList
+@onready var close_button = $MarginContainer/VBoxContainer/CloseButton
+
+func _ready():
+	close_button.pressed.connect(_on_close_pressed)
+
+	# Set title
+	title_label.text = title
+
+	# Populate items
+	_populate_list()
+
+	# Center on screen
+	position = (get_viewport_rect().size - size) / 2
+
+	# Emit open signal if provided
+	if open_signal:
+		open_signal.emit()
+
+func _populate_list():
+	# Clear existing
+	for child in item_list.get_children():
+		child.queue_free()
+
+	if items.is_empty():
+		var label = Label.new()
+		label.text = empty_message
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		item_list.add_child(label)
+		return
+
+	# Create button for each item
+	for item in items:
+		_create_item_button(item)
+
+func _create_item_button(item: Dictionary):
+	var vbox = VBoxContainer.new()
+
+	var button = Button.new()
+	button.text = item.get("name", "Unnamed")
+	button.custom_minimum_size = Vector2(360, 60)
+	button.pressed.connect(_on_item_selected.bind(item.get("data")))
+	vbox.add_child(button)
+
+	# Optional description
+	if item.has("description") and not item.description.is_empty():
+		var desc_label = Label.new()
+		desc_label.text = item.description
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_label.custom_minimum_size.x = 360
+		desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+		vbox.add_child(desc_label)
+
+	# Separator
+	var separator = HSeparator.new()
+	vbox.add_child(separator)
+
+	item_list.add_child(vbox)
+
+func _on_item_selected(data: Variant):
+	# Call callback if provided
+	if on_item_selected:
+		on_item_selected.call(data)
+
+	# Close selector
+	queue_free()
+
+func _on_close_pressed():
+	# Emit close signal if provided
+	if close_signal:
+		close_signal.emit()
+	queue_free()
+
+# Static helper to create and configure a selector
+static func create(p_title: String, p_items: Array[Dictionary], p_callback: Callable) -> GenericSelector:
+	var selector_scene = preload("res://scenes/windows/generic_selector.tscn")
+	var selector = selector_scene.instantiate()
+	selector.title = p_title
+	selector.items = p_items
+	selector.on_item_selected = p_callback
+	return selector
+```
+
+**Node Path References** (from actual scene structure):
+- Root: `PanelContainer` (not Panel)
+- Title: `$MarginContainer/VBoxContainer/TitleLabel`
+- Item List: `$MarginContainer/VBoxContainer/ScrollContainer/ItemList`
+- Close Button: `$MarginContainer/VBoxContainer/CloseButton`
+
+**Why**:
+- Generic, reusable component for any selection UI
+- Configurable title, items, and callbacks
+- Items can have optional descriptions
+- Static helper function for easy instantiation
+- Uses existing generic_selector.tscn scene
+- Can be used for shops, food, or any future selection needs
+
+---
+
+#### Step 6: Create Store Selector using Generic Selector
+
+**Create file**: `scripts/store_selector_helper.gd` (static helper class)
+
+```gdscript
+class_name StoreSelectorHelper
+
+static func open_store_selector(parent_node: Node):
+	# Load all shops from resources/shops/
+	var shops = _load_shops()
+
+	if shops.is_empty():
+		push_error("No shops found in resources/shops/")
+		return
+
+	# Convert shops to selector items
+	var items: Array[Dictionary] = []
+	for shop_data in shops:
+		var shop: ShopResource = shop_data.resource
+		items.append({
+			"name": shop.shop_name,
+			"description": shop.greeting,
+			"data": shop
+		})
+
+	# Create selector
+	var selector = GenericSelector.create(
+		"Select a Store",
+		items,
+		func(shop: ShopResource):
+			_open_shop(parent_node, shop)
+	)
+
+	# Set signals
+	selector.open_signal = SignalBus.shop_selector_opened
+	selector.close_signal = SignalBus.shop_selector_closed
+	selector.empty_message = "No shops available"
+
+	parent_node.add_child(selector)
+
+static func _load_shops() -> Array[Dictionary]:
+	var shops: Array[Dictionary] = []
+	var shops_path = "res://resources/shops/"
+	var dir = DirAccess.open(shops_path)
+
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+
+		while file_name != "":
+			if file_name.ends_with(".tres"):
+				var shop_path = shops_path + file_name
+				var shop: ShopResource = load(shop_path)
+				if shop:
+					shops.append({
+						"resource": shop,
+						"path": shop_path
+					})
+					print("Loaded shop: ", shop.shop_name)
+			file_name = dir.get_next()
+
+		dir.list_dir_end()
+	else:
+		push_error("Failed to open shops directory: " + shops_path)
+
+	return shops
+
+static func _open_shop(parent_node: Node, shop: ShopResource):
+	var shop_window_scene = preload("res://scenes/windows/shop_window.tscn")
+	var shop_window = shop_window_scene.instantiate()
+	parent_node.add_child(shop_window)
+	shop_window.setup(shop)
+```
+
+**Why**: Separates shop-specific logic from the generic selector. Shop loading and opening logic contained in helper class. Generic selector remains completely reusable.
+
+---
+
+#### Step 7: Update game_scene to use Store Selector Helper
+
+**File**: `scenes/view/game_scene.gd`
+
+**Find the F6 shop code in `_input()` function** (around line 50):
+
+**Current code**:
+```gdscript
+# TEST: Open shop with F6
+elif event.is_action_pressed("ui_text_backspace"):  # F6 key
+	_open_test_shop()
+```
+
+**Replace with**:
+```gdscript
+# Open Store Selector with F6
+elif event.is_action_pressed("ui_text_backspace"):  # F6 key
+	StoreSelectorHelper.open_store_selector(self)
+```
+
+**Remove or comment out the old `_open_test_shop()` function** (no longer needed).
+
+**Why**: One-line call to open store selector. All shop logic handled by helper class. Clean separation of concerns.
+
+---
+
+#### Step 8: Convert Food Selector to use Generic Selector
+
+**File**: `scenes/windows/food_selector.gd`
+
+**Current implementation**: Custom food selector with hardcoded UI logic (72 lines)
+
+**Replace entire file with**:
+```gdscript
+class_name FoodSelectorHelper
+
+static func open_food_selector(parent_node: Node, creature: CreatureData):
+	var inventory_manager = GameManager.inventory_manager
+	var player_inv = GameManager.player_data.inventory
+
+	# Get all food items in inventory
+	var food_items = inventory_manager.get_items_by_type(GlobalEnums.ItemType.FOOD)
+
+	# Build items array
+	var items: Array[Dictionary] = []
+	for item_id in food_items:
+		if player_inv.has(item_id) and player_inv[item_id] > 0:
+			var item = inventory_manager.get_item_resource(item_id)
+			if item:
+				var quantity = player_inv[item_id]
+				var description = "%s (x%d)" % [item.description if item.description else "", quantity]
+
+				# Add stat boost info if applicable
+				if item.stat_boost_multiplier != 1.0:
+					description += "\n+%d%% training bonus" % int((item.stat_boost_multiplier - 1.0) * 100)
+
+				items.append({
+					"name": "%s (x%d)" % [item.item_name, quantity],
+					"description": description,
+					"data": item_id
+				})
+
+	# Create selector
+	var selector = GenericSelector.create(
+		"Select Food for %s" % creature.creature_name,
+		items,
+		func(item_id: String):
+			GameManager.facility_manager.assign_food_to_creature(creature, item_id)
+	)
+
+	selector.empty_message = "No food in inventory!\nBuy food from shop (F6)"
+	selector.open_signal = SignalBus.food_selection_requested
+
+	parent_node.add_child(selector)
+```
+
+**Update**: `scenes/windows/food_selector.tscn` can be deleted (no longer needed)
+
+**Update game_scene.gd** to use the new helper:
+
+**Find**:
+```gdscript
+func _on_food_selection_requested(creature: CreatureData):
+	var selector_scene = preload("res://scenes/windows/food_selector.tscn")
+	var selector = selector_scene.instantiate()
+	add_child(selector)
+	selector.setup(creature)
+```
+
+**Replace with**:
+```gdscript
+func _on_food_selection_requested(creature: CreatureData):
+	FoodSelectorHelper.open_food_selector(self, creature)
+```
+
+**Why**: Food selector now uses generic selector - 30 lines vs 72 lines. Consistent UI across all selection windows. Easy to maintain and extend.
+
+---
+
+#### Step 9: Update game_scene to show store selector hint in UI
+
+**File**: `scenes/view/game_scene.gd` (or create UI label)
+
+**Optional: Add hint label to game UI**:
+```gdscript
+# In _ready() or UI setup function
+var hint_label = Label.new()
+hint_label.text = "F5: Save | F9: Load | F6: Stores | Q: Quests"
+hint_label.position = Vector2(10, 10)
+add_child(hint_label)
+```
+
+**Why**: Players need to know F6 opens the store selector. Shows all main hotkeys in one place.
+
+---
+
+#### Step 10: Convert existing test shop to Creature Market
+
+**File**: Any existing shop resource (or create new `resources/shops/creature_market.tres`)
+
+**If you have an existing test shop .tres file**:
+1. Open it in Godot Editor
+2. Update properties:
+   - `shop_name`: "Creature Market"
+   - `vendor_name`: "Breeder Bob"
+   - `greeting`: "Quality creatures for discerning trainers!"
+3. Clear existing entries
+4. Add ShopEntry for each species:
+   - **Scuttleguard**:
+     - `entry_name`: "Scuttleguard"
+     - `description`: "A sturdy tank creature with high defense."
+     - `entry_type`: CREATURE
+     - `creature_species`: SCUTTLEGUARD
+     - `cost`: 150
+     - `stock`: -1
+   - **Slime**:
+     - `entry_name`: "Slime"
+     - `description`: "A balanced creature that adapts to any situation."
+     - `entry_type`: CREATURE
+     - `creature_species`: SLIME
+     - `cost`: 100
+     - `stock`: -1
+   - **Wind Dancer**:
+     - `entry_name`: "Wind Dancer"
+     - `description`: "A swift and intelligent aerial creature."
+     - `entry_type`: CREATURE
+     - `creature_species`: WIND_DANCER
+     - `cost`: 200
+     - `stock`: -1
+5. Save as `creature_market.tres` (rename if needed)
+
+**Why**: Convert the existing test shop into a proper creature market. Now you'll have two shops (Creature Market and Food Market) to test the store selector with.
+
+---
+
+#### Step 11: Remove test_shop variable from game_scene (cleanup)
+
+**File**: `scenes/view/game_scene.gd`
+
+**Find the test_shop variable declaration** (around line 21):
+```gdscript
+# Test shop - will be created manually in Godot Editor
+var test_shop: ShopResource
+```
+
+**Remove it** (no longer needed):
+```gdscript
+# Old test shop variable removed - using store selector now
+```
+
+**Why**: Clean up unused code. The store selector loads shops dynamically from the `resources/shops/` folder, so we don't need hardcoded shop references in game_scene.
+
+---
+
+### Summary
+
+**New Features**:
+1. **Generic Selector Window**: Reusable selection UI for any list-based choice
+2. **Food Market Shop**: Dedicated shop for food items (basic and premium)
+3. **Creature Market Shop**: Convert existing test shop to proper creature market
+4. **Store Selector Helper**: Uses GenericSelector for browsing shops
+5. **Food Selector Helper**: Refactored to use GenericSelector (60% less code)
+6. **Dynamic Shop Loading**: Shops auto-discovered from `resources/shops/` folder
+7. **Unified item_id System**: All shop entries use item_id strings consistently
+8. **F6 Hotkey**: Now opens store selector (replaces direct shop access)
+
+**Key Architecture Decisions**:
+1. **Generic Selector Pattern**: Single reusable component for all selection UIs
+2. **Helper Classes**: StoreSelectorHelper and FoodSelectorHelper contain domain logic
+3. **Shop auto-discovery**: Load all .tres from `resources/shops/` folder
+4. **Selector closes on selection**: Clean UX, no overlapping windows
+5. **item_id system**: All shop entries now use item_id strings (cleaner, matches inventory architecture)
+6. **Static factory method**: `GenericSelector.create()` for easy instantiation
+
+**Files Created**:
+- `resources/shops/food_market.tres` - Food shop resource
+- `scenes/windows/generic_selector.gd` - Generic selector class (90 lines) - attached to existing .tscn
+- `scripts/store_selector_helper.gd` - Shop selector helper class (60 lines)
+
+**Files Converted**:
+- `resources/shops/creature_market.tres` - Convert existing test shop to creature market
+- `scenes/windows/food_selector.gd` - Convert to helper class using GenericSelector (30 lines, was 72)
+
+**Files Deleted**:
+- `scenes/windows/food_selector.tscn` - No longer needed (uses generic_selector.tscn)
+
+**Files Modified**:
+- `resources/shop_entry.gd` - Replaced `item` with `item_id` for consistency
+- `scripts/shop_manager.gd` - Updated ITEM purchase to use item_id only
+- `core/signal_bus.gd` - Added shop_selector_opened/closed signals
+- `scenes/view/game_scene.gd` - Use helper classes for selectors, removed test_shop variable
+
+**Signals Added**:
+- `shop_selector_opened()` - Store selector opened
+- `shop_selector_closed()` - Store selector closed
+
+**Gameplay Flow**:
+1. Player presses F6
+2. Store selector opens showing all shops (Food Market, Creature Market, etc.)
+3. Each shop shows name and greeting
+4. Player clicks shop button
+5. Shop window opens with that shop's inventory
+6. Store selector closes
+7. Player purchases items/creatures
+8. Shop window closes
+9. Player can press F6 again to browse other shops
+
+**Future Extensions (Easy with GenericSelector)**:
+1. **Equipment Store**: Same pattern as food/shops
+2. **Service Provider**: List of services using GenericSelector
+3. **Creature Selector**: Replace quest selector with GenericSelector
+4. **Facility Selector**: Choose facilities to build
+5. **Activity Selector**: Pick training activities
+6. **Achievement Browser**: View completed achievements
+7. **Settings Menu**: List of settings categories
+8. **Recipe Book**: Craft items via selection UI
+9. **Black Market**: Special shop with limited stock
+10. **Shop Unlocking**: Filter shops based on quest completion
+
+**Testing Steps**:
+1. Verify `res://scenes/windows/generic_selector.tscn` exists ✓
+2. Attach `generic_selector.gd` script to the GenericSelector (PanelContainer) node
+3. Verify @onready paths (TitleLabel, ItemList, CloseButton all exist)
+4. Create `food_market.tres` with two food items
+5. Convert existing test shop to `creature_market.tres` with three creatures
+6. Press F6 in game
+7. See store selector with "Food Market" and "Creature Market"
+8. Click "Food Market" → shop window opens with food items
+9. Purchase food_basic or food_premium
+10. Check inventory (I key) - should show purchased food
+11. Press F6 again → click "Creature Market" → buy a creature
+12. Verify new creature appears in the world
+13. Verify gold deducted correctly for all purchases
+
+---
 
 ---
 

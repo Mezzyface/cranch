@@ -8,7 +8,6 @@ const CREATURE_STATS_POPUP:PackedScene = preload("res://scenes/windows/creature_
 const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
 const QUEST_WINDOW = preload("res://scenes/windows/quest_window.tscn")
 const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_selector.tscn")
-const FOOD_SELECTOR = preload("res://scenes/windows/food_selector.tscn")
 
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
@@ -17,10 +16,6 @@ const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.
 const STRENGTH_FACILITY = preload("res://resources/facilities/strength_training.tres")
 const AGILITY_FACILITY = preload("res://resources/facilities/agility_training.tres")
 const INTELLIGENCE_FACILITY = preload("res://resources/facilities/intelligence_training.tres")
-
-# Test shop - will be created manually in Godot Editor
-var test_shop: ShopResource
-
 
 @onready var creature_container: PanelContainer = $CreatureContainer
 
@@ -47,9 +42,9 @@ func _input(event):
 			_refresh_display()
 			_show_load_notification()
 
-	# TEST: Open shop with F6
+	# Open Store Selector with F6
 	elif event.is_action_pressed("ui_text_backspace"):  # F6 key
-		_open_test_shop()
+		StoreSelectorHelper.open_store_selector(self)
 
 	# Open Quest Log with Q key
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -367,71 +362,6 @@ func _on_creature_clicked(creature_data: CreatureData) -> void:
 	add_child(popup)
 	popup.setup(creature_data)
 
-func _open_test_shop():
-	# Try to load test shop if available
-	if not test_shop:
-		# Try to load from file (created manually in Godot Editor)
-		if ResourceLoader.exists("res://resources/shops/creature_shop_1.tres"):
-			test_shop = load("res://resources/shops/creature_shop_1.tres")
-		else:
-			# Create a simple test shop in code if file doesn't exist
-			test_shop = _create_fallback_shop()
-
-	if test_shop:
-		# Check if shop window already exists
-		var existing_shop = get_node_or_null("ShopWindow")
-		if existing_shop:
-			# Reuse existing window
-			existing_shop.setup(test_shop)
-		else:
-			# Create new shop window
-			var shop_window = SHOP_WINDOW.instantiate()
-			shop_window.name = "ShopWindow"
-			add_child(shop_window)
-			shop_window.setup(test_shop)
-	else:
-		print("ERROR: Could not create test shop")
-
-func _create_fallback_shop() -> ShopResource:
-	# Create a simple test shop programmatically
-	var shop = ShopResource.new()
-	shop.shop_name = "Creature Emporium"
-	shop.vendor_name = "Greta the Breeder"
-	shop.greeting = "Looking for a new companion? I've got just the thing!"
-
-	# Create shop entries
-	var slime_entry = ShopEntry.new()
-	slime_entry.entry_name = "Slime Egg"
-	slime_entry.description = "A balanced starter creature"
-	slime_entry.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	slime_entry.cost = 50
-	slime_entry.stock = -1
-	slime_entry.creature_species = GlobalEnums.Species.SLIME
-
-	var scuttleguard_entry = ShopEntry.new()
-	scuttleguard_entry.entry_name = "Scuttleguard Egg"
-	scuttleguard_entry.description = "A tough, defensive creature"
-	scuttleguard_entry.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	scuttleguard_entry.cost = 75
-	scuttleguard_entry.stock = 3
-	scuttleguard_entry.creature_species = GlobalEnums.Species.SCUTTLEGUARD
-
-	var wind_dancer_entry = ShopEntry.new()
-	wind_dancer_entry.entry_name = "Wind Dancer Egg"
-	wind_dancer_entry.description = "A swift and intelligent creature"
-	wind_dancer_entry.entry_type = GlobalEnums.ShopEntryType.CREATURE
-	wind_dancer_entry.cost = 100
-	wind_dancer_entry.stock = 2
-	wind_dancer_entry.creature_species = GlobalEnums.Species.WIND_DANCER
-
-	# Can't directly assign array to typed Array[ShopEntry], must append
-	shop.entries.append(slime_entry)
-	shop.entries.append(scuttleguard_entry)
-	shop.entries.append(wind_dancer_entry)
-	shop._initialize_stock()
-
-	return shop
-
 func open_quest_window():
 	# Prevent multiple instances
 	if get_node_or_null("QuestWindow"):
@@ -454,9 +384,7 @@ func _on_quest_turn_in_started(quest: QuestResource):
 	selector.setup(quest)
 
 func _on_food_selection_requested(creature: CreatureData):
-	var selector = FOOD_SELECTOR.instantiate()
-	add_child(selector)
-	selector.setup(creature)
+	FoodSelectorHelper.open_food_selector(self, creature)
 
 func _on_week_advancement_blocked(reason: String, creatures: Array):
 	print("⚠️ Cannot advance week: %s" % reason)
