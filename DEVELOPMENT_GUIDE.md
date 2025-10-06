@@ -169,6 +169,102 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Implementation Steps Section
 
+---
+
+## Completed Implementation History
+
+### ✅ Tino Creature Click Detection & Stats Popup Improvements (Completed 2025-01-XX)
+
+**What Was Implemented:**
+- Added click detection to the new tino_creature scene
+- Clicking a Tino (without dragging) now shows the creature stats popup
+- Uses existing DragDropComponent's `clicked()` signal
+- **Converted stats popup to CanvasLayer** for proper layering on top of game
+- **Prevents modal stacking** - only one stats popup can be open at a time
+
+**Implementation Details:**
+
+**File: `scenes/entities/tino_creature.gd`**
+- Connected `drag_component.clicked` signal to `_on_clicked()` handler
+- `_on_clicked()` emits `SignalBus.creature_clicked` with creature data
+
+**File: `scenes/windows/creature_stats_popup.gd`**
+- Changed from `extends PanelContainer` to `extends CanvasLayer`
+- Updated all node references to include `PanelContainer` parent
+- Centers popup on viewport instead of using position offset
+
+**File: `scenes/windows/creature_stats_popup.tscn`**
+- Restructured with CanvasLayer as root node
+- PanelContainer now a child of CanvasLayer
+- Updated all node paths to reflect new hierarchy
+
+**File: `scenes/view/game_scene.gd`**
+- Added `_close_existing_creature_stats_popup()` helper function
+- Closes any existing stats popup before opening new one
+- Named popup "CreatureStatsPopup" for easy identification
+
+**Files Modified:**
+- `scenes/entities/tino_creature.gd` - Added click detection
+- `scenes/windows/creature_stats_popup.gd` - CanvasLayer conversion
+- `scenes/windows/creature_stats_popup.tscn` - Scene hierarchy restructure
+- `scenes/view/game_scene.gd` - Modal stacking prevention
+
+**Behavior:**
+- Click on a Tino creature in the world → Stats popup appears on top of all game elements
+- Click another Tino → Old popup closes, new one opens (no stacking)
+- Drag a Tino creature → Normal drag behavior (no stats popup)
+- Click detection uses 10px movement threshold to distinguish click from drag
+- Popup displays as CanvasLayer overlay, always visible above game content
+
+---
+
+### ✅ Food Container Visibility & Icon Updates (Completed 2025-01-XX)
+
+**What Was Implemented:**
+- FoodContainer automatically hides when facility slots are empty
+- FoodContainer shows when creatures are assigned to facilities
+- Food button icon updates to show assigned food item
+- Red X icon shown when no food is assigned
+- Prevents modal stacking when opening food selector multiple times
+
+**Key Features:**
+1. **Dynamic Visibility**: Food container only visible when creature assigned
+2. **Icon Updates**: Food button shows actual food icon from ItemResource
+3. **Signal Integration**: Listens to `creature_food_assigned` for real-time updates
+4. **Persistent Food**: Food assignments follow creatures between facilities
+5. **Modal Management**: Closes existing food selectors before opening new ones
+
+**Implementation Details:**
+
+**File: `scenes/view/facility_view.gd`**
+- Added `food_container` @onready reference
+- Hide food_container in `_ready()` initially
+- Show food_container in `assign_creature()` when creature assigned
+- Hide food_container in `clear_creature()` when creature removed
+- Connected to `SignalBus.creature_food_assigned` signal
+- Implemented `_update_food_button_texture()` to update food icon
+- Check for existing food assignment when creature is assigned
+- `_on_food_assigned()` handler updates texture when food is assigned
+
+**File: `scenes/windows/food_selector.gd`**
+- Added `_close_existing_selector()` helper function
+- Close existing food selector before opening new one
+- Named selector "FoodSelector" for easy identification
+- Prevents modal stacking by cleaning up old instances
+
+**Files Modified:**
+- `scenes/view/facility_view.gd` - Food container visibility and icon management
+- `scenes/windows/food_selector.gd` - Modal stacking prevention
+
+**Behavior:**
+- Empty facility slots: No food container visible
+- Occupied facility slots: Food container visible with appropriate icon
+- No food assigned: Shows Red X icon
+- Food assigned: Shows actual food item icon
+- Opening food selector multiple times: Old selector closes, new one replaces it
+- Food assignments persist when moving creatures between facilities
+
+
 ### 🛒 Food Store & Store Selector System (Using Generic Selector)
 
 **Goal**: Add a dedicated food shop and a store selector UI to switch between different shops (food store, creature store, future shops).

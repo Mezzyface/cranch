@@ -61,9 +61,6 @@ func _ready():
 		queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
-	if not can_drag:
-		return
-
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_mouse_pressed = true
@@ -76,6 +73,10 @@ func _gui_input(event: InputEvent) -> void:
 					# It's a click, not a drag
 					clicked.emit()
 			_mouse_pressed = false
+
+	# Early return for drag-related logic if can't drag
+	if not can_drag:
+		return
 
 func _draw_debug():
 	# Draw a semi-transparent overlay to see the drag area

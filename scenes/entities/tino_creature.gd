@@ -34,6 +34,9 @@ func _ready():
 			modulate.a = 1.0  # Restore opacity
 		)
 
+		# Connect click signal to show creature stats
+		drag_component.clicked.connect(_on_clicked)
+
 func _update_sprite():
 	if not creature_data or not animated_sprite:
 		return
@@ -79,3 +82,8 @@ func get_drag_data() -> Dictionary:
 			"source_node": self
 		}
 	return {}
+
+func _on_clicked():
+	"""Called when creature is clicked (not dragged)"""
+	if creature_data:
+		SignalBus.creature_clicked.emit(creature_data)

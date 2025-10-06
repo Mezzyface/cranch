@@ -13,7 +13,6 @@
 
 [sub_resource type="LabelSettings" id="LabelSettings_ybn7d"]
 font = ExtResource("4_esbav")
-font_size = 32
 font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
 outline_size = 5
 outline_color = Color(0.8156863, 0.5058824, 0.34901962, 1)
@@ -21,7 +20,8 @@ shadow_size = 0
 
 [node name="FacilityView" type="Control"]
 custom_minimum_size = Vector2(128, 160)
-layout_mode = 0
+layout_mode = 3
+anchors_preset = 0
 offset_right = 128.0
 offset_bottom = 160.0
 size_flags_horizontal = 0
@@ -46,9 +46,9 @@ show_behind_parent = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 0
 offset_left = 96.0
-offset_top = 138.0
+offset_top = 123.0
 offset_right = 128.0
-offset_bottom = 170.0
+offset_bottom = 155.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 theme = SubResource("Theme_tj564")
@@ -73,6 +73,7 @@ ignore_texture_size = true
 stretch_mode = 0
 
 [node name="Lockscreen" type="Control" parent="."]
+visible = false
 custom_minimum_size = Vector2(128, 128)
 anchors_preset = 0
 offset_right = 40.0
@@ -102,6 +103,20 @@ text = "Locked
 100g"
 label_settings = SubResource("LabelSettings_ybn7d")
 horizontal_alignment = 1
+
+[node name="CreatureName" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -64.0
+offset_right = 64.0
+offset_bottom = 32.0
+grow_horizontal = 2
+text = "CreatureName"
+label_settings = SubResource("LabelSettings_ybn7d")
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="DropZone" type="Control" parent="."]
 layout_mode = 1

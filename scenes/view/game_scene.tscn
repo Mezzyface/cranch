@@ -1,12 +1,16 @@
-[gd_scene load_steps=10 format=4 uid="uid://bw2rpq8e545hs"]
+[gd_scene load_steps=14 format=4 uid="uid://bw2rpq8e545hs"]
 
 [ext_resource type="Script" uid="uid://d0lp8rta5wmar" path="res://scenes/view/game_scene.gd" id="1_dlcv3"]
 [ext_resource type="Texture2D" uid="uid://2i5nofi5pd6t" path="res://assets/Grid/Grid_16px.png" id="2_awu2i"]
 [ext_resource type="TileSet" uid="uid://cyke4okorrvbe" path="res://Tileset/v1/TileSet_16px.tres" id="3_20gb2"]
 [ext_resource type="PackedScene" uid="uid://br6d711bl84my" path="res://scenes/view/facility_view.tscn" id="4_x1e4x"]
+[ext_resource type="Resource" uid="uid://cld0nc02l256m" path="res://resources/facilities/strength_training.tres" id="5_facility1"]
+[ext_resource type="Resource" uid="uid://dlvpuibj5hyvr" path="res://resources/facilities/agility_training.tres" id="6_facility2"]
 [ext_resource type="Script" uid="uid://1r4qgndqla8e" path="res://scripts/drag_drop_component.gd" id="7_20gb2"]
 [ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="7_awu2i"]
+[ext_resource type="Resource" uid="uid://c0m0lqxkqtxwa" path="res://resources/facilities/intelligence_training.tres" id="7_facility3"]
 [ext_resource type="Texture2D" uid="uid://bfsl8r5pdvf3j" path="res://assets/sprites/items/food/rpg_item_icon_coin_102.png" id="8_20gb2"]
+[ext_resource type="Resource" uid="uid://c8c5g3aobx3c6" path="res://resources/facilities/balanced_training.tres" id="8_facility4"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_20gb2"]
 font = ExtResource("7_awu2i")
@@ -54,6 +58,7 @@ offset_left = 512.0
 offset_top = 608.0
 offset_right = 640.0
 offset_bottom = 768.0
+facility_resource = ExtResource("5_facility1")
 
 [node name="FacilitySlot2" parent="." instance=ExtResource("4_x1e4x")]
 layout_mode = 0
@@ -61,6 +66,9 @@ offset_left = 704.0
 offset_top = 608.0
 offset_right = 832.0
 offset_bottom = 768.0
+facility_resource = ExtResource("6_facility2")
+is_locked = true
+unlock_cost = 100
 
 [node name="FacilitySlot3" parent="." instance=ExtResource("4_x1e4x")]
 layout_mode = 0
@@ -68,6 +76,9 @@ offset_left = 896.0
 offset_top = 608.0
 offset_right = 1024.0
 offset_bottom = 768.0
+facility_resource = ExtResource("7_facility3")
+is_locked = true
+unlock_cost = 200
 
 [node name="FacilitySlot4" parent="." instance=ExtResource("4_x1e4x")]
 layout_mode = 0
@@ -75,6 +86,9 @@ offset_left = 1088.0
 offset_top = 608.0
 offset_right = 1216.0
 offset_bottom = 768.0
+facility_resource = ExtResource("8_facility4")
+is_locked = true
+unlock_cost = 300
 
 [node name="FacilitySlot5" parent="." instance=ExtResource("4_x1e4x")]
 layout_mode = 0
@@ -82,6 +96,9 @@ offset_left = 1280.0
 offset_top = 608.0
 offset_right = 1408.0
 offset_bottom = 768.0
+facility_resource = ExtResource("5_facility1")
+is_locked = true
+unlock_cost = 500
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 

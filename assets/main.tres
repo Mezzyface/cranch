@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=62 format=3 uid="uid://de72pewi7lkny"]
+[gd_resource type="Theme" load_steps=61 format=3 uid="uid://de72pewi7lkny"]
 
 [ext_resource type="Texture2D" uid="uid://6q1pe22wd6" path="res://ui/button_square.custom/button_square_0.png" id="1"]
 [ext_resource type="FontFile" uid="uid://fitttpkbkn2q" path="res://assets/fonts/honeyblot_caps.ttf" id="1_7reej"]
@@ -20,7 +20,6 @@
 [ext_resource type="Texture2D" uid="uid://bu4jdpa4vep84" path="res://ui/scrollbar_horizontal_button.custom/scrollbar_horizontal_button_0.png" id="20"]
 [ext_resource type="Texture2D" uid="uid://dph51yqkbaa5g" path="res://ui/scrollbar_horizontal_button_pressed.custom/scrollbar_horizontal_button_pressed_0.png" id="21"]
 [ext_resource type="Texture2D" uid="uid://dp8em2m3lxf47" path="res://ui/tooltip.custom/tooltip_0.png" id="22"]
-[ext_resource type="Texture2D" uid="uid://caftp2pme18nj" path="res://ui/selection_frame_square.custom/selection_frame_square_0.png" id="23"]
 [ext_resource type="Texture2D" uid="uid://0gkpgfofmkgg" path="res://ui/banner.custom/banner_0.png" id="25"]
 [ext_resource type="Texture2D" uid="uid://ddyk1servoyag" path="res://ui/inventory_slot.custom/inventory_slot_0.png" id="26"]
 [ext_resource type="Texture2D" uid="uid://dgqv2s54ewt33" path="res://ui/button_square.dark/button_square_0.png" id="27"]
@@ -194,12 +193,8 @@ texture_margin_top = 16.0
 texture_margin_right = 16.0
 texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_19"]
-texture = ExtResource("23")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxTexture_19"]
+bg_color = Color(0.819, 0.533, 0.349, 0.4)
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_11"]
 texture = ExtResource("15")

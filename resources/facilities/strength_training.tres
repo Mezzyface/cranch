@@ -13,5 +13,6 @@ description = "Increases creature's strength"
 script = ExtResource("3_qxntt")
 facility_name = "Strength Training Grounds"
 description = "A rugged training area focused on building physical power"
+background_path = "res://assets/backgrounds/gym.png"
 activities = Array[ExtResource("1_h7uk0")]([SubResource("Resource_8iuvv")])
 max_creatures = 3

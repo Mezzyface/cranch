@@ -1,6 +1,9 @@
 class_name FoodSelectorHelper
 
 static func open_food_selector(parent_node: Node, creature: CreatureData):
+	# Close any existing food selector to prevent stacking
+	_close_existing_selector(parent_node)
+
 	var inventory_manager = GameManager.inventory_manager
 	var player_inv = GameManager.player_data.inventory
 
@@ -36,5 +39,12 @@ static func open_food_selector(parent_node: Node, creature: CreatureData):
 
 	selector.empty_message = "No food in inventory!\nBuy food from shop (F6)"
 	selector.open_signal = SignalBus.food_selection_requested
+	selector.name = "FoodSelector"  # Give it a unique name so we can find it
 
 	parent_node.add_child(selector)
+
+static func _close_existing_selector(parent_node: Node):
+	"""Close any existing GenericSelector instances to prevent stacking"""
+	for child in parent_node.get_children():
+		if child is GenericSelector and child.name == "FoodSelector":
+			child.queue_free()

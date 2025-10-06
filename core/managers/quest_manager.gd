@@ -14,18 +14,18 @@ var current_quest_for_turnin: QuestResource = null
 
 func initialize():
 	"""Called by GameManager on game start"""
-	print("QuestManager: initialize() called")
+	# print("QuestManager: initialize() called")  # Debug disabled
 	load_all_quests()
 
-	print("QuestManager: Total quests loaded: ", all_quests.size())
+	# print("QuestManager: Total quests loaded: ", all_quests.size())  # Debug disabled
 
 	# Auto-accept first quest in chain (only if no quests active/completed)
 	if active_quests.is_empty() and completed_quests.is_empty():
 		if all_quests.has("COL-01"):
-			print("QuestManager: Auto-accepting COL-01")
+			# print("QuestManager: Auto-accepting COL-01")  # Debug disabled
 			accept_quest("COL-01")
 		else:
-			print("QuestManager: COL-01 not found in all_quests")
+			print("QuestManager: COL-01 not found in all_quests")  # Keep this as it's an error condition
 
 # Load quest resources from disk
 func load_all_quests():
@@ -45,9 +45,9 @@ func load_all_quests():
 				var quest = load(quest_path) as QuestResource
 				if quest:
 					register_quest(quest)
-					print("Loaded quest: ", quest.quest_title, " (", quest.quest_id, ")")
+					# print("Loaded quest: ", quest.quest_title, " (", quest.quest_id, ")")  # Debug disabled
 				else:
-					print("Failed to load quest: ", quest_path)
+					print("Failed to load quest: ", quest_path)  # Keep this as it's an error condition
 			file_name = dir.get_next()
 
 		dir.list_dir_end()

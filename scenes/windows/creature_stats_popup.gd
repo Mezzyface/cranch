@@ -1,13 +1,14 @@
-extends PanelContainer
+extends CanvasLayer
 
 # References to labels (set in _ready via get_node)
-@onready var creature_name_label: Label = $MarginContainer/VBoxContainer/CreatureName
-@onready var species_label: Label = $MarginContainer/VBoxContainer/SpeciesLabel
-@onready var strength_label: Label = $MarginContainer/VBoxContainer/StrengthLabel
-@onready var agility_label: Label = $MarginContainer/VBoxContainer/AgilityLabel
-@onready var intelligence_label: Label = $MarginContainer/VBoxContainer/IntelligenceLabel
-@onready var tags_label: Label = $MarginContainer/VBoxContainer/TagsLabel
-@onready var close_button: Button = $MarginContainer/VBoxContainer/CloseButton
+@onready var panel_container: PanelContainer = $PanelContainer
+@onready var creature_name_label: Label = $PanelContainer/MarginContainer/VBoxContainer/CreatureName
+@onready var species_label: Label = $PanelContainer/MarginContainer/VBoxContainer/SpeciesLabel
+@onready var strength_label: Label = $PanelContainer/MarginContainer/VBoxContainer/StrengthLabel
+@onready var agility_label: Label = $PanelContainer/MarginContainer/VBoxContainer/AgilityLabel
+@onready var intelligence_label: Label = $PanelContainer/MarginContainer/VBoxContainer/IntelligenceLabel
+@onready var tags_label: Label = $PanelContainer/MarginContainer/VBoxContainer/TagsLabel
+@onready var close_button: Button = $PanelContainer/MarginContainer/VBoxContainer/CloseButton
 
 var creature_data: CreatureData
 
@@ -15,7 +16,8 @@ func _ready() -> void:
 	close_button.pressed.connect(_on_close_pressed)
 
 	# Center popup on screen
-	position = get_viewport_rect().size / 2 - size / 2
+	if panel_container:
+		panel_container.position = get_viewport().get_visible_rect().size / 2 - panel_container.size / 2
 
 func setup(creature: CreatureData) -> void:
 	creature_data = creature

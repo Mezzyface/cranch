@@ -31,7 +31,7 @@ func _ready():
 	if randf() > 0.5:
 		direction = -1
 
-	print("Starting direction: ", direction)
+	# print("Starting direction: ", direction)  # Debug disabled
 
 	# Apply initial sprite direction
 	_update_sprite_direction()
@@ -128,7 +128,7 @@ func _start_walking():
 	else:
 		direction = -1
 
-	print("Started walking in direction: ", direction)
+	# print("Started walking in direction: ", direction)  # Debug disabled
 
 func _check_platform_edge():
 	if not character_body:
@@ -151,9 +151,9 @@ func _check_platform_edge():
 
 	# If no floor detected ahead, turn around
 	if result.is_empty():
-		print("Platform edge detected! Turning around")
+		# print("Platform edge detected! Turning around")  # Debug disabled
 		_turn_around()
 
 func _turn_around():
 	direction *= -1
-	print("Turning around! New direction: ", direction)
+	# print("Turning around! New direction: ", direction)  # Debug disabled

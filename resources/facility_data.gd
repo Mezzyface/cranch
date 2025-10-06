@@ -4,6 +4,7 @@ class_name FacilityResource
 
 @export var facility_name: String = "Unnamed Facility"
 @export var description: String = ""
+@export var background_path: String = ""
 @export var activities: Array[ActivityResource] = []
 @export var max_creatures: int = 1
 

@@ -13,5 +13,6 @@ description = "Increases all stats evenly"
 script = ExtResource("3_4fr6t")
 facility_name = "Balanced Training Dojo"
 description = "A comprehensive training facility for all-around development"
+background_path = "res://assets/backgrounds/field.png"
 activities = Array[ExtResource("1_r5bec")]([SubResource("Resource_xwfj8")])
 max_creatures = 3

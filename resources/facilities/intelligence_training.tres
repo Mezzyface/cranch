@@ -13,5 +13,6 @@ description = "Increases creature's intelligence"
 script = ExtResource("3_xciko")
 facility_name = "Study Hall"
 description = "A quiet library for mental development and learning"
+background_path = "res://assets/backgrounds/study.png"
 activities = Array[ExtResource("1_rsfeh")]([SubResource("Resource_pims0")])
 max_creatures = 3

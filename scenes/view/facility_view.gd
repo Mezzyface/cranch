@@ -12,9 +12,12 @@ var creature_sprite: AnimatedSprite2D = null
 var _was_swap: bool = false  # Track if last drag was a swap
 
 @onready var panel_container = $PanelContainer
+@onready var background_texture = $PanelContainer/Locationbackground
+@onready var food_container = $FoodContainer
 @onready var food_button = $FoodContainer/MarginContainer/FoodButton
 @onready var lockscreen = $Lockscreen
 @onready var drop_zone = $DropZone
+@onready var creature_name_label = $CreatureName
 
 func _ready():
 	# Setup initial state
@@ -23,8 +26,20 @@ func _ready():
 	else:
 		_show_unlocked_state()
 
+	# Update background based on facility resource
+	_update_background()
+
+	# Hide food container initially (shown when creature assigned)
+	if food_container:
+		food_container.hide()
+
+	# Hide creature name label initially (shown when creature assigned)
+	if creature_name_label:
+		creature_name_label.hide()
+
 	# Connect signals
 	food_button.pressed.connect(_on_food_button_pressed)
+	SignalBus.creature_food_assigned.connect(_on_food_assigned)
 
 	# Setup drop zone
 	if drop_zone:
@@ -32,16 +47,8 @@ func _ready():
 			return data.has("creature") and not is_locked
 
 		drop_zone.drop_received.connect(_on_creature_dropped)
+		drop_zone.clicked.connect(_on_facility_clicked)
 		drop_zone.z_index = 10  # Put above panel contents so it can receive drag events
-
-	# Make panel clickable for detail modal
-	var click_detector = Button.new()
-	click_detector.flat = true
-	click_detector.custom_minimum_size = Vector2(128, 128)
-	click_detector.mouse_filter = Control.MOUSE_FILTER_PASS
-	click_detector.z_index = -1  # Put behind everything else so it doesn't block drag
-	click_detector.pressed.connect(_on_facility_clicked)
-	panel_container.add_child(click_detector)
 
 func _show_locked_state():
 	lockscreen.visible = true
@@ -49,6 +56,16 @@ func _show_locked_state():
 
 func _show_unlocked_state():
 	lockscreen.visible = false
+
+func _update_background():
+	"""Update the background texture based on facility_resource"""
+	if not facility_resource or not background_texture:
+		return
+
+	if not facility_resource.background_path.is_empty():
+		var texture = load(facility_resource.background_path)
+		if texture:
+			background_texture.texture = texture
 
 func _on_creature_dropped(data: Dictionary):
 	if not data.has("creature"):
@@ -101,6 +118,15 @@ func assign_creature(creature: CreatureData):
 
 	assigned_creature = creature
 
+	# Update creature name label
+	if creature_name_label:
+		creature_name_label.text = creature.creature_name
+		creature_name_label.show()
+
+	# Register with FacilityManager if we have a facility resource
+	if facility_resource and GameManager.facility_manager:
+		GameManager.facility_manager.register_assignment(creature, facility_resource)
+
 	# Get sprite frames for this creature
 	var sprite_frames = GlobalEnums.get_sprite_frames_for_species(creature.species)
 
@@ -124,6 +150,18 @@ func assign_creature(creature: CreatureData):
 		placeholder.add_theme_font_size_override("font_size", 48)
 
 		panel_container.add_child(placeholder)
+
+	# Show food container now that creature is assigned
+	if food_container:
+		food_container.show()
+
+	# Check if creature already has food assigned and update button
+	var existing_food = GameManager.facility_manager.get_assigned_food(creature)
+	if not existing_food.is_empty():
+		assigned_food_id = existing_food
+	else:
+		assigned_food_id = ""
+	_update_food_button_texture()
 
 	# Setup drag component for dragging creature out of facility
 	_setup_drag_component()
@@ -180,11 +218,24 @@ func _on_drag_ended(successful: bool):
 
 func clear_creature():
 	"""Remove creature from facility slot"""
+	# Unregister from FacilityManager before clearing
+	if assigned_creature and facility_resource and GameManager.facility_manager:
+		GameManager.facility_manager.unregister_assignment(assigned_creature, facility_resource)
+
 	if creature_sprite:
 		creature_sprite.queue_free()
 		creature_sprite = null
 
 	assigned_creature = null
+
+	# Clear creature name label
+	if creature_name_label:
+		creature_name_label.text = ""
+		creature_name_label.hide()
+
+	# Hide food container when no creature assigned
+	if food_container:
+		food_container.hide()
 
 	# Reset drop zone to accept drops again
 	if drop_zone:
@@ -212,23 +263,124 @@ func _on_food_button_pressed():
 
 func _on_facility_clicked():
 	if is_locked:
-		print("Facility is locked - unlock for %dg" % unlock_cost)
-		# TODO: Show unlock confirmation
+		_show_unlock_confirmation()
 		return
 
 	# Show facility details modal
 	_show_facility_modal()
 
+func _show_unlock_confirmation():
+	"""Show confirmation dialog to unlock this facility"""
+	var message = "Unlock this facility for %dg?" % unlock_cost
+	var modal_scene = preload("res://scenes/windows/generic_message_modal.tscn")
+	var modal = modal_scene.instantiate()
+	modal.title = "Unlock Facility"
+	modal.message = message
+
+	# Override the close button to be "Yes/No" buttons
+	var game_scene = get_tree().current_scene
+	if game_scene:
+		game_scene.add_child(modal)
+
+		# Replace single button with Yes/No
+		var button_container = modal.get_node("PanelContainer/MarginContainer/VBoxContainer/CloseButton").get_parent()
+		var close_button = modal.get_node("PanelContainer/MarginContainer/VBoxContainer/CloseButton")
+		close_button.queue_free()
+
+		var hbox = HBoxContainer.new()
+		hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+
+		var yes_button = Button.new()
+		yes_button.text = "Yes (%dg)" % unlock_cost
+		yes_button.custom_minimum_size = Vector2(120, 40)
+		yes_button.pressed.connect(func():
+			_attempt_unlock()
+			modal.queue_free()
+		)
+
+		var no_button = Button.new()
+		no_button.text = "No"
+		no_button.custom_minimum_size = Vector2(120, 40)
+		no_button.pressed.connect(func(): modal.queue_free())
+
+		hbox.add_child(yes_button)
+		hbox.add_child(no_button)
+		button_container.add_child(hbox)
+
+func _attempt_unlock():
+	"""Try to unlock the facility by spending gold"""
+	# Check if player has enough gold
+	if GameManager.player_data.gold < unlock_cost:
+		var modal_scene = preload("res://scenes/windows/generic_message_modal.tscn")
+		var modal = modal_scene.instantiate()
+		modal.title = "Not Enough Gold"
+		modal.message = "You need %dg to unlock this facility.\nYou only have %dg." % [unlock_cost, GameManager.player_data.gold]
+		get_tree().current_scene.add_child(modal)
+		return
+
+	# Deduct gold
+	SignalBus.gold_change_requested.emit(-unlock_cost)
+
+	# Unlock facility
+	is_locked = false
+	_show_unlocked_state()
+
+	print("Facility unlocked for %dg" % unlock_cost)
+
 func _show_facility_modal():
-	print("Show facility modal - TODO")
-	# TODO: Create modal showing:
-	# - Facility name and description
-	# - Stats/bonuses it provides
-	# - Assigned creature (if any)
-	# - Assigned food (if any)
-	# - Activities available
+	# Load all available facilities
+	var available_facilities: Array[FacilityResource] = []
+
+	var facilities_dir = "res://resources/facilities/"
+	var dir = DirAccess.open(facilities_dir)
+
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+
+		while file_name != "":
+			if file_name.ends_with(".tres"):
+				var facility_path = facilities_dir + file_name
+				var facility = load(facility_path) as FacilityResource
+				if facility:
+					available_facilities.append(facility)
+			file_name = dir.get_next()
+
+		dir.list_dir_end()
+
+	# Show modal with available facilities
+	var game_scene = get_tree().current_scene
+	if game_scene:
+		FacilityDetailModal.show_modal(game_scene, self, available_facilities)
 
 func set_food(item_id: String):
 	assigned_food_id = item_id
-	# TODO: Update food icon visual
+	_update_food_button_texture()
 	print("Food set to: %s" % item_id)
+
+func _update_food_button_texture():
+	"""Update the food button texture based on assigned food"""
+	if not food_button:
+		return
+
+	if assigned_food_id.is_empty():
+		# No food assigned - show red X or empty indicator
+		var empty_texture = load("res://assets/Red_X.svg.png")
+		food_button.texture_normal = empty_texture
+	else:
+		# Food assigned - show food icon
+		var food_item = GameManager.inventory_manager.get_item_resource(assigned_food_id)
+		if food_item and not food_item.icon_path.is_empty():
+			var food_texture = load(food_item.icon_path)
+			food_button.texture_normal = food_texture
+		else:
+			# Fallback to empty texture if food resource not found
+			var empty_texture = load("res://assets/Red_X.svg.png")
+			food_button.texture_normal = empty_texture
+
+func _on_food_assigned(creature: CreatureData, item_id: String):
+	"""Called when food is assigned to any creature via SignalBus"""
+	# Only update if this is our creature
+	if creature == assigned_creature:
+		assigned_food_id = item_id
+		_update_food_button_texture()

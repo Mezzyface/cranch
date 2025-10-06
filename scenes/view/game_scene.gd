@@ -9,6 +9,7 @@ const SHOP_WINDOW = preload("res://scenes/windows/shop_window.tscn")
 const QUEST_WINDOW = preload("res://scenes/windows/quest_window.tscn")
 const QUEST_CREATURE_SELECTOR = preload("res://scenes/windows/quest_creature_selector.tscn")
 const TINO_CREATURE = preload("res://scenes/entities/tino_creature.tscn")
+const GENERIC_MESSAGE_MODAL = preload("res://scenes/windows/generic_message_modal.tscn")
 
 const FacilitySlot = preload("res://scenes/card/facility_slot.gd")
 const STRENGTH_TRAINING = preload("res://resources/activities/strength_training.gd")
@@ -19,14 +20,19 @@ const AGILITY_FACILITY = preload("res://resources/facilities/agility_training.tr
 const INTELLIGENCE_FACILITY = preload("res://resources/facilities/intelligence_training.tres")
 
 # @onready var creature_container: PanelContainer = $UILayer/CreatureContainer  # Removed for tileset rework
+@onready var next_week_button: Button = $UILayer/WeekBox/MarginContainer/NextWeekButton
 
 func _ready():
 	# Connect to know when data is ready
 	_connect_signals()
-	
+
+	# Connect Next Week button
+	if next_week_button:
+		next_week_button.pressed.connect(_on_next_week_pressed)
+
 	# Initialize the game when scene loads
 	SignalBus.game_started.emit()
-	
+
 	# _setup_container_drop_handling()  # Commented out - creature container removed
 	_create_week_display()
 	# _create_facility_slots()  # Disabled - using scene-based slots instead
@@ -70,7 +76,7 @@ func _on_player_data_ready():
 	pass
 
 func _on_creature_added(creature: CreatureData):
-	print("_on_creature_added: %s" % creature.creature_name)
+	# print("_on_creature_added: %s" % creature.creature_name)  # Debug disabled
 	# Spawn creature at random position within drop zone
 	# Drop zone is 750px wide, centered at screen (960, 540)
 	# At 2x zoom: screen 585-1335 = world 585-1335 (same because centered on camera)
@@ -318,10 +324,20 @@ func _on_facility_removed(facility_card: FacilityCard, slot: FacilitySlot):
 	print("Facility removed from slot ", slot.slot_index)
 
 func _on_creature_clicked(creature_data: CreatureData) -> void:
+	# Close any existing creature stats popup to prevent stacking
+	_close_existing_creature_stats_popup()
+
 	# Create and show popup
 	var popup = CREATURE_STATS_POPUP.instantiate()
+	popup.name = "CreatureStatsPopup"  # Give it a unique name
 	add_child(popup)
 	popup.setup(creature_data)
+
+func _close_existing_creature_stats_popup():
+	"""Close any existing creature stats popup"""
+	var existing_popup = get_node_or_null("CreatureStatsPopup")
+	if existing_popup:
+		existing_popup.queue_free()
 
 func open_quest_window():
 	# Prevent multiple instances
@@ -349,12 +365,30 @@ func _on_food_selection_requested(creature: CreatureData):
 
 func _on_week_advancement_blocked(reason: String, creatures: Array):
 	print("⚠️ Cannot advance week: %s" % reason)
+
+	# Build creature list message
+	var creature_names: Array[String] = []
 	for creature in creatures:
 		if creature is CreatureData:
+			creature_names.append(creature.creature_name)
 			print("  - %s needs food" % creature.creature_name)
 
-	# TODO: Show popup with creature list and message
-	# For now, visual feedback: flash the facility cards with red tint
+	# Show modal popup
+	_show_week_blocked_modal(reason, creature_names)
+
+func _show_week_blocked_modal(reason: String, creature_names: Array[String]):
+	"""Show modal informing player which creatures need food"""
+	# Build message with creature list
+	var message = "The following creatures need food assigned:\n\n"
+	for creature_name in creature_names:
+		message += "• %s\n" % creature_name
+	message += "\nAssign food to all creatures before advancing the week."
+
+	# Show simple message modal
+	var modal = GENERIC_MESSAGE_MODAL.instantiate()
+	modal.title = "⚠️ Cannot Advance Week"
+	modal.message = message
+	add_child(modal)
 
 func _on_gold_changed(gold_amount: int):
 	var gold_label = get_node_or_null("UILayer/GoldBox/Gold")
@@ -440,3 +474,7 @@ func spawn_tino_at_position(creature: CreatureData, position: Vector2):
 	var movement_controller = tino.get_node_or_null("WanderMovementController")
 	if movement_controller:
 		movement_controller.platform_bounds = Vector2(400, 1520)
+
+func _on_next_week_pressed():
+	"""Called when Next Week button is pressed"""
+	GameManager.advance_week()

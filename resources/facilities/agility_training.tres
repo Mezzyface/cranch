@@ -13,5 +13,6 @@ description = "Increases creature's agility"
 script = ExtResource("3_re6ch")
 facility_name = "Agility Training Course"
 description = "An obstacle course designed to improve speed and dexterity"
+background_path = "res://assets/backgrounds/dojo.png"
 activities = Array[ExtResource("1_2mm5o")]([SubResource("Resource_nn30q")])
 max_creatures = 3

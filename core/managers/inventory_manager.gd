@@ -26,7 +26,7 @@ func _load_item_database():
 				if item:
 					var item_id = file_name.replace(".tres", "")
 					_item_database[item_id] = item
-					print("Loaded item: ", item_id)
+					# print("Loaded item: ", item_id)  # Debug disabled
 			file_name = dir.get_next()
 
 		dir.list_dir_end()

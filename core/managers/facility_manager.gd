@@ -19,7 +19,7 @@ func _ready():
 	# Connect to signal once in the scene tree
 	if not SignalBus.creature_removed.is_connected(_on_creature_removed):
 		SignalBus.creature_removed.connect(_on_creature_removed)
-		print("FacilityManager: Connected to creature_removed signal")
+		# print("FacilityManager: Connected to creature_removed signal")  # Debug disabled
 
 func register_assignment(creature: CreatureData, facility: FacilityResource):
 	# Store the assignment but don't run activities yet
@@ -91,18 +91,18 @@ func clear_all_assignments():
 	active_facilities.clear()
 
 func _on_creature_removed(creature: CreatureData):
-	print("FacilityManager: _on_creature_removed called for: ", creature.creature_name)
-	print("Current facility_assignments: ", facility_assignments.keys())
+	# print("FacilityManager: _on_creature_removed called for: ", creature.creature_name)  # Debug disabled
+	# print("Current facility_assignments: ", facility_assignments.keys())  # Debug disabled
 
 	# Automatically unassign creature from any facilities when removed
 	for facility in facility_assignments.keys():
-		print("Checking facility: ", facility.facility_name, " creatures: ", facility_assignments[facility])
+		# print("Checking facility: ", facility.facility_name, " creatures: ", facility_assignments[facility])  # Debug disabled
 		if creature in facility_assignments[facility]:
-			print("Found creature in facility, unregistering...")
+			# print("Found creature in facility, unregistering...")  # Debug disabled
 			unregister_assignment(creature, facility)
 			# Emit signal so FacilityCard can update its visual display
 			SignalBus.facility_unassigned.emit(creature, facility)
-			print("Auto-unassigned removed creature from facility: ", facility.facility_name)
+			# print("Auto-unassigned removed creature from facility: ", facility.facility_name)  # Debug disabled
 
 # Assign food to a creature in a facility
 func assign_food_to_creature(creature: CreatureData, item_id: String):

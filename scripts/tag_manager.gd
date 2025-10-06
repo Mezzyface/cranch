@@ -53,16 +53,16 @@ static func load_all_tags():
 					if tag.is_category(GlobalEnums.TagCategory.TRAINING):
 						training_tags.append(tag)
 
-					print("Loaded tag: ", tag.tag_name, " (", tag.tag_id, ")")
+					# print("Loaded tag: ", tag.tag_name, " (", tag.tag_id, ")")  # Debug disabled
 				else:
-					print("Failed to load tag or missing tag_id: ", tag_path)
+					print("Failed to load tag or missing tag_id: ", tag_path)  # Keep this as it's an error condition
 			file_name = dir.get_next()
 
 		dir.list_dir_end()
 	else:
-		print("Failed to open tags directory: ", tags_dir)
+		print("Failed to open tags directory: ", tags_dir)  # Keep this as it's an error condition
 
-	print("TagManager: Total tags loaded: ", all_tags.size(), " (", training_tags.size(), " training tags)")
+	# print("TagManager: Total tags loaded: ", all_tags.size(), " (", training_tags.size(), " training tags)")  # Debug disabled
 
 # Get a tag by ID
 static func get_tag(tag_id: String) -> TagResource:
