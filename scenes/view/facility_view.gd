@@ -40,6 +40,8 @@ func _ready():
 	# Connect signals
 	food_button.pressed.connect(_on_food_button_pressed)
 	SignalBus.creature_food_assigned.connect(_on_food_assigned)
+	SignalBus.creature_food_unassigned.connect(_on_food_unassigned)
+	SignalBus.creature_removed.connect(_on_creature_removed)
 
 	# Setup drop zone
 	if drop_zone:
@@ -384,3 +386,16 @@ func _on_food_assigned(creature: CreatureData, item_id: String):
 	if creature == assigned_creature:
 		assigned_food_id = item_id
 		_update_food_button_texture()
+
+func _on_food_unassigned(creature: CreatureData):
+	"""Called when food is unassigned from any creature via SignalBus"""
+	# Only update if this is our creature
+	if creature == assigned_creature:
+		assigned_food_id = ""
+		_update_food_button_texture()
+
+func _on_creature_removed(creature: CreatureData):
+	"""Called when a creature is removed from the game (e.g., turned in for quest)"""
+	# Only clear if this is our creature
+	if creature == assigned_creature:
+		clear_creature()

@@ -1,24 +1,18 @@
 # scenes/windows/quest_creature_selector.gd
-extends Panel
+extends CanvasLayer
 
-@onready var title = $MarginContainer/VBoxContainer/Title
-@onready var quest_info = $MarginContainer/VBoxContainer/QuestInfo
-@onready var creature_grid = $MarginContainer/VBoxContainer/GridContainer
-@onready var selected_info = $MarginContainer/VBoxContainer/SelectedInfo
-@onready var cancel_button = $MarginContainer/VBoxContainer/HBoxContainer/Button
-@onready var confirm_button = $MarginContainer/VBoxContainer/HBoxContainer/Button2
-@onready var close_button = $CloseButton
+@onready var title = $Panel/MarginContainer/VBoxContainer/Title
+@onready var quest_info = $Panel/MarginContainer/VBoxContainer/QuestInfo
+@onready var creature_grid = $Panel/MarginContainer/VBoxContainer/GridContainer
+@onready var selected_info = $Panel/MarginContainer/VBoxContainer/SelectedInfo
+@onready var cancel_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/Button
+@onready var confirm_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/Button2
 
 var quest: QuestResource = null
 var selected_creatures: Array[CreatureData] = []
 var required_count: int = 0
 
 func _ready():
-	if close_button:
-		close_button.pressed.connect(close_window)
-	else:
-		print("ERROR: close_button is null!")
-
 	if cancel_button:
 		cancel_button.pressed.connect(close_window)
 	else:
@@ -28,12 +22,6 @@ func _ready():
 		confirm_button.pressed.connect(_on_confirm_pressed)
 	else:
 		print("ERROR: confirm_button is null!")
-
-	# Center on screen
-	position = Vector2(
-		(get_viewport_rect().size.x - size.x) / 2,
-		(get_viewport_rect().size.y - size.y) / 2
-	)
 
 func setup(quest_resource: QuestResource):
 	quest = quest_resource
