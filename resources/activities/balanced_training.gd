@@ -2,11 +2,11 @@
 extends ActivityResource
 class_name BalancedTrainingActivity
 
-@export var stat_gain: int = 30
+@export var stat_gain: int = 20
 
 func _init():
 	activity_name = "Balanced Training"
-	description = "Increases all stats by 30"
+	description = "Increases all stats by 20"
 	duration_weeks = 1
 
 func run_activity(creature: CreatureData) -> void:
@@ -14,9 +14,9 @@ func run_activity(creature: CreatureData) -> void:
 	var old_agi = creature.agility
 	var old_int = creature.intelligence
 
-	creature.strength += stat_gain
-	creature.agility += stat_gain
-	creature.intelligence += stat_gain
+	creature.strength = min(1000, creature.strength + stat_gain)
+	creature.agility = min(1000, creature.agility + stat_gain)
+	creature.intelligence = min(1000, creature.intelligence + stat_gain)
 
 	print(creature.creature_name, " gained ", stat_gain, " to all stats! STR: ", old_str, "->", creature.strength, " AGI: ", old_agi, "->", creature.agility, " INT: ", old_int, "->", creature.intelligence)
 

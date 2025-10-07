@@ -69,6 +69,8 @@ func _connect_signals():
 	SignalBus.week_advancement_blocked.connect(_on_week_advancement_blocked)
 	SignalBus.gold_changed.connect(_on_gold_changed)
 	SignalBus.week_advanced.connect(_on_week_advanced)
+	SignalBus.competition_completed.connect(_on_competition_completed)
+	SignalBus.creature_died.connect(_on_creature_died)
 
 func _on_player_data_ready():
 	# Debug popup disabled for now
@@ -478,3 +480,14 @@ func spawn_tino_at_position(creature: CreatureData, position: Vector2):
 func _on_next_week_pressed():
 	"""Called when Next Week button is pressed"""
 	GameManager.advance_week()
+
+func _on_competition_completed(competition: CompetitionResource, results: Array):
+	"""Called when a competition finishes - shows results popup"""
+	var results_popup = preload("res://scenes/windows/competition_results_popup.tscn").instantiate()
+	results_popup.setup(competition, results)
+	add_child(results_popup)
+
+func _on_creature_died(creature: CreatureData, cause: String):
+	"""Called when a creature dies - handles cleanup and notifications"""
+	print("%s died: %s" % [creature.creature_name, cause])
+	# TODO: Add death animation, memorial popup, etc.

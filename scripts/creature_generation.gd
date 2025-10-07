@@ -3,92 +3,93 @@ class_name CreatureGenerator
 
 # Species stat templates: [base_value, variance]
 # Stats are generated as: base ± variance using normal distribution
-# Stats range from 0-1000
+# Aptitudes: High (35±10 = 25-45), Medium (25±8 = 17-33), Low (15±5 = 10-20)
+# Max stat cap: 1000
 const SPECIES_STATS = {
 	GlobalEnums.Species.GUARD_ROBOT: {
-		"strength": [550, 150],      # Tank - High strength
-		"agility": [250, 100],       # Low agility
-		"intelligence": [450, 100]   # Medium intelligence
+		"strength": [35, 10],      # Tank - High strength
+		"agility": [15, 5],        # Low agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.FIRE_PYROPE: {
-		"strength": [650, 150],      # Strong elemental - High strength
-		"agility": [350, 100],       # Medium agility
-		"intelligence": [300, 100]   # Lower intelligence
+		"strength": [35, 10],      # Strong elemental - High strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [15, 5]    # Low intelligence
 	},
 	GlobalEnums.Species.ILLUSIONARY_RACCOON: {
-		"strength": [300, 100],      # Trickster - Low strength
-		"agility": [550, 150],       # High agility
-		"intelligence": [600, 150]   # High intelligence
+		"strength": [15, 5],       # Trickster - Low strength
+		"agility": [35, 10],       # High agility
+		"intelligence": [35, 10]   # High intelligence
 	},
 	GlobalEnums.Species.ORE_MUNCHER: {
-		"strength": [700, 150],      # Powerful - Very high strength
-		"agility": [200, 100],       # Very low agility
-		"intelligence": [250, 100]   # Low intelligence
+		"strength": [35, 10],      # Powerful - High strength
+		"agility": [15, 5],        # Low agility
+		"intelligence": [15, 5]    # Low intelligence
 	},
 	GlobalEnums.Species.NEON_BAT: {
-		"strength": [350, 100],      # Speedy - Medium-low strength
-		"agility": [650, 150],       # Very high agility
-		"intelligence": [400, 100]   # Medium intelligence
+		"strength": [15, 5],       # Speedy - Low strength
+		"agility": [35, 10],       # High agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.TOY_TROJAN: {
-		"strength": [500, 100],      # Balanced fighter - Medium strength
-		"agility": [450, 100],       # Medium agility
-		"intelligence": [350, 100]   # Medium-low intelligence
+		"strength": [25, 8],       # Balanced fighter - Medium strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.ROBO: {
-		"strength": [450, 100],      # Mechanical - Medium strength
-		"agility": [400, 100],       # Medium agility
-		"intelligence": [550, 150]   # High intelligence
+		"strength": [25, 8],       # Mechanical - Medium strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [35, 10]   # High intelligence
 	},
 	GlobalEnums.Species.FROSCOLA: {
-		"strength": [400, 100],      # Balanced - Medium strength
-		"agility": [500, 100],       # Medium-high agility
-		"intelligence": [450, 100]   # Medium intelligence
+		"strength": [25, 8],       # Balanced - Medium strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.GRIZZLY: {
-		"strength": [750, 150],      # Beast - Very high strength
-		"agility": [300, 100],       # Low agility
-		"intelligence": [200, 100]   # Low intelligence
+		"strength": [35, 10],      # Beast - High strength
+		"agility": [15, 5],        # Low agility
+		"intelligence": [15, 5]    # Low intelligence
 	},
 	GlobalEnums.Species.BLAZIN_SPARKINSTONE_BUGS: {
-		"strength": [600, 150],      # Elemental swarm - High strength
-		"agility": [500, 100],       # Medium-high agility
-		"intelligence": [350, 100]   # Medium-low intelligence
+		"strength": [35, 10],      # Elemental swarm - High strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [15, 5]    # Low intelligence
 	},
 	GlobalEnums.Species.STOPLIGHT_GHOST: {
-		"strength": [350, 100],      # Ghost - Medium-low strength
-		"agility": [450, 100],       # Medium agility
-		"intelligence": [600, 150]   # High intelligence
+		"strength": [15, 5],       # Ghost - Low strength
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [35, 10]   # High intelligence
 	},
 	GlobalEnums.Species.HAUNTED_RIVER_ROCK: {
-		"strength": [550, 150],      # Rock spirit - High strength
-		"agility": [250, 100],       # Low agility
-		"intelligence": [500, 100]   # Medium-high intelligence
+		"strength": [35, 10],      # Rock spirit - High strength
+		"agility": [15, 5],        # Low agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.HEDGEHOG: {
-		"strength": [400, 100],      # Spiky defender - Medium strength
-		"agility": [550, 150],       # High agility
-		"intelligence": [350, 100]   # Medium-low intelligence
+		"strength": [25, 8],       # Spiky defender - Medium strength
+		"agility": [35, 10],       # High agility
+		"intelligence": [15, 5]    # Low intelligence
 	},
 	GlobalEnums.Species.DELINQUENT_CHICK: {
-		"strength": [300, 100],      # Scrappy - Low strength
-		"agility": [600, 150],       # High agility
-		"intelligence": [400, 100]   # Medium intelligence
+		"strength": [15, 5],       # Scrappy - Low strength
+		"agility": [35, 10],       # High agility
+		"intelligence": [25, 8]    # Medium intelligence
 	},
 	GlobalEnums.Species.OOZE_WASTE: {
-		"strength": [450, 100],      # Toxic - Medium strength
-		"agility": [300, 100],       # Low agility
-		"intelligence": [550, 150]   # High intelligence
+		"strength": [25, 8],       # Toxic - Medium strength
+		"agility": [15, 5],        # Low agility
+		"intelligence": [35, 10]   # High intelligence
 	},
 	GlobalEnums.Species.KRIP: {
-		"strength": [500, 100],      # Mysterious - Medium strength
-		"agility": [500, 100],       # Medium agility
-		"intelligence": [500, 100]   # Medium intelligence (balanced)
+		"strength": [25, 8],       # Mysterious - Medium all
+		"agility": [25, 8],        # Medium agility
+		"intelligence": [25, 8]    # Medium intelligence (balanced)
 	},
 	GlobalEnums.Species.GRAVE_ROBBER_HUNTING_DOG: {
-		"strength": [550, 150],      # Hunter - High strength
-		"agility": [600, 150],       # High agility
-		"intelligence": [300, 100]   # Low intelligence
+		"strength": [35, 10],      # Hunter - High strength
+		"agility": [35, 10],       # High agility
+		"intelligence": [15, 5]    # Low intelligence
 	}
 }
 
@@ -114,6 +115,10 @@ static func generate_creature(species: GlobalEnums.Species, creature_name: Strin
 		creature.strength = 500
 		creature.agility = 500
 		creature.intelligence = 500
+
+	# Set lifespan based on species
+	creature.birth_week = GameManager.current_week if GameManager else 1
+	creature.max_lifespan = GlobalEnums.get_species_lifespan(species)
 
 	# Assign species-specific tags
 	var species_tags = TagManager.get_species_tags(species)

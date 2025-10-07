@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CompetitionResource" load_steps=2 format=3 uid="uid://es3t4u5v6w7x8"]
+
+[ext_resource type="Script" path="res://resources/competition_resource.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+activity_name = "Mind Maze Challenge"
+description = "Put your creature's brain to the test!"
+competition_type = 2
+difficulty = 1
+entry_fee = 50
+first_place_gold = 200
+second_place_gold = 100
+third_place_gold = 50
+winner_tag_id = ""
+num_ai_opponents = 3

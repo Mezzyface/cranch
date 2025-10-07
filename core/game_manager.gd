@@ -90,6 +90,9 @@ func advance_week():
 	if facility_manager:
 		facility_manager.process_all_activities(current_week)
 
+	# Check for creature deaths
+	_check_creature_lifespans()
+
 	SignalBus.week_advanced.emit(current_week)
 
 	# Save after week advancement
@@ -114,6 +117,13 @@ func create_test_facility() -> void:
 	training_facility.activities.append(strength_activity)
 	training_facility.activities.append(transform_activity)
 
+	# Create competition stadium
+	var stadium = load("res://resources/facilities/competition_stadium.tres") as FacilityResource
+	if stadium:
+		print("Competition Stadium loaded: ", stadium.facility_name)
+	else:
+		push_warning("Failed to load competition stadium resource")
+
 func get_active_creature() -> CreatureData:
 	if player_data and player_data.creatures.size() > 0:
 		return player_data.creatures[0]
@@ -137,3 +147,27 @@ func _on_gold_change_requested(amount: int):
 		print("Gained %d gold (Total: %d)" % [amount, player_data.gold])
 	else:
 		print("Spent %d gold (Total: %d)" % [-amount, player_data.gold])
+
+func _check_creature_lifespans() -> void:
+	if not player_data:
+		return
+
+	var creatures_to_remove: Array[CreatureData] = []
+
+	for creature in player_data.creatures:
+		var age = creature.get_age(current_week)
+		var remaining = creature.get_remaining_lifespan(current_week)
+
+		# Check if creature died of old age
+		if creature.is_dead(current_week):
+			print("%s died of old age at %d weeks" % [creature.creature_name, age])
+			SignalBus.creature_died.emit(creature, "old_age")
+			creatures_to_remove.append(creature)
+
+		# Warn if creature is nearing death (5 weeks or less)
+		elif remaining <= 5 and remaining > 0:
+			SignalBus.creature_nearing_death.emit(creature, remaining)
+
+	# Remove dead creatures
+	for creature in creatures_to_remove:
+		remove_creature(creature)

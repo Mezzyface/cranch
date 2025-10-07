@@ -29,7 +29,7 @@ func setup(quest_resource: QuestResource):
 	# Calculate total creatures needed
 	required_count = 0
 	for req in quest.requirements:
-		required_count += req.quantity
+		required_count += req.quantity 
 
 	title.text = "Select Creatures: " + quest.quest_title
 	quest_info.text = quest.get_requirements_summary()

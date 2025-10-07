@@ -8,6 +8,10 @@ class_name CreatureData
 @export var intelligence: int = 10
 @export var species: GlobalEnums.Species
 
+# Lifespan tracking
+@export var birth_week: int = 1  # Week creature was born/acquired
+@export var max_lifespan: int = 30  # Maximum weeks creature can live
+
 # Tag system - stores TagResource references
 @export var tags: Array[TagResource] = []
 
@@ -41,3 +45,15 @@ func get_tags_colored_display() -> String:
 			tag_displays.append(tag.get_colored_display())
 
 	return ", ".join(tag_displays)
+
+# Calculate current age based on game week
+func get_age(current_week: int) -> int:
+	return current_week - birth_week
+
+# Check if creature has died of old age
+func is_dead(current_week: int) -> bool:
+	return get_age(current_week) >= max_lifespan
+
+# Get remaining lifespan
+func get_remaining_lifespan(current_week: int) -> int:
+	return max(0, max_lifespan - get_age(current_week))

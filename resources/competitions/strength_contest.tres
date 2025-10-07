@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CompetitionResource" load_steps=2 format=3 uid="uid://cqx1m2n3o4p5q"]
+
+[ext_resource type="Script" path="res://resources/competition_resource.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+activity_name = "Boulder Toss Contest"
+description = "Test your creature's raw power!"
+competition_type = 0
+difficulty = 1
+entry_fee = 50
+first_place_gold = 200
+second_place_gold = 100
+third_place_gold = 50
+winner_tag_id = ""
+num_ai_opponents = 3

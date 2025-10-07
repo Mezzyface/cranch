@@ -2,17 +2,18 @@
 extends ActivityResource
 class_name AgilityTrainingActivity
 
-@export var agility_gain: int = 50
+@export var agility_gain: int = 35
 
 func _init():
 	activity_name = "Agility Training"
-	description = "Increases creature's agility by 50"
+	description = "Increases creature's agility by 35"
 	duration_weeks = 1
 
 func run_activity(creature: CreatureData) -> void:
 	var old_agility = creature.agility
-	creature.agility += agility_gain
-	print(creature.creature_name, " gained ", agility_gain, " agility! (", old_agility, " -> ", creature.agility, ")")
+	creature.agility = min(1000, creature.agility + agility_gain)  # Cap at 1000
+	var actual_gain = creature.agility - old_agility
+	print(creature.creature_name, " gained ", actual_gain, " agility! (", old_agility, " -> ", creature.agility, ")")
 
 	# Auto-grant training tags if creature now qualifies
 	TagManager.auto_grant_training_tags(creature)
@@ -22,4 +23,5 @@ func run_activity(creature: CreatureData) -> void:
 		SignalBus.creature_stats_changed.emit(creature)
 
 func get_preview_text(creature: CreatureData) -> String:
-	return "Will gain +" + str(agility_gain) + " agility"
+	var potential_gain = min(agility_gain, 1000 - creature.agility)
+	return "Will gain +" + str(potential_gain) + " agility"

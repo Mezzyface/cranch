@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CompetitionResource" load_steps=2 format=3 uid="uid://dr2y3z4a5b6c7"]
+
+[ext_resource type="Script" path="res://resources/competition_resource.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+activity_name = "Lightning Sprint"
+description = "Who's the fastest creature around?"
+competition_type = 1
+difficulty = 1
+entry_fee = 50
+first_place_gold = 200
+second_place_gold = 100
+third_place_gold = 50
+winner_tag_id = ""
+num_ai_opponents = 3

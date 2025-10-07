@@ -18,6 +18,8 @@ signal creature_removed(creature: CreatureData)
 signal creature_stats_changed(creature: CreatureData)
 signal creature_tag_added(creature: CreatureData, tag_id: String)
 signal creature_tag_removed(creature: CreatureData, tag_id: String)
+signal creature_died(creature: CreatureData, cause: String)  # Emitted when creature dies
+signal creature_nearing_death(creature: CreatureData, weeks_remaining: int)  # Warning when close to death
 
 # UI Events
 signal show_debug_popup_requested
@@ -64,3 +66,8 @@ signal food_selection_requested(creature: CreatureData)  # Opens food picker UI
 
 # Week Advancement
 signal week_advancement_blocked(reason: String, creatures: Array)  # Prevents week progress
+
+# Competition System
+signal competition_started(competition: CompetitionResource, creature: CreatureData)
+signal competition_completed(competition: CompetitionResource, results: Array)  # Array of CompetitionResult
+signal competition_entry_failed(reason: String)

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FacilityResource" load_steps=6 format=3 uid="uid://byplkgaanddti"]
+
+[ext_resource type="Script" uid="uid://cwfaj7e4sd2pt" path="res://resources/activity_data.gd" id="1_activity"]
+[ext_resource type="Script" uid="uid://blvcev25noqpa" path="res://resources/facility_data.gd" id="2_facility"]
+[ext_resource type="Resource" uid="uid://cqx1m2n3o4p5q" path="res://resources/competitions/strength_contest.tres" id="3_strength"]
+[ext_resource type="Resource" uid="uid://dr2y3z4a5b6c7" path="res://resources/competitions/speed_race.tres" id="4_speed"]
+[ext_resource type="Resource" uid="uid://es3t4u5v6w7x8" path="res://resources/competitions/puzzle_tournament.tres" id="5_puzzle"]
+
+[resource]
+script = ExtResource("2_facility")
+facility_name = "Competition Stadium"
+description = "Enter competitions to win prizes!"
+background_path = ""
+activities = Array[ExtResource("1_activity")]([ExtResource("3_strength"), ExtResource("4_speed"), ExtResource("5_puzzle")])
+max_creatures = 1
