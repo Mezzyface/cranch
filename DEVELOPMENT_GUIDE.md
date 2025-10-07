@@ -169,680 +169,724 @@ creature_removed(creature) → game_scene._on_creature_removed() (visual cleanup
 
 ## Implementation Steps Section
 
----
+### 🏗️ Simulation/View Architecture Separation
 
-## Completed Implementation History
+**Goal**: Implement a clean separation between game simulation (logic) and view (rendering), following the principles from the video transcript. The simulation runs independently, and the view observes/renders the simulation state.
 
-### ✅ Tino Creature Click Detection & Stats Popup Improvements (Completed 2025-01-XX)
+**Key Architecture Principles**:
+- **Simulation Layer**: Pure game logic, no visual elements
+- **View Layer**: Observes and renders simulation state
+- **Glue Layer**: Connects simulation to view through events/commands
+- **Data Separation**: Gameplay data vs visual data
+- **Controlled Execution**: "Time spaghetti" managed explicitly
 
-**What Was Implemented:**
-- Added click detection to the new tino_creature scene
-- Clicking a Tino (without dragging) now shows the creature stats popup
-- Uses existing DragDropComponent's `clicked()` signal
-- **Converted stats popup to CanvasLayer** for proper layering on top of game
-- **Prevents modal stacking** - only one stats popup can be open at a time
-
-**Implementation Details:**
-
-**File: `scenes/entities/tino_creature.gd`**
-- Connected `drag_component.clicked` signal to `_on_clicked()` handler
-- `_on_clicked()` emits `SignalBus.creature_clicked` with creature data
-
-**File: `scenes/windows/creature_stats_popup.gd`**
-- Changed from `extends PanelContainer` to `extends CanvasLayer`
-- Updated all node references to include `PanelContainer` parent
-- Centers popup on viewport instead of using position offset
-
-**File: `scenes/windows/creature_stats_popup.tscn`**
-- Restructured with CanvasLayer as root node
-- PanelContainer now a child of CanvasLayer
-- Updated all node paths to reflect new hierarchy
-
-**File: `scenes/view/game_scene.gd`**
-- Added `_close_existing_creature_stats_popup()` helper function
-- Closes any existing stats popup before opening new one
-- Named popup "CreatureStatsPopup" for easy identification
-
-**Files Modified:**
-- `scenes/entities/tino_creature.gd` - Added click detection
-- `scenes/windows/creature_stats_popup.gd` - CanvasLayer conversion
-- `scenes/windows/creature_stats_popup.tscn` - Scene hierarchy restructure
-- `scenes/view/game_scene.gd` - Modal stacking prevention
-
-**Behavior:**
-- Click on a Tino creature in the world → Stats popup appears on top of all game elements
-- Click another Tino → Old popup closes, new one opens (no stacking)
-- Drag a Tino creature → Normal drag behavior (no stats popup)
-- Click detection uses 10px movement threshold to distinguish click from drag
-- Popup displays as CanvasLayer overlay, always visible above game content
+**Benefits**:
+- Can run simulation without visuals (for testing/AI)
+- Easy to swap visual styles or add new views
+- Deterministic simulation for replays
+- Clean modding interface
+- Better performance (simulation/render at different rates)
 
 ---
 
-### ✅ Food Container Visibility & Icon Updates (Completed 2025-01-XX)
+## Phase 1: Core Simulation Infrastructure
 
-**What Was Implemented:**
-- FoodContainer automatically hides when facility slots are empty
-- FoodContainer shows when creatures are assigned to facilities
-- Food button icon updates to show assigned food item
-- Red X icon shown when no food is assigned
-- Prevents modal stacking when opening food selector multiple times
+### Step 1: Create SimulationManager Singleton
 
-**Key Features:**
-1. **Dynamic Visibility**: Food container only visible when creature assigned
-2. **Icon Updates**: Food button shows actual food icon from ItemResource
-3. **Signal Integration**: Listens to `creature_food_assigned` for real-time updates
-4. **Persistent Food**: Food assignments follow creatures between facilities
-5. **Modal Management**: Closes existing food selectors before opening new ones
+**File**: `core/simulation/simulation_manager.gd`
 
-**Implementation Details:**
-
-**File: `scenes/view/facility_view.gd`**
-- Added `food_container` @onready reference
-- Hide food_container in `_ready()` initially
-- Show food_container in `assign_creature()` when creature assigned
-- Hide food_container in `clear_creature()` when creature removed
-- Connected to `SignalBus.creature_food_assigned` signal
-- Implemented `_update_food_button_texture()` to update food icon
-- Check for existing food assignment when creature is assigned
-- `_on_food_assigned()` handler updates texture when food is assigned
-
-**File: `scenes/windows/food_selector.gd`**
-- Added `_close_existing_selector()` helper function
-- Close existing food selector before opening new one
-- Named selector "FoodSelector" for easy identification
-- Prevents modal stacking by cleaning up old instances
-
-**Files Modified:**
-- `scenes/view/facility_view.gd` - Food container visibility and icon management
-- `scenes/windows/food_selector.gd` - Modal stacking prevention
-
-**Behavior:**
-- Empty facility slots: No food container visible
-- Occupied facility slots: Food container visible with appropriate icon
-- No food assigned: Shows Red X icon
-- Food assigned: Shows actual food item icon
-- Opening food selector multiple times: Old selector closes, new one replaces it
-- Food assignments persist when moving creatures between facilities
-
-
-### 🛒 Food Store & Store Selector System (Using Generic Selector)
-
-**Goal**: Add a dedicated food shop and a store selector UI to switch between different shops (food store, creature store, future shops).
-
-**Design**:
-- Create a new "Food Market" shop resource with food items
-- Add "Store Selector" button in game scene (F7 hotkey)
-- Store selector shows available shops in a list
-- Clicking a shop opens that shop window
-- Food shop sells food_basic and food_premium items
-- Future: Can add more shops (Equipment Store, Service Provider, etc.)
-
----
-
-#### Step 1: Create Food Market shop resource
-
-**File**: Create `resources/shops/food_market.tres`
-
-**In Godot Editor**:
-1. Create new ShopResource
-2. Set properties:
-   - `shop_name`: "Food Market"
-   - `vendor_name`: "Chef Gustav"
-   - `greeting`: "Fresh food for your creatures! Keep them fed and trained!"
-3. Add first ShopEntry (Basic Food):
-   - `entry_name`: "Basic Food"
-   - `description`: "Standard creature nutrition. One meal per training session."
-   - `entry_type`: ITEM
-   - `cost`: 10
-   - `stock`: -1 (unlimited)
-   - `item_id`: "food_basic"
-4. Add second ShopEntry (Premium Food):
-   - `entry_name`: "Premium Food"
-   - `description`: "High-quality meal that provides +50% training bonus!"
-   - `entry_type`: ITEM
-   - `cost`: 25
-   - `stock`: -1 (unlimited)
-   - `item_id`: "food_premium"
-5. Save as `food_market.tres`
-
-**Why**: Food deserves its own shop. Separates food purchases from creature/service shops. Chef Gustav is more flavorful than generic shopkeeper.
-
----
-
-#### Step 2: Replace ItemResource with item_id in ShopEntry
-
-**File**: `resources/shop_entry.gd`
-
-**Current item reference** (line 14):
-```gdscript
-@export var item: ItemResource = null  # For ITEM type
-```
-
-**Replace with**:
-```gdscript
-@export var item_id: String = ""  # For ITEM type - references inventory items by ID
-```
-
-**Why**: Using `item_id` string is cleaner and matches the inventory system's architecture. Items are stored in the inventory by ID (e.g., "food_basic"), so shops should reference them the same way. This eliminates the need for ItemResource references in shop entries.
-
----
-
-#### Step 3: Update ShopManager to use item_id
-
-**File**: `scripts/shop_manager.gd`
-
-**Find the ITEM purchase case** (around line 50-60):
-
-**Current code**:
-```gdscript
-ShopEntry.ShopEntryType.ITEM:
-	# Add item to inventory
-	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
-		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
-		return false
-
-	print("Purchased item: ", entry.item_id)
-	return true
-```
-
-**Replace with**:
-```gdscript
-ShopEntry.ShopEntryType.ITEM:
-	# Validate item_id is set
-	if entry.item_id.is_empty():
-		SignalBus.shop_purchase_failed.emit("Shop entry has no item_id set")
-		return false
-
-	# Add item to inventory
-	if not GameManager.inventory_manager.add_item(entry.item_id, 1):
-		SignalBus.shop_purchase_failed.emit("Failed to add item to inventory")
-		return false
-
-	print("Purchased item: ", entry.item_id)
-	return true
-```
-
-**Why**: Simple validation that `item_id` is set. All shop entries now use the `item_id` system consistently. No need for complex fallback logic.
-
----
-
-#### Step 4: Add shop_selector_opened signal to SignalBus
-
-**File**: `core/signal_bus.gd`
-
-**Add in Shop & Commerce section** (after line 40):
-```gdscript
-signal shop_selector_opened()
-signal shop_selector_closed()
-```
-
-**Why**: Allows UI to react when store selector opens/closes. Consistent with existing shop_opened/shop_closed pattern.
-
----
-
-#### Step 5: Attach Generic Selector Script
-
-**Create file**: `scenes/windows/generic_selector.gd`
-
-**Attach to**: `res://scenes/windows/generic_selector.tscn` (existing scene)
-
-**Note**: The .tscn file already exists. You just need to create and attach the script.
+Create new file with this content:
 
 ```gdscript
-extends PanelContainer
-class_name GenericSelector
+# core/simulation/simulation_manager.gd
+extends Node
+class_name SimulationManager
 
-# Configuration
-var title: String = "Select an Option"
-var empty_message: String = "No options available"
+# Simulation state
+var simulation_running: bool = false
+var simulation_tick: int = 0
+var tick_rate: float = 30.0  # Ticks per second
+var time_accumulator: float = 0.0
 
-# Item data structure: Array[Dictionary]
-# Each dictionary should have:
-#   - "name": String (button text)
-#   - "description": String (optional, subtitle text)
-#   - "data": Variant (passed to callback when selected)
-var items: Array[Dictionary] = []
+# Entity registries
+var sim_creatures: Dictionary = {}  # {id: SimCreature}
+var sim_facilities: Dictionary = {}  # {id: SimFacility}
+var sim_activities: Dictionary = {}  # {id: SimActivity}
 
-# Callback when item selected: func(data: Variant)
-var on_item_selected: Callable
+# Simulation events queue (for view layer to consume)
+var event_queue: Array = []
 
-# Optional signal to emit when opened
-var open_signal: Signal
-var close_signal: Signal
-
-@onready var title_label = $MarginContainer/VBoxContainer/TitleLabel
-@onready var item_list = $MarginContainer/VBoxContainer/ScrollContainer/ItemList
-@onready var close_button = $MarginContainer/VBoxContainer/CloseButton
+signal simulation_tick_completed(tick: int)
+signal simulation_event_emitted(event: Dictionary)
 
 func _ready():
-	close_button.pressed.connect(_on_close_pressed)
+	set_process(false)  # Start paused
+	print("SimulationManager initialized")
 
-	# Set title
-	title_label.text = title
+func start_simulation():
+	simulation_running = true
+	set_process(true)
+	print("Simulation started")
 
-	# Populate items
-	_populate_list()
+func stop_simulation():
+	simulation_running = false
+	set_process(false)
+	print("Simulation stopped")
 
-	# Center on screen
-	position = (get_viewport_rect().size - size) / 2
-
-	# Emit open signal if provided
-	if open_signal:
-		open_signal.emit()
-
-func _populate_list():
-	# Clear existing
-	for child in item_list.get_children():
-		child.queue_free()
-
-	if items.is_empty():
-		var label = Label.new()
-		label.text = empty_message
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		item_list.add_child(label)
+func _process(delta: float):
+	if not simulation_running:
 		return
 
-	# Create button for each item
-	for item in items:
-		_create_item_button(item)
+	# Fixed timestep simulation
+	time_accumulator += delta
+	var tick_duration = 1.0 / tick_rate
 
-func _create_item_button(item: Dictionary):
-	var vbox = VBoxContainer.new()
+	while time_accumulator >= tick_duration:
+		_simulate_tick()
+		time_accumulator -= tick_duration
 
-	var button = Button.new()
-	button.text = item.get("name", "Unnamed")
-	button.custom_minimum_size = Vector2(360, 60)
-	button.pressed.connect(_on_item_selected.bind(item.get("data")))
-	vbox.add_child(button)
+func _simulate_tick():
+	simulation_tick += 1
 
-	# Optional description
-	if item.has("description") and not item.description.is_empty():
-		var desc_label = Label.new()
-		desc_label.text = item.description
-		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc_label.custom_minimum_size.x = 360
-		desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-		vbox.add_child(desc_label)
+	# Process all simulation systems in deterministic order
+	_process_creature_ai()
+	_process_facilities()
+	_process_activities()
 
-	# Separator
-	var separator = HSeparator.new()
-	vbox.add_child(separator)
+	simulation_tick_completed.emit(simulation_tick)
 
-	item_list.add_child(vbox)
+func _process_creature_ai():
+	for creature in sim_creatures.values():
+		creature.update_simulation(1.0 / tick_rate)
 
-func _on_item_selected(data: Variant):
-	# Call callback if provided
-	if on_item_selected:
-		on_item_selected.call(data)
+func _process_facilities():
+	# Process facility logic
+	pass
 
-	# Close selector
-	queue_free()
+func _process_activities():
+	# Process activity logic
+	pass
 
-func _on_close_pressed():
-	# Emit close signal if provided
-	if close_signal:
-		close_signal.emit()
-	queue_free()
+func emit_sim_event(event_type: String, data: Dictionary):
+	var event = {
+		"type": event_type,
+		"tick": simulation_tick,
+		"data": data
+	}
+	event_queue.append(event)
+	simulation_event_emitted.emit(event)
 
-# Static helper to create and configure a selector
-static func create(p_title: String, p_items: Array[Dictionary], p_callback: Callable) -> GenericSelector:
-	var selector_scene = preload("res://scenes/windows/generic_selector.tscn")
-	var selector = selector_scene.instantiate()
-	selector.title = p_title
-	selector.items = p_items
-	selector.on_item_selected = p_callback
-	return selector
+func register_creature(creature: SimCreature) -> String:
+	var id = generate_unique_id()
+	sim_creatures[id] = creature
+	creature.sim_id = id
+	emit_sim_event("creature_spawned", {"id": id, "position": creature.position})
+	return id
+
+func unregister_creature(id: String):
+	if sim_creatures.has(id):
+		sim_creatures.erase(id)
+		emit_sim_event("creature_removed", {"id": id})
+
+func generate_unique_id() -> String:
+	return "sim_" + str(Time.get_ticks_msec()) + "_" + str(randi())
 ```
 
-**Node Path References** (from actual scene structure):
-- Root: `PanelContainer` (not Panel)
-- Title: `$MarginContainer/VBoxContainer/TitleLabel`
-- Item List: `$MarginContainer/VBoxContainer/ScrollContainer/ItemList`
-- Close Button: `$MarginContainer/VBoxContainer/CloseButton`
-
-**Why**:
-- Generic, reusable component for any selection UI
-- Configurable title, items, and callbacks
-- Items can have optional descriptions
-- Static helper function for easy instantiation
-- Uses existing generic_selector.tscn scene
-- Can be used for shops, food, or any future selection needs
+**Why**: This is the core simulation engine. It runs at a fixed timestep (30 ticks/sec) independent of rendering framerate. All game logic happens here in a deterministic order. Events are queued for the view layer to consume.
 
 ---
 
-#### Step 6: Create Store Selector using Generic Selector
+### Step 2: Create SimCreature Entity Class
 
-**Create file**: `scripts/store_selector_helper.gd` (static helper class)
+**File**: `core/simulation/entities/sim_creature.gd`
+
+Create new file with this content:
 
 ```gdscript
-class_name StoreSelectorHelper
+# core/simulation/entities/sim_creature.gd
+extends Resource
+class_name SimCreature
 
-static func open_store_selector(parent_node: Node):
-	# Load all shops from resources/shops/
-	var shops = _load_shops()
+# Simulation ID
+var sim_id: String = ""
 
-	if shops.is_empty():
-		push_error("No shops found in resources/shops/")
-		return
+# Reference to actual creature data
+var creature_data: CreatureData
 
-	# Convert shops to selector items
-	var items: Array[Dictionary] = []
-	for shop_data in shops:
-		var shop: ShopResource = shop_data.resource
-		items.append({
-			"name": shop.shop_name,
-			"description": shop.greeting,
-			"data": shop
-		})
+# Simulation state (no visuals!)
+var position: Vector2 = Vector2.ZERO
+var velocity: Vector2 = Vector2.ZERO
+var current_state: GlobalEnums.CreatureState = GlobalEnums.CreatureState.IDLE
+var facing_direction: GlobalEnums.FacingDirection = GlobalEnums.FacingDirection.WALK_DOWN
 
-	# Create selector
-	var selector = GenericSelector.create(
-		"Select a Store",
-		items,
-		func(shop: ShopResource):
-			_open_shop(parent_node, shop)
+# AI state
+var wander_target: Vector2 = Vector2.ZERO
+var state_timer: float = 0.0
+var current_state_duration: float = 0.0
+var container_bounds: Rect2 = Rect2(0, 0, 1920, 1080)
+
+# AI parameters (moved from visual layer)
+var wander_speed: float = 50.0
+var min_walk_time: float = 2.0
+var max_walk_time: float = 4.0
+var min_idle_time: float = 1.0
+var max_idle_time: float = 3.0
+
+# Emote state (simulation decides, view renders)
+var current_emote: GlobalEnums.Emote = GlobalEnums.Emote.NONE
+var emote_timer: float = 0.0
+var next_emote_time: float = 0.0
+
+func _init(data: CreatureData = null):
+	if data:
+		creature_data = data
+		# Initialize AI timers
+		next_emote_time = randf_range(5.0, 15.0)
+		_start_idle_state()
+
+func update_simulation(delta: float):
+	# Update timers
+	state_timer += delta
+	emote_timer += delta
+
+	# Process current state
+	match current_state:
+		GlobalEnums.CreatureState.IDLE:
+			_process_idle_state(delta)
+		GlobalEnums.CreatureState.WALKING:
+			_process_walking_state(delta)
+
+	# Check for emote trigger
+	if emote_timer >= next_emote_time:
+		_trigger_random_emote()
+
+	# Clear expired emotes
+	if current_emote != GlobalEnums.Emote.NONE and emote_timer > 2.5:
+		current_emote = GlobalEnums.Emote.NONE
+
+func _process_idle_state(delta: float):
+	if state_timer >= current_state_duration:
+		_start_walking_state()
+
+func _process_walking_state(delta: float):
+	# Move towards target
+	var direction = (wander_target - position).normalized()
+	velocity = direction * wander_speed
+	position += velocity * delta
+
+	# Update facing direction based on movement
+	facing_direction = _get_walking_direction(direction)
+
+	# Check if reached target or time expired
+	var distance_to_target = position.distance_to(wander_target)
+	if distance_to_target < 5.0 or state_timer >= current_state_duration:
+		_start_idle_state()
+
+func _start_idle_state():
+	current_state = GlobalEnums.CreatureState.IDLE
+	state_timer = 0.0
+	current_state_duration = randf_range(min_idle_time, max_idle_time)
+	velocity = Vector2.ZERO
+
+func _start_walking_state():
+	current_state = GlobalEnums.CreatureState.WALKING
+	state_timer = 0.0
+	current_state_duration = randf_range(min_walk_time, max_walk_time)
+	_pick_new_wander_target()
+
+func _pick_new_wander_target():
+	wander_target = Vector2(
+		randf_range(container_bounds.position.x + 50,
+		           container_bounds.position.x + container_bounds.size.x - 50),
+		randf_range(container_bounds.position.y + 50,
+		           container_bounds.position.y + container_bounds.size.y - 50)
 	)
 
-	# Set signals
-	selector.open_signal = SignalBus.shop_selector_opened
-	selector.close_signal = SignalBus.shop_selector_closed
-	selector.empty_message = "No shops available"
+func _get_walking_direction(direction: Vector2) -> GlobalEnums.FacingDirection:
+	var angle = direction.angle()
+	var degrees = rad_to_deg(angle)
+	if degrees < 0:
+		degrees += 360
 
-	parent_node.add_child(selector)
-
-static func _load_shops() -> Array[Dictionary]:
-	var shops: Array[Dictionary] = []
-	var shops_path = "res://resources/shops/"
-	var dir = DirAccess.open(shops_path)
-
-	if dir:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
-
-		while file_name != "":
-			if file_name.ends_with(".tres"):
-				var shop_path = shops_path + file_name
-				var shop: ShopResource = load(shop_path)
-				if shop:
-					shops.append({
-						"resource": shop,
-						"path": shop_path
-					})
-					print("Loaded shop: ", shop.shop_name)
-			file_name = dir.get_next()
-
-		dir.list_dir_end()
+	if degrees >= 315 or degrees < 45:
+		return GlobalEnums.FacingDirection.WALK_RIGHT
+	elif degrees >= 45 and degrees < 135:
+		return GlobalEnums.FacingDirection.WALK_DOWN
+	elif degrees >= 135 and degrees < 225:
+		return GlobalEnums.FacingDirection.WALK_LEFT
 	else:
-		push_error("Failed to open shops directory: " + shops_path)
+		return GlobalEnums.FacingDirection.WALK_UP
 
-	return shops
+func _trigger_random_emote():
+	var emotes = GlobalEnums.Emote.values()
+	emotes.erase(GlobalEnums.Emote.NONE)
+	current_emote = emotes[randi() % emotes.size()]
+	emote_timer = 0.0
+	next_emote_time = randf_range(5.0, 15.0)
 
-static func _open_shop(parent_node: Node, shop: ShopResource):
-	var shop_window_scene = preload("res://scenes/windows/shop_window.tscn")
-	var shop_window = shop_window_scene.instantiate()
-	parent_node.add_child(shop_window)
-	shop_window.setup(shop)
+	# Notify simulation manager of emote change
+	if has_node("/root/SimulationManager"):
+		get_node("/root/SimulationManager").emit_sim_event("creature_emote", {
+			"id": sim_id,
+			"emote": current_emote
+		})
 ```
 
-**Why**: Separates shop-specific logic from the generic selector. Shop loading and opening logic contained in helper class. Generic selector remains completely reusable.
+**Why**: This is pure simulation logic with NO visual components. All the AI, movement, and state management that was in CreatureDisplay has been extracted here. The simulation runs independently and emits events that the view layer can observe.
+
+## Phase 2: View Layer Architecture
+
+### Step 3: Create ViewManager
+
+**File**: `core/view/view_manager.gd`
+
+Create new file with this content:
+
+```gdscript
+# core/view/view_manager.gd
+extends Node
+class_name ViewManager
+
+# View registries
+var creature_views: Dictionary = {}  # {sim_id: CreatureView}
+var facility_views: Dictionary = {}  # {sim_id: FacilityView}
+
+# Reference to simulation
+var simulation_manager: SimulationManager
+
+func _ready():
+	# Get simulation manager reference
+	if has_node("/root/SimulationManager"):
+		simulation_manager = get_node("/root/SimulationManager")
+		simulation_manager.simulation_event_emitted.connect(_on_simulation_event)
+		simulation_manager.simulation_tick_completed.connect(_on_simulation_tick)
+	print("ViewManager initialized")
+
+func _on_simulation_event(event: Dictionary):
+	match event.type:
+		"creature_spawned":
+			_create_creature_view(event.data.id, event.data.position)
+		"creature_removed":
+			_remove_creature_view(event.data.id)
+		"creature_emote":
+			_update_creature_emote(event.data.id, event.data.emote)
+
+func _on_simulation_tick(tick: int):
+	# Update all views based on simulation state
+	_update_all_creature_views()
+
+func _update_all_creature_views():
+	if not simulation_manager:
+		return
+
+	for sim_id in simulation_manager.sim_creatures:
+		var sim_creature = simulation_manager.sim_creatures[sim_id]
+		if creature_views.has(sim_id):
+			var view = creature_views[sim_id]
+			view.update_from_simulation(sim_creature)
+
+func _create_creature_view(sim_id: String, position: Vector2):
+	# This will create the visual representation
+	# For now, just track that we need to create it
+	print("Need to create view for creature: ", sim_id)
+
+func _remove_creature_view(sim_id: String):
+	if creature_views.has(sim_id):
+		creature_views[sim_id].queue_free()
+		creature_views.erase(sim_id)
+
+func _update_creature_emote(sim_id: String, emote: GlobalEnums.Emote):
+	if creature_views.has(sim_id):
+		creature_views[sim_id].show_emote(emote)
+```
+
+**Why**: ViewManager observes the SimulationManager and updates visual representations based on simulation events. It acts as the bridge between pure simulation and visual rendering, maintaining a registry of all view components.
 
 ---
 
-#### Step 7: Update game_scene to use Store Selector Helper
+### Step 4: Create CreatureView Component
+
+**File**: `scenes/entities/creature_view.gd` (refactored from creature_display.gd)
+
+Create new file with this content:
+
+```gdscript
+# scenes/entities/creature_view.gd
+extends CharacterBody2D
+class_name CreatureView
+
+# Visual configuration
+@export var hitbox_scale: float = 0.7
+
+# References
+var sim_id: String = ""
+var creature_data: CreatureData
+var current_emote_bubble = null
+
+const EMOTE_BUBBLE = preload("res://scenes/windows/emote_bubble.tscn")
+
+func _ready():
+	# View-only setup, no AI initialization
+	pass
+
+func set_creature_data(data: CreatureData):
+	creature_data = data
+	_update_sprite()
+	_update_hitbox()
+
+func set_sim_id(id: String):
+	sim_id = id
+
+func update_from_simulation(sim_creature: SimCreature):
+	# Sync position with simulation
+	position = sim_creature.position
+
+	# Update animation based on simulation state
+	_update_animation(sim_creature.current_state, sim_creature.facing_direction)
+
+	# Handle emote display
+	if sim_creature.current_emote != GlobalEnums.Emote.NONE and not current_emote_bubble:
+		show_emote(sim_creature.current_emote)
+	elif sim_creature.current_emote == GlobalEnums.Emote.NONE and current_emote_bubble:
+		_hide_emote_bubble()
+
+func _update_sprite():
+	if not creature_data:
+		return
+
+	var sprite_frames = GlobalEnums.get_sprite_frames_for_species(creature_data.species)
+	if sprite_frames and $AnimatedSprite2D:
+		$AnimatedSprite2D.sprite_frames = sprite_frames
+
+func _update_hitbox():
+	if not creature_data or not $AnimatedSprite2D or not $CollisionShape2D:
+		return
+
+	await get_tree().process_frame
+
+	var sprite_frames = $AnimatedSprite2D.sprite_frames
+	if not sprite_frames:
+		return
+
+	var current_texture = sprite_frames.get_frame_texture("idle", 0)
+	if current_texture:
+		var sprite_size = current_texture.get_size()
+		var rect_shape = RectangleShape2D.new()
+		rect_shape.size = sprite_size * hitbox_scale
+		$CollisionShape2D.shape = rect_shape
+		$CollisionShape2D.position = Vector2(0, (sprite_size.y - rect_shape.size.y) / 2.0)
+
+func _update_animation(state: GlobalEnums.CreatureState, facing: GlobalEnums.FacingDirection):
+	var animation_name = ""
+
+	match state:
+		GlobalEnums.CreatureState.IDLE:
+			animation_name = _get_idle_animation(facing)
+		GlobalEnums.CreatureState.WALKING:
+			animation_name = GlobalEnums.get_animation_name(facing)
+
+	if animation_name and $AnimatedSprite2D.sprite_frames:
+		if $AnimatedSprite2D.sprite_frames.has_animation(animation_name):
+			$AnimatedSprite2D.play(animation_name)
+
+func _get_idle_animation(walk_dir: GlobalEnums.FacingDirection) -> String:
+	match walk_dir:
+		GlobalEnums.FacingDirection.WALK_UP:
+			return "idle-up"
+		GlobalEnums.FacingDirection.WALK_DOWN:
+			return "idle-down"
+		GlobalEnums.FacingDirection.WALK_LEFT:
+			return "idle-left"
+		GlobalEnums.FacingDirection.WALK_RIGHT:
+			return "idle-right"
+		_:
+			return "idle"
+
+func show_emote(emote: GlobalEnums.Emote):
+	_hide_emote_bubble()
+
+	current_emote_bubble = EMOTE_BUBBLE.instantiate()
+	add_child(current_emote_bubble)
+	current_emote_bubble.position = Vector2(0, -20)
+
+	if current_emote_bubble.has_method("set_emote"):
+		current_emote_bubble.set_emote(emote)
+
+	# Auto-remove after duration
+	get_tree().create_timer(2.5).timeout.connect(_hide_emote_bubble)
+
+func _hide_emote_bubble():
+	if current_emote_bubble:
+		current_emote_bubble.queue_free()
+		current_emote_bubble = null
+
+func _on_input_event(viewport, event, shape_idx):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if creature_data:
+			SignalBus.creature_clicked.emit(creature_data)
+```
+
+**Why**: This is a pure view component. It only renders what the simulation tells it to render. No AI logic, no decision making - just visual representation. It observes SimCreature state and updates sprites, animations, and effects accordingly.
+
+---
+
+## Phase 3: Glue Layer - Connecting Simulation and View
+
+### Step 5: Update GameScene Integration
 
 **File**: `scenes/view/game_scene.gd`
 
-**Find the F6 shop code in `_input()` function** (around line 50):
+Update creature spawning to use both layers (around line 80-90):
 
-**Current code**:
 ```gdscript
-# TEST: Open shop with F6
-elif event.is_action_pressed("ui_text_backspace"):  # F6 key
-	_open_test_shop()
+# OLD CODE (mixed):
+func _on_creature_added(creature: CreatureData):
+	var random_x = randf_range(585, 1335)
+	spawn_tino_at_position(creature, Vector2(random_x, 400))
+
+# NEW CODE (separated):
+func _on_creature_added(creature: CreatureData):
+	# 1. Create simulation entity
+	var sim_creature = SimCreature.new(creature)
+	sim_creature.container_bounds = Rect2(585, 300, 750, 300)  # Define simulation bounds
+	sim_creature.position = Vector2(randf_range(585, 1335), 400)
+	var sim_id = get_node("/root/SimulationManager").register_creature(sim_creature)
+
+	# 2. Create view entity
+	var creature_view = CREATURE_DISPLAY.instantiate()  # Or CREATURE_VIEW if renamed
+	creature_view.set_creature_data(creature)
+	creature_view.set_sim_id(sim_id)
+	add_child(creature_view)  # Or appropriate container
+
+	# 3. Register view with ViewManager
+	get_node("/root/ViewManager").creature_views[sim_id] = creature_view
 ```
 
-**Replace with**:
-```gdscript
-# Open Store Selector with F6
-elif event.is_action_pressed("ui_text_backspace"):  # F6 key
-	StoreSelectorHelper.open_store_selector(self)
-```
-
-**Remove or comment out the old `_open_test_shop()` function** (no longer needed).
-
-**Why**: One-line call to open store selector. All shop logic handled by helper class. Clean separation of concerns.
+**Why**: This is the glue code that connects a creature's data to both its simulation entity and visual representation. The simulation runs the logic, the view displays it.
 
 ---
 
-#### Step 8: Convert Food Selector to use Generic Selector
+### Step 6: Add Autoload Configuration
 
-**File**: `scenes/windows/food_selector.gd`
+**File**: `project.godot`
 
-**Current implementation**: Custom food selector with hardcoded UI logic (72 lines)
+Add new autoloads in the [autoload] section:
 
-**Replace entire file with**:
-```gdscript
-class_name FoodSelectorHelper
+```ini
+[autoload]
 
-static func open_food_selector(parent_node: Node, creature: CreatureData):
-	var inventory_manager = GameManager.inventory_manager
-	var player_inv = GameManager.player_data.inventory
-
-	# Get all food items in inventory
-	var food_items = inventory_manager.get_items_by_type(GlobalEnums.ItemType.FOOD)
-
-	# Build items array
-	var items: Array[Dictionary] = []
-	for item_id in food_items:
-		if player_inv.has(item_id) and player_inv[item_id] > 0:
-			var item = inventory_manager.get_item_resource(item_id)
-			if item:
-				var quantity = player_inv[item_id]
-				var description = "%s (x%d)" % [item.description if item.description else "", quantity]
-
-				# Add stat boost info if applicable
-				if item.stat_boost_multiplier != 1.0:
-					description += "\n+%d%% training bonus" % int((item.stat_boost_multiplier - 1.0) * 100)
-
-				items.append({
-					"name": "%s (x%d)" % [item.item_name, quantity],
-					"description": description,
-					"data": item_id
-				})
-
-	# Create selector
-	var selector = GenericSelector.create(
-		"Select Food for %s" % creature.creature_name,
-		items,
-		func(item_id: String):
-			GameManager.facility_manager.assign_food_to_creature(creature, item_id)
-	)
-
-	selector.empty_message = "No food in inventory!\nBuy food from shop (F6)"
-	selector.open_signal = SignalBus.food_selection_requested
-
-	parent_node.add_child(selector)
+GlobalEnums="*res://core/global_enums.gd"
+SignalBus="*res://core/signal_bus.gd"
+GameManager="*res://core/game_manager.gd"
+SaveManager="*res://core/save_manager.gd"
+SimulationManager="*res://core/simulation/simulation_manager.gd"
+ViewManager="*res://core/view/view_manager.gd"
 ```
 
-**Update**: `scenes/windows/food_selector.tscn` can be deleted (no longer needed)
+**Order matters!** SimulationManager should come before ViewManager since the view depends on simulation.
 
-**Update game_scene.gd** to use the new helper:
-
-**Find**:
-```gdscript
-func _on_food_selection_requested(creature: CreatureData):
-	var selector_scene = preload("res://scenes/windows/food_selector.tscn")
-	var selector = selector_scene.instantiate()
-	add_child(selector)
-	selector.setup(creature)
-```
-
-**Replace with**:
-```gdscript
-func _on_food_selection_requested(creature: CreatureData):
-	FoodSelectorHelper.open_food_selector(self, creature)
-```
-
-**Why**: Food selector now uses generic selector - 30 lines vs 72 lines. Consistent UI across all selection windows. Easy to maintain and extend.
+**Why**: Makes these managers globally accessible singletons. SimulationManager runs the game logic, ViewManager observes and renders it.
 
 ---
 
-#### Step 9: Update game_scene to show store selector hint in UI
+## Phase 4: Migration Implementation Steps
 
-**File**: `scenes/view/game_scene.gd` (or create UI label)
+### Step 7: Create Directory Structure
 
-**Optional: Add hint label to game UI**:
-```gdscript
-# In _ready() or UI setup function
-var hint_label = Label.new()
-hint_label.text = "F5: Save | F9: Load | F6: Stores | Q: Quests"
-hint_label.position = Vector2(10, 10)
-add_child(hint_label)
+Create the following new directories in your project:
+
+```
+core/
+├── simulation/
+│   ├── simulation_manager.gd
+│   └── entities/
+│       ├── sim_creature.gd
+│       ├── sim_facility.gd
+│       └── sim_activity.gd
+└── view/
+    ├── view_manager.gd
+    └── components/
+        └── creature_view.gd
 ```
 
-**Why**: Players need to know F6 opens the store selector. Shows all main hotkeys in one place.
+**Why**: Organized structure separates simulation logic from view logic physically in the file system, making the architecture clear.
 
 ---
 
-#### Step 10: Convert existing test shop to Creature Market
-
-**File**: Any existing shop resource (or create new `resources/shops/creature_market.tres`)
-
-**If you have an existing test shop .tres file**:
-1. Open it in Godot Editor
-2. Update properties:
-   - `shop_name`: "Creature Market"
-   - `vendor_name`: "Breeder Bob"
-   - `greeting`: "Quality creatures for discerning trainers!"
-3. Clear existing entries
-4. Add ShopEntry for each species:
-   - **Scuttleguard**:
-     - `entry_name`: "Scuttleguard"
-     - `description`: "A sturdy tank creature with high defense."
-     - `entry_type`: CREATURE
-     - `creature_species`: SCUTTLEGUARD
-     - `cost`: 150
-     - `stock`: -1
-   - **Slime**:
-     - `entry_name`: "Slime"
-     - `description`: "A balanced creature that adapts to any situation."
-     - `entry_type`: CREATURE
-     - `creature_species`: SLIME
-     - `cost`: 100
-     - `stock`: -1
-   - **Wind Dancer**:
-     - `entry_name`: "Wind Dancer"
-     - `description`: "A swift and intelligent aerial creature."
-     - `entry_type`: CREATURE
-     - `creature_species`: WIND_DANCER
-     - `cost`: 200
-     - `stock`: -1
-5. Save as `creature_market.tres` (rename if needed)
-
-**Why**: Convert the existing test shop into a proper creature market. Now you'll have two shops (Creature Market and Food Market) to test the store selector with.
-
----
-
-#### Step 11: Remove test_shop variable from game_scene (cleanup)
+### Step 8: Initialize Simulation on Game Start
 
 **File**: `scenes/view/game_scene.gd`
 
-**Find the test_shop variable declaration** (around line 21):
+Add to _ready() function:
+
 ```gdscript
-# Test shop - will be created manually in Godot Editor
-var test_shop: ShopResource
+func _ready():
+	_connect_signals()
+
+	# Initialize simulation
+	if has_node("/root/SimulationManager"):
+		get_node("/root/SimulationManager").start_simulation()
+
+	# Initialize the game when scene loads
+	SignalBus.game_started.emit()
+
+	# Rest of initialization...
 ```
 
-**Remove it** (no longer needed):
-```gdscript
-# Old test shop variable removed - using store selector now
-```
-
-**Why**: Clean up unused code. The store selector loads shops dynamically from the `resources/shops/` folder, so we don't need hardcoded shop references in game_scene.
+**Why**: Starts the simulation engine when the game begins. The simulation will run at its fixed timestep independent of rendering.
 
 ---
 
-### Summary
+## Phase 5: Testing and Validation
 
-**New Features**:
-1. **Generic Selector Window**: Reusable selection UI for any list-based choice
-2. **Food Market Shop**: Dedicated shop for food items (basic and premium)
-3. **Creature Market Shop**: Convert existing test shop to proper creature market
-4. **Store Selector Helper**: Uses GenericSelector for browsing shops
-5. **Food Selector Helper**: Refactored to use GenericSelector (60% less code)
-6. **Dynamic Shop Loading**: Shops auto-discovered from `resources/shops/` folder
-7. **Unified item_id System**: All shop entries use item_id strings consistently
-8. **F6 Hotkey**: Now opens store selector (replaces direct shop access)
+### Step 9: Create Simulation Test Scene
 
-**Key Architecture Decisions**:
-1. **Generic Selector Pattern**: Single reusable component for all selection UIs
-2. **Helper Classes**: StoreSelectorHelper and FoodSelectorHelper contain domain logic
-3. **Shop auto-discovery**: Load all .tres from `resources/shops/` folder
-4. **Selector closes on selection**: Clean UX, no overlapping windows
-5. **item_id system**: All shop entries now use item_id strings (cleaner, matches inventory architecture)
-6. **Static factory method**: `GenericSelector.create()` for easy instantiation
+**File**: `test/simulation_test.gd`
 
-**Files Created**:
-- `resources/shops/food_market.tres` - Food shop resource
-- `scenes/windows/generic_selector.gd` - Generic selector class (90 lines) - attached to existing .tscn
-- `scripts/store_selector_helper.gd` - Shop selector helper class (60 lines)
+Create a test scene to verify simulation works without visuals:
 
-**Files Converted**:
-- `resources/shops/creature_market.tres` - Convert existing test shop to creature market
-- `scenes/windows/food_selector.gd` - Convert to helper class using GenericSelector (30 lines, was 72)
+```gdscript
+# test/simulation_test.gd
+extends Node
 
-**Files Deleted**:
-- `scenes/windows/food_selector.tscn` - No longer needed (uses generic_selector.tscn)
+func _ready():
+	print("=== SIMULATION TEST START ===")
 
-**Files Modified**:
-- `resources/shop_entry.gd` - Replaced `item` with `item_id` for consistency
-- `scripts/shop_manager.gd` - Updated ITEM purchase to use item_id only
-- `core/signal_bus.gd` - Added shop_selector_opened/closed signals
-- `scenes/view/game_scene.gd` - Use helper classes for selectors, removed test_shop variable
+	# Get simulation manager
+	var sim_manager = get_node("/root/SimulationManager")
 
-**Signals Added**:
-- `shop_selector_opened()` - Store selector opened
-- `shop_selector_closed()` - Store selector closed
+	# Create test creature
+	var test_data = CreatureData.new()
+	test_data.creature_name = "TestBot"
+	test_data.species = GlobalEnums.Species.GUARD_ROBOT
 
-**Gameplay Flow**:
-1. Player presses F6
-2. Store selector opens showing all shops (Food Market, Creature Market, etc.)
-3. Each shop shows name and greeting
-4. Player clicks shop button
-5. Shop window opens with that shop's inventory
-6. Store selector closes
-7. Player purchases items/creatures
-8. Shop window closes
-9. Player can press F6 again to browse other shops
+	var sim_creature = SimCreature.new(test_data)
+	sim_creature.container_bounds = Rect2(0, 0, 1000, 1000)
+	sim_creature.position = Vector2(500, 500)
 
-**Future Extensions (Easy with GenericSelector)**:
-1. **Equipment Store**: Same pattern as food/shops
-2. **Service Provider**: List of services using GenericSelector
-3. **Creature Selector**: Replace quest selector with GenericSelector
-4. **Facility Selector**: Choose facilities to build
-5. **Activity Selector**: Pick training activities
-6. **Achievement Browser**: View completed achievements
-7. **Settings Menu**: List of settings categories
-8. **Recipe Book**: Craft items via selection UI
-9. **Black Market**: Special shop with limited stock
-10. **Shop Unlocking**: Filter shops based on quest completion
+	# Register and start
+	var sim_id = sim_manager.register_creature(sim_creature)
+	sim_manager.start_simulation()
 
-**Testing Steps**:
-1. Verify `res://scenes/windows/generic_selector.tscn` exists ✓
-2. Attach `generic_selector.gd` script to the GenericSelector (PanelContainer) node
-3. Verify @onready paths (TitleLabel, ItemList, CloseButton all exist)
-4. Create `food_market.tres` with two food items
-5. Convert existing test shop to `creature_market.tres` with three creatures
-6. Press F6 in game
-7. See store selector with "Food Market" and "Creature Market"
-8. Click "Food Market" → shop window opens with food items
-9. Purchase food_basic or food_premium
-10. Check inventory (I key) - should show purchased food
-11. Press F6 again → click "Creature Market" → buy a creature
-12. Verify new creature appears in the world
-13. Verify gold deducted correctly for all purchases
+	# Monitor for 5 seconds
+	await get_tree().create_timer(5.0).timeout
+
+	# Check creature moved
+	var final_pos = sim_manager.sim_creatures[sim_id].position
+	print("Initial position: (500, 500)")
+	print("Final position: ", final_pos)
+
+	if final_pos != Vector2(500, 500):
+		print("✅ PASS: Creature moved in simulation")
+	else:
+		print("❌ FAIL: Creature did not move")
+
+	print("=== SIMULATION TEST END ===")
+```
+
+**Why**: Proves the simulation can run without any visual components. This is a key benefit of the architecture - testability.
 
 ---
+
+## Architecture Benefits Summary
+
+### Before (Mixed Architecture)
+```
+Problems:
+❌ Can't test AI without visuals
+❌ Simulation tied to framerate
+❌ Hard to add multiplayer
+❌ Difficult to replay/record
+❌ Complex save/load
+❌ Performance issues with many creatures
+```
+
+### After (Separated Architecture)
+```
+Benefits:
+✅ Run simulation without graphics (headless testing)
+✅ Fixed timestep (deterministic)
+✅ Easy multiplayer (sync simulation state)
+✅ Record/replay capability
+✅ Simple save (just simulation state)
+✅ Better performance (simulate only what matters)
+✅ Multiple views of same simulation
+✅ Clean modding API
+```
+
+---
+
+## Implementation Checklist
+
+**Phase 1: Core Infrastructure**
+- [ ] Create `core/simulation/simulation_manager.gd`
+- [ ] Create `core/simulation/entities/sim_creature.gd`
+- [ ] Add simulation autoload to project.godot
+
+**Phase 2: View Layer**
+- [ ] Create `core/view/view_manager.gd`
+- [ ] Create `scenes/entities/creature_view.gd`
+- [ ] Add view autoload to project.godot
+
+**Phase 3: Integration**
+- [ ] Update `game_scene.gd` creature spawning
+- [ ] Connect simulation to view via events
+- [ ] Test simulation/view sync
+
+**Phase 4: Migration**
+- [ ] Remove AI logic from `creature_display.gd`
+- [ ] Move state management to `sim_creature.gd`
+- [ ] Update save/load for new architecture
+
+**Phase 5: Testing**
+- [ ] Create simulation test scene
+- [ ] Verify deterministic behavior
+- [ ] Performance benchmarking
+- [ ] Save/load compatibility
+
+---
+
+## Next Steps After Implementation
+
+1. **Extend to other systems**: Apply same pattern to facilities, activities, competitions
+2. **Add replay system**: Record simulation events for replay
+3. **Implement speed controls**: Run simulation faster/slower than real-time
+4. **Add debug view**: Visualize simulation state without sprites
+5. **Create mod API**: Let modders hook into simulation events
+
+---
+
+## Common Issues and Solutions
+
+**Issue**: View lags behind simulation
+**Solution**: Increase view update rate or interpolate positions
+
+**Issue**: Simulation runs too fast/slow
+**Solution**: Adjust `tick_rate` in SimulationManager (default 30)
+
+**Issue**: Creatures teleport instead of smooth movement
+**Solution**: Add position interpolation in CreatureView
+
+**Issue**: Save files too large
+**Solution**: Only save simulation state, reconstruct views on load
+
+---
+
+## Code Migration Map
+
+| Current Location | Move To | Keep In |
+|-----------------|---------|---------|
+| AI parameters | SimCreature | - |
+| State machine | SimCreature | - |
+| Movement logic | SimCreature | - |
+| Position updates | SimCreature | - |
+| Emote decisions | SimCreature | - |
+| Sprite rendering | - | CreatureView |
+| Animation updates | - | CreatureView |
+| Hitbox/clicking | - | CreatureView |
+| Visual effects | - | CreatureView |
+
+This completes the simulation/view separation implementation guide. The architecture is now ready for implementation following these detailed steps.
 
 ---
 
