@@ -26,6 +26,10 @@ func _ready():
 	# Connect to know when data is ready
 	_connect_signals()
 
+	# Initialize simulation
+	if has_node("/root/SimulationManager"):
+		get_node("/root/SimulationManager").start_simulation()
+
 	# Connect Next Week button
 	if next_week_button:
 		next_week_button.pressed.connect(_on_next_week_pressed)
@@ -78,12 +82,20 @@ func _on_player_data_ready():
 	pass
 
 func _on_creature_added(creature: CreatureData):
-	# print("_on_creature_added: %s" % creature.creature_name)  # Debug disabled
-	# Spawn creature at random position within drop zone
-	# Drop zone is 750px wide, centered at screen (960, 540)
-	# At 2x zoom: screen 585-1335 = world 585-1335 (same because centered on camera)
-	var random_x = randf_range(585, 1335)
-	spawn_tino_at_position(creature, Vector2(random_x, 400))
+	# 1. Create simulation entity
+	var sim_creature = SimCreature.new(creature)
+	sim_creature.container_bounds = Rect2(585, 300, 750, 300)  # Define simulation bounds
+	sim_creature.position = Vector2(randf_range(585, 1335), 400)
+	var sim_id = get_node("/root/SimulationManager").register_creature(sim_creature)
+
+	# 2. Create view entity
+	var creature_view = CREATURE_DISPLAY.instantiate()  # Or CREATURE_VIEW if renamed
+	creature_view.set_creature_data(creature)
+	creature_view.set_sim_id(sim_id)
+	add_child(creature_view)  # Or appropriate container
+
+	# 3. Register view with ViewManager
+	get_node("/root/ViewManager").creature_views[sim_id] = creature_view
 
 func _on_creature_removed(creature: CreatureData):
 	print("_on_creature_removed: ", creature.creature_name)

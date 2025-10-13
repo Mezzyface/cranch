@@ -19,7 +19,8 @@
       "Bash(fi)",
       "Bash(while read f)",
       "Bash(do echo \"$f:\")",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
